@@ -1,0 +1,4 @@
+# This folder contains client-side libraries.
+# This will prevent the files from being added into version control.
+# Instead, use LibMan.
+*.*

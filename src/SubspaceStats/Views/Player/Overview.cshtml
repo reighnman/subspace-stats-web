@@ -1,0 +1,64 @@
+﻿@model SubspaceStats.Models.Player.OverviewViewModel
+
+@{
+	ViewData["Title"] = Model.PlayerName;
+}
+
+<h1>@Model.PlayerName</h1>
+<dl class="row">
+	@if (!string.IsNullOrWhiteSpace(Model.PlayerInfo.SquadName))
+	{
+		<dt class="col-sm-2">Squad</dt>
+		<dd class="col-sm-10">@Model.PlayerInfo.SquadName</dd>
+	}
+	<dt class="col-sm-2">Resolution</dt>
+	<dd class="col-sm-10">@Model.PlayerInfo.XRes<text>x</text>@Model.PlayerInfo.YRes</dd>
+</dl>
+
+<div class="container mt-3 mb-3">
+	@if (Model.ParticipationRecordList.Count > 0)
+	{
+		<div class="row g-3">
+			@foreach (var participationRecord in Model.ParticipationRecordList)
+			{
+				<div class="col-12 col-md-6 col-lg-3">
+					<div class="card h-100">
+						<h5 class="card-header card-title text-center">@participationRecord.LastStatPeriod.GameType.GetDisplayName()</h5>
+						<div class="card-body">
+							<h5>@participationRecord.LastStatPeriod.GetDisplayDescription()</h5>
+							@if (participationRecord.Rating is not null)
+							{
+								<div class="d-flex">
+									<div class="flex-grow-1">Rating</div>
+									<div>@participationRecord.Rating</div>
+								</div>
+							}
+
+							@* TODO: details from game type specific json *@
+							@* 
+							<div class="d-flex">
+								<div class="flex-grow-1">Wins</div>
+								<div>123</div>
+							</div>
+							<div class="d-flex">
+								<div class="flex-grow-1">Losses</div>
+								<div>345</div>
+							</div>
+							*@
+							@Html.ActionLink("View Stats", "Index", "Player", new { playerName = Model.PlayerName, gameType = participationRecord.LastStatPeriod.GameType, period = participationRecord.LastStatPeriod.StatPeriodId}, new { @class = "btn btn-primary stretched-link" })
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+	}
+	else
+	{
+		<div>No recent activity.</div>
+	}
+</div>
+
+@* 
+	TODO: Add historical data about the player?
+	Perhaps list which game types / periods the player participated in, even if that data is not recent enough for details to be viewed.
+*@

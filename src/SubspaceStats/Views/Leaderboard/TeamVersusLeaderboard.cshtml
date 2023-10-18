@@ -1,0 +1,245 @@
+﻿@model SubspaceStats.Models.Leaderboard.TeamVersusLeaderboardViewModel
+
+@{
+	ViewData["Title"] = $"{Model.GameType.GetDisplayName()} {(Model.SelectedPeriod is not null ? Model.SelectedPeriod.Value.GetDisplayDescription() : "")} Leaderboard";
+
+	string? action = ViewContext.RouteData.Values["action"] as string;
+	string? controller = ViewContext.RouteData.Values["controller"] as string;
+}
+
+<div class="d-flex">
+	<h1>@Model.GameType.GetDisplayName()</h1>
+	<div class="p-2 align-bottom">
+		<form asp-action="@action" asp-controller="@controller" method="get">
+			<input type="hidden" name="gameType" value="@Model.GameType" />
+			<select class="form-select" id="periodSelect" name="period">
+				@foreach (var period in Model.Periods)
+				{
+					bool selected = Model.SelectedPeriod is not null && Model.SelectedPeriod.Value.StatPeriodId == period.StatPeriodId;
+					string periodDescription = period.StatPeriodType switch
+					{
+						StatPeriodType.Monthly => period.PeriodRange.LowerBound.ToString("yyyy-MM"),
+						_ => period.PeriodRange.ToString(),
+					};
+
+					<option value="@period.StatPeriodId" selected="@selected">@periodDescription</option>
+				}
+			</select>
+		</form>
+	</div>
+</div>
+
+@*
+TODO: TOP 5 lists
+- Rating
+- Average Rating
+- Kills per 10 minutes
+- Last month's TOP 5
+*@
+
+<div class="container mt-3 mb-3">
+	<div class="row g-3">
+		@if (Model.TopRatingList is not null && Model.TopRatingList.Count > 0)
+		{
+			<div class="col-12 col-md-6 col-lg-3">
+				<div class="card h-100">
+					<h5 class="card-header text-center">Rating</h5>
+					<div class="card-body">
+						<table class="table table-sm table-borderless m-0">
+							<tbody>
+								@foreach (var record in Model.TopRatingList)
+								{
+									<tr>
+										<td class="fw-bold">@record.Rank</td>
+										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
+										<td class="text-end">@record.Rating</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		}
+		@if (Model.TopAvgRatingList is not null && Model.TopAvgRatingList.Count > 0)
+		{
+			<div class="col-12 col-md-6 col-lg-3">
+				<div class="card h-100">
+					<h5 class="card-header text-center">Average Rating</h5>
+					<div class="card-body">
+						<table class="table table-sm table-borderless m-0">
+							<tbody>
+								@foreach (var record in Model.TopAvgRatingList)
+								{
+									<tr>
+										<td class="fw-bold">@record.Rank</td>
+										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
+										<td class="text-end">@record.AvgRating.ToString("f2")</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		}
+		@if (Model.TopKillsPerMinuteList is not null && Model.TopKillsPerMinuteList.Count > 0)
+		{
+			<div class="col-12 col-md-6 col-lg-3">
+				<div class="card h-100">
+					<h5 class="card-header text-center">Kills Per 10 Minutes</h5>
+					<div class="card-body">
+						<table class="table table-sm table-borderless m-0">
+							<tbody>
+								@foreach (var record in Model.TopKillsPerMinuteList)
+								{
+									<tr>
+										<td class="fw-bold">@record.Rank</td>
+										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
+										<td class="text-end">@((record.KillsPerMinute * 10f).ToString("f2"))</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		}
+
+		@if (Model.TopRatingLastMonth is not null && Model.TopRatingLastMonth.Count > 0)
+		{
+			<div class="col-12 col-md-6 col-lg-3">
+				<div class="card h-100">
+					<h5 class="card-header text-center">Top Last Month</h5>
+					<div class="card-body">
+						<table class="table table-sm table-borderless m-0">
+							<tbody>
+								@foreach (var record in Model.TopRatingLastMonth)
+								{
+									<tr>
+										<td class="fw-bold">@record.Rank</td>
+										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
+										<td class="text-end">@record.Rating</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+</div>
+
+
+<div class="table-responsive">
+	<table class="table table-striped table-bordered table-hover">
+		<thead>
+			<tr>
+				<th scope="colgroup" colspan="14" class="text-center">
+					@Model.GameType.GetDisplayName() Leaderboard Statistics
+					@{
+						if (Model.StatsPaging.Offset > 0)
+						{
+							int offset = Math.Max(0, Model.StatsPaging.Offset - Model.StatsPaging.Limit);
+							@Html.ActionLink("Previous", action, new { gameType = Model.SelectedPeriod?.GameType, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = offset }, new { @class = "float-start" })
+						}
+
+						if (Model.StatsPaging.HasMore)
+						{
+							if (action is not null)
+							{
+								@Html.ActionLink("Next", action, new { gameType = Model.SelectedPeriod?.GameType, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = Model.StatsPaging.Offset + Model.StatsPaging.Limit }, new { @class = "float-end"})
+							}
+						}
+					}
+				</th>
+			</tr>
+			<tr class="table-secondary text-nowrap">
+				<th scope="col" class="text-center">#</th>
+				<th scope="col" class="text-start">Pilot</th>
+				<th scope="col" class="text-start">Squad</th>
+				<th scope="col" class="text-end">Rating</th>
+				<th scope="col" class="text-end" title="Average Rating">AvgR</th>
+				<th scope="col" class="text-center" title="Total Kills / Deaths">K/D</th>
+				<th scope="col" class="text-center" title="Total Wins - Losses">W-L</th>
+				<th scope="col" class="text-center" title="Damage Dealt Per Minute / Damage Taken Per Minute">DDPM/DTPM</th>
+				<th scope="col" class="text-end" title="Kill Damage Per Minute">KDPM</th>
+				<th scope="col" class="text-end" title="Forced Repel Damage Per Minute">FRDPM</th>
+				<th scope="col" class="text-end" title="Wasted Energy Per Minute">WEPM</th>
+				<th scope="col" class="text-end" title="Percent of games First Out">1Out</th>
+				<th scope="col" class="text-center" title="Kills / Deaths (per 10 minutes)">K/D(10m)</th>
+				<th scope="col" class="text-center">
+					<span title="Assists per 10 minutes">AS</span>-<span title="Forced Reps per 10 minutes">FR</span>(10m)
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			@if (Model.Stats is not null)
+			{
+				foreach (var pilotStats in Model.Stats)
+				{
+					double avgRating = (pilotStats.Rating - 500) / pilotStats.GamesPlayed;
+					string? avgRatingClass = avgRating >= 0 ? "text-success" : "text-danger";
+
+					double firstOutRatio = pilotStats.FirstOut / pilotStats.GamesPlayed;
+					string? firstOutClass = null;
+					if (firstOutRatio == 0d)
+						firstOutClass = "text-success";
+					else if (firstOutRatio > .1)
+						firstOutClass = "text-danger";
+
+					<tr>
+						<td class="text-center">@pilotStats.RatingRank</td>
+						<td>@Html.ActionLink(pilotStats.PlayerName, "Index", "Player", new { playerName = pilotStats.PlayerName, gameType = Model.GameType, period = Model.SelectedPeriod?.StatPeriodId })</td>
+						<td>@pilotStats.SquadName</td>
+						<td class="text-end">@pilotStats.Rating</td>
+						<td class="text-end @avgRatingClass">@avgRating</td>
+						<td class="text-center">@pilotStats.Kills/@pilotStats.Deaths</td>
+						<td class="text-center">@pilotStats.Wins-@pilotStats.Losses</td>
+						<td class="text-center">@((int)(pilotStats.DamageDealt / pilotStats.PlayDuration.TotalMinutes))/@((int)(pilotStats.DamageTaken / pilotStats.PlayDuration.TotalMinutes))</td>
+						<td class="text-end">@((int)(pilotStats.KillDamage / pilotStats.PlayDuration.TotalMinutes))</td>
+						<td class="text-end">@((int)(pilotStats.ForcedRepDamage / pilotStats.PlayDuration.TotalMinutes))</td>
+						<td class="text-end">@((int)(pilotStats.WastedEnergy / pilotStats.PlayDuration.TotalMinutes))</td>
+						<td class="text-end @firstOutClass">@(firstOutRatio.ToString("p0"))</td>
+						<td class="text-center">@((pilotStats.Kills / pilotStats.PlayDuration.TotalMinutes * 10).ToString("0.#"))/@((pilotStats.Deaths / pilotStats.PlayDuration.TotalMinutes * 10).ToString("0.#"))</td>
+						<td class="text-center">@((pilotStats.Assists / pilotStats.PlayDuration.TotalMinutes * 10).ToString("0.#")) - @((pilotStats.ForcedReps / pilotStats.PlayDuration.TotalMinutes * 10).ToString("0.#"))</td>
+					</tr>
+				}
+			}
+		</tbody>
+		<tfoot>
+			<tr>
+				<th scope="colgroup" colspan="14" class="text-center">
+					@Model.GameType.GetDisplayName() Leaderboard Statistics
+					@{
+						if (Model.StatsPaging.Offset > 0)
+						{
+							int offset = Math.Max(0, Model.StatsPaging.Offset - Model.StatsPaging.Limit);
+							@Html.ActionLink("Previous", action, new { gameType = Model.SelectedPeriod?.GameType, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = offset }, new { @class = "float-start"})
+						}
+
+						if (Model.StatsPaging.HasMore)
+						{
+							if (action is not null)
+							{
+								@Html.ActionLink("Next", action, new { gameType = Model.SelectedPeriod?.GameType, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = Model.StatsPaging.Offset + Model.StatsPaging.Limit }, new { @class = "float-end"})
+							}
+						}
+					}
+				</th>
+			</tr>
+		</tfoot>
+	</table>
+</div>
+
+@section Scripts {
+	<script type="text/javascript">
+		$(document).ready(function () {
+			var periodSelect = $("#periodSelect");
+			periodSelect.on("change", function () {
+				periodSelect.closest("form").submit();
+			});
+		});
+	</script>
+}

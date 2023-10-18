@@ -1,0 +1,578 @@
+﻿@using System.Text;
+@using SubspaceStats.Models;
+@using SubspaceStats.Models.GameDetails.TeamVersus;
+@using SubspaceStats.Models.Player;
+
+@* TODO: Maybe use a layout for all variants of player data? @Layout = "_PlayerLayout" *@
+
+@model SubspaceStats.Models.Player.TeamVersusHistoryViewModel
+
+@{
+	ViewData["Title"] = $"{Model.SelectedPeriod.GameType.GetDisplayName()} {Model.SelectedPeriod.GetDisplayDescription()} - {Model.PlayerName}";
+
+	string? action = ViewContext.RouteData.Values["action"] as string;
+	string? controller = ViewContext.RouteData.Values["controller"] as string;
+}
+
+@functions {
+	public static string GetShipImage(ShipType shipType)
+	{
+		return shipType switch
+		{
+			ShipType.Warbird => "/img/Warbird.svg",
+			ShipType.Javelin => "/img/Javelin.svg",
+			ShipType.Spider => "/img/Spider.svg",
+			ShipType.Leviathan => "/img/Leviathan.svg",
+			ShipType.Terrier => "/img/Terrier.svg",
+			ShipType.Weasel => "/img/Weasel.svg",
+			ShipType.Lancaster => "/img/Lancaster.svg",
+			ShipType.Shark => "/img/Shark.svg",
+			_ => "",
+		};
+	}
+}
+
+<h1>@Model.PlayerName</h1>
+<dl class="row">
+	@if (!string.IsNullOrWhiteSpace(Model.PlayerInfo.SquadName))
+	{
+		<dt class="col-sm-2">Squad</dt>
+		<dd class="col-sm-10">@Model.PlayerInfo.SquadName</dd>
+	}
+	<dt class="col-sm-2">Resolution</dt>
+	<dd class="col-sm-10">@Model.PlayerInfo.XRes<text>x</text>@Model.PlayerInfo.YRes</dd>
+</dl>
+
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+	<div class="container-fluid">
+		<span class="navbar-brand">@Model.SelectedPeriod.GameType.GetDisplayName()</span>
+		<form asp-action="@action" asp-controller="@controller" method="get">
+			<input type="hidden" name="playerName" value="@Model.PlayerName" />
+			<input type="hidden" name="gameType" value="@Model.SelectedPeriod.GameType" />
+			<select class="form-select" id="periodSelect" name="period">
+				@{
+					GameType? gameType = null;
+
+					int i = 0;
+					while (i < Model.PeriodList.Count)
+					{
+						gameType = Model.PeriodList[i].GameType;
+						<optgroup label="@gameType.Value.GetDisplayName()">
+							@do
+							{
+								bool selected = Model.SelectedPeriod.StatPeriodId == Model.PeriodList[i].StatPeriodId;
+								<option value="@Model.PeriodList[i].StatPeriodId" selected="@selected">@Model.PeriodList[i].GetDisplayDescription()</option>
+							}
+							while (++i < Model.PeriodList.Count && Model.PeriodList[i].GameType == gameType);
+						</optgroup>
+					}
+				}
+			</select>
+		</form>
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="navbarNav">
+			<ul class="navbar-nav">
+				<li class="nav-item">
+					<a class="nav-link" asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@Model.SelectedPeriod.GameType" asp-route-period="@Model.SelectedPeriod.StatPeriodId">View Leaderboard</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" asp-controller="Player" asp-action="Index" asp-route-playerName="@Model.PlayerName">View Player Details</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</nav>
+
+<div class="container">
+	<div class="row g-3">
+		<div class="col-12">
+			<div class="table-responsive">
+				<table class="table table-bordered table-hover text-end text-nowrap">
+					<thead>
+						<tr class="table-secondary align-top">
+							<th scope="colgroup" class="h4 align-middle text-start text-wrap">@Model.SelectedPeriod.GameType.GetDisplayName() Overall Stats</th>
+							<th scope="col" class="text-center">
+								<div title="Wins-Losses">W-L</div>
+								<div title="Rating">Rating</div>
+								<div title="Average Rating">AvgR</div>
+							</th>
+							<th scope="col" class="text-center">
+								<div title="Kills / Deaths">K/D</div>
+								<div title="Forced Repels">FR</div>
+								<div title="Team Kills">TK</div>
+							</th>
+							<th scope="col" class="text-center">
+								<div title="Kills Per 10 Minutes / Deaths Per 10 Minutes">K/D (10m)</div>
+								<div title="Forced Repels Per 10 Minutes">FR (10m)</div>
+								<div title="Team Kills Per 10 Minutes">TK (10m)</div>
+							</th>
+							<th scope="col">
+								<div title="Kill Damage Per Minute">KDmg (10m)</div>
+								<div title="Forced Repel Damage Per Minute">FRDmg (10m)</div>
+								<div title="Team Kill Damage Per Minute">TKDmg (10m)</div>
+							</th>
+							<th scope="col">
+								<div title="Assists">AS</div>
+								<div title="Solo Kills">SK</div>
+								<div title="Knockouts">KO</div>
+							</th>
+							<th scope="col">
+								<div title="Assists Per 10 Minutes">AS (10m)</div>
+								<div title="Solo Kills Per 10 Minutes">SK (10m)</div>
+								<div title="Knockouts Per 10 Minutes">KO (10m)</div>
+							</th>
+							<th scope="col" class="text-center" title="">
+								<div title="Total Damage Dealt Per Minute / Total Damage Taken Per Minute">DmgD/DmgT (1m)</div>
+								<div title="Team Damage Dealt Per Minute / Team Damage Taken Per Minute">TeamD/TeamT (1m)</div>
+								<div title="Self Damage Per Minute">Self Damage (1m)</div>
+							</th>
+							<th scope="col">
+								<div title="Damage Efficiency">DmgE</div>
+								<div title="Accuracy Bombs">AccB</div>
+								<div title="Accuracy Guns">AccG</div>
+							</th>
+							<th scope="col">
+								<div title="Mine Use Per Game">Mi/g</div>
+								<div title="Bomb Fire Per Minute">B/m</div>
+								<div title="Gun Fire Per Minute">G/m</div>
+							</th>
+							<th scope="col">
+								<div title="Wasted Energy Per Minute">WE/m</div>
+								<div title="Average Distance to Enemy (tiles)">AvgDE</div>
+							</th>
+							<th scope="col">
+								<div title="Wasted Repels Per Game">WR/g</div>
+								<div title="Wasted Rockets Per Game">WRk/g</div>
+								
+							</th>
+							<th scope="col" class="text-center">
+								<div title="Games Played">GP</div>
+								<div title="Play Time">PT</div>
+								<div title="Critical First Out / Regular First Out / First Out Game Percentage">1Out</div>
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach(TeamVersusPeriodStats periodStats in Model.PeriodStatsList)
+						{
+							long periodDamageDealt = periodStats.BombDamageDealt + periodStats.GunDamageDealt;
+							long periodDamageTaken = periodStats.BombDamageTaken + periodStats.GunDamageTaken + periodStats.TeamDamageTaken + periodStats.SelfDamage;
+							long periodTotalDamage = periodDamageDealt + periodDamageTaken;
+							double? periodDamageEfficiency = periodTotalDamage > 0 ? (float)periodDamageDealt / periodTotalDamage : null;
+							long periodBombMineFireCount = periodStats.BombFireCount + periodStats.MineFireCount;
+							long periodBombMineHitCount = periodStats.BombHitCount + periodStats.MineHitCount;
+							float? periodBombAccuracy = periodBombMineFireCount > 0 ? (float)periodBombMineHitCount / periodBombMineFireCount : null;
+							float? periodGunAccuracy = periodStats.BulletFireCount > 0 ? (float)periodStats.BulletHitCount / periodStats.BulletFireCount : null;
+							double playDurationTotalMinutes = periodStats.PlayDuration.TotalMinutes;
+						
+							<tr>
+								<th scope="row" class="text-start">
+									<div>@periodStats.StatPeriod.GetDisplayDescription()</div>
+									@if (periodStats.Rank is not null)
+									{
+										<div class="bg-gradient text-bg-primary text-center">Rank #@periodStats.Rank</div>
+									}
+								</th>
+								<td class="text-center">
+									<div>@periodStats.Wins-@periodStats.Losses</div>
+									<div>@periodStats.Rating</div>
+									<div>
+										@if(periodStats.Rating is not null)
+										{
+											@(((periodStats.Rating.Value - 500) / (float)periodStats.Games).ToString("f2"))
+										}
+									</div>
+								</td>
+								<td class="text-center">
+									<div>@periodStats.Kills/@periodStats.Deaths</div>
+									<div>@periodStats.ForcedReps</div>
+									<div class="@(periodStats.TeamKills > 0 ? "text-danger" : null)">@periodStats.TeamKills</div>
+								</td>
+								<td class="text-center">
+									<div>@((periodStats.Kills / playDurationTotalMinutes * 10).ToString("f1"))/@((periodStats.Deaths / playDurationTotalMinutes * 10).ToString("f1"))</div>
+									<div>@((periodStats.ForcedReps / playDurationTotalMinutes * 10).ToString("f1"))</div>
+									<div class="@(periodStats.TeamKills > 0 ? "text-danger" : null)">@((periodStats.TeamKills / playDurationTotalMinutes * 10).ToString("f1"))</div>
+								</td>
+								<td>
+									<div>@((periodStats.KillDamage / playDurationTotalMinutes * 10).ToString("f0"))</div>
+									<div>@((periodStats.ForcedRepDamage / playDurationTotalMinutes * 10).ToString("f0"))</div>
+									<div class="@(periodStats.TeamKillDamage > 0 ? "text-danger" : null)">@((periodStats.TeamKillDamage / playDurationTotalMinutes * 10).ToString("f0"))</div>
+								</td>
+								<td>
+									<div>@periodStats.Assists</div>
+									<div>@periodStats.SoloKills</div>
+									<div>@periodStats.Knockouts</div>
+								</td>
+								<td>
+									<div>@((periodStats.Assists / playDurationTotalMinutes * 10).ToString("f1"))</div>
+									<div>@((periodStats.SoloKills / playDurationTotalMinutes * 10).ToString("f1"))</div>
+									<div>@((periodStats.Knockouts / playDurationTotalMinutes * 10).ToString("f1"))</div>
+								</td>
+								<td class="text-center">
+									<div><span title="Total Damage Dealt Per Minute">@((periodDamageDealt / playDurationTotalMinutes).ToString("f0"))</span>/<span title="Total Damage Taken Per Minute">@((periodDamageTaken / playDurationTotalMinutes).ToString("f0"))</span></div>
+									<div><span class="@(@periodStats.TeamDamageDealt > 0 ? "text-danger" : null)" title="Team Damage Dealt Per Minute">@((periodStats.TeamDamageDealt / playDurationTotalMinutes).ToString("f0"))</span>/<span title="Team Damage Taken Per Minute">@((periodStats.TeamDamageTaken / playDurationTotalMinutes).ToString("f0"))</span></div>
+									<div><span class="@(periodStats.SelfDamage > 0 ? "text-danger" : null)" title="Self Damage Per Minute">@((periodStats.SelfDamage / playDurationTotalMinutes).ToString("f0"))</span></div>
+								</td>
+								<td>
+									<div title="Damage Efficiency">
+										@if (periodDamageEfficiency is not null)
+										{
+											@periodDamageEfficiency?.ToString("p0")
+										}
+										else
+										{
+											<text>&nbsp;</text>
+										}
+									</div>
+									<div title="Bomb Accuracy: @periodBombMineHitCount/@periodBombMineFireCount">
+										@if (periodBombAccuracy is not null)
+										{
+											@periodBombAccuracy?.ToString("p0")
+										}
+										else
+										{
+											<text>&nbsp;</text>
+										}
+									</div>
+									<div title="Gun Accuracy: @periodStats.BulletHitCount/@periodStats.BulletFireCount">
+										@if (periodGunAccuracy is not null)
+										{
+											@periodGunAccuracy?.ToString("p0")
+										}
+										else
+										{
+											<text>&nbsp;</text>
+										}
+									</div>
+								</td>
+								<td>
+									<div>@((periodStats.MineFireCount / (double)periodStats.Games).ToString("f1"))</div>
+									<div>@((periodStats.BombFireCount / (double)periodStats.Games).ToString("f1"))</div>
+									<div>@((periodStats.BulletFireCount / (double)periodStats.Games).ToString("f1"))</div>
+								</td>
+								<td>
+									<div>@((int)(periodStats.WastedEnergy / periodStats.PlayDuration.TotalMinutes))</div>
+									<div>TODO</div>
+								</td>
+								<td>
+									<div>@((periodStats.WastedRepel/(double)periodStats.Games).ToString("f1"))</div>
+									<div>@((periodStats.WastedRocket / (double)periodStats.Games).ToString("f1"))</div>
+								</td>
+								<td class="text-center">
+									<div>@periodStats.Games</div>
+									<div title="Play Time">@periodStats.PlayDuration.ToDisplayString()</div>
+									<div>
+										<div>
+											<span title="Critical First Out">@periodStats.FirstOutCritical</span> / <span title="Regular First Out">@periodStats.FirstOutRegular</span> / <span title="First Out Game Percentage">@(((periodStats.FirstOutCritical + periodStats.FirstOutRegular) / periodStats.Games).ToString("p0"))</span>
+										</div>
+									</div>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	<div class="row g-3">
+		<div class="col-12 col-lg-9">
+			<div class="table-responsive">
+				<table class="table table-striped table-bordered table-hover text-end text-nowrap">
+					<thead>
+						<tr>
+							<th scope="colgroup" colspan="17" class="text-center">
+								@Model.SelectedPeriod.GameType.GetDisplayName() Game History
+								@{
+									if (Model.GameStatsPaging.Offset > 0)
+									{
+										int offset = Math.Max(0, Model.GameStatsPaging.Offset - Model.GameStatsPaging.Limit);
+										@Html.ActionLink("Previous", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameType, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = offset }, new { @class = "float-start"})
+									}
+
+									if (Model.GameStatsPaging.HasMore)
+									{
+										if (action is not null)
+										{
+											@Html.ActionLink("Next", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameType, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = Model.GameStatsPaging.Offset + Model.GameStatsPaging.Limit }, new { @class = "float-end"})
+										}
+									}
+								}
+							</th>
+						</tr>
+						<tr class="table-secondary align-top">
+							<th scope="col" class="text-center">
+								<div>Result</div>
+								<div>Score</div>
+								<div>Rating</div>
+							</th>
+							<th scope="col" class="text-center">
+								<div title="Kills / Deaths">K/D</div>
+								<div title="Forced Reps">FR</div>
+								<div title="Team Kills">TK</div>
+							</th>
+							<th scope="col">
+								<div title="Kill Damage">KDmg</div>
+								<div title="Forced Rep Damage">FRDmg</div>
+								<div title="Team Kill Damage">TKDmg</div>
+							</th>
+							<th scope="col">
+								<div title="Assists">AS</div>
+								<div title="Solo Kills">SK</div>
+								<div title="Knockouts">KO</div>
+							</th>
+							<th scope="col" class="text-center" title="">
+								<div title="Total Damage Dealt / Total Damage Taken">DmgD/DmgT</div>
+								<div title="Team Damage Dealt / Team Damage Taken">TeamD/TeamT</div>
+								<div title="Self Damage">Self Damage</div>
+							</th>
+							<th scope="col">
+								<div title="Damage Efficiency">DmgE</div>
+								<div title="Accuracy Bombs">AccB</div>
+								<div title="Accuracy Guns">AccG</div>
+							</th>
+							<th scope="col">
+								<div title="Wasted Energy Per Minute">WE/m</div>
+								<div title="Average Distance to Enemy">AvgDE</div>
+							</th>
+							<th scope="col">
+								<div title="Wasted Repels">WR</div>
+								<div title="Wasted Rockets">WRk</div>
+								<div title="Mines Used">Mi</div>
+							</th>
+							<th scope="col" class="text-center">
+								<div title="Play Time">PT</div>
+								<div title="First Out, Critical First Out">1Out</div>
+							</th>
+							<th scope="col" class="text-center">
+								<div>Date</div>
+								<div>Time</div>
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var gameStats in Model.GameStatsList)
+						{
+							StringBuilder scoreBuilder = new();
+							foreach (int score in gameStats.Score)
+							{
+								if (scoreBuilder.Length > 0)
+									scoreBuilder.Append('-');
+
+								scoreBuilder.Append(score);
+							}
+
+							int damageDealt = gameStats.BombDamageDealt + gameStats.GunDamageDealt;
+							int damageTaken = gameStats.BombDamageTaken + gameStats.GunDamageTaken + gameStats.TeamDamageTaken + gameStats.SelfDamage;
+							int totalDamage = damageDealt + damageTaken;
+							double? damageEfficiency = totalDamage > 0 ? (float)damageDealt / totalDamage : null;
+							int bombMineFireCount = gameStats.BombFireCount + gameStats.MineFireCount;
+							int bombMineHitCount = gameStats.BombHitCount + gameStats.MineHitCount;
+							float? bombAccuracy = bombMineFireCount > 0 ? (float)bombMineHitCount / bombMineFireCount : null;
+							float? gunAccuracy = gameStats.BulletFireCount > 0 ? (float)gameStats.BulletHitCount / gameStats.BulletFireCount : null;
+
+							<tr>
+								<td class="text-center">
+									<div>
+										@if (gameStats.Result == GameResult.Win)
+										{
+											<span class="text-success" title="Win">Win</span>
+										}
+										else if (gameStats.Result == GameResult.Loss)
+										{
+											<span class="text-danger" title="Loss">Loss</span>
+										}
+										else if (gameStats.Result == GameResult.Draw)
+										{
+											<span class="text-secondary" title="Draw">Draw</span>
+										}
+									</div>
+									<div>
+										@Html.ActionLink(scoreBuilder.ToString(), "Index", "Game", new { id = gameStats.GameId })
+									</div>
+									<div class="@(gameStats.RatingChange > 0 ? "text-success" : "text-danger")">@gameStats.RatingChange.ToString("+#;-#;0")</div>
+								</td>
+								<td class="text-center">
+									<div>@gameStats.Kills/@gameStats.Deaths</div>
+									<div>@gameStats.ForcedReps</div>
+									<div class="@(gameStats.TeamKills > 0 ? "text-danger" : null)">@gameStats.TeamKills</div>
+								</td>
+								<td>
+									<div>@gameStats.KillDamage</div>
+									<div>@gameStats.ForcedRepDamage</div>
+									<div>@gameStats.TeamKillDamage</div>
+								</td>
+								<td>
+									<div>@gameStats.Assists</div>
+									<div>@gameStats.SoloKills</div>
+									<div>@gameStats.Knockouts</div>
+								</td>
+								<td class="text-center">
+									<div title="Total Damage"><span title="Total Damage Dealt">@damageDealt</span>/<span title="Total Damage Taken">@damageTaken</span></div>
+									<div title="Team Damage"><span class="@(@gameStats.TeamDamageDealt > 0 ? "text-danger" : null)" title="Team Damage Dealt">@gameStats.TeamDamageDealt</span>/<span title="Team Damage Taken">@gameStats.TeamDamageTaken</span></div>
+									<div title="Self Damage"><span class="@(gameStats.SelfDamage > 0 ? "text-danger" : null)">@gameStats.SelfDamage</span></div>
+								</td>
+								<td>
+									<div title="Damage Efficiency">
+										@if (damageEfficiency is not null)
+										{
+											@damageEfficiency?.ToString("p0")
+										}
+										else
+										{
+											<text>&nbsp;</text>
+										}
+									</div>
+									<div title="Bomb Accuracy: @bombMineHitCount/@bombMineFireCount">
+										@if (bombAccuracy is not null)
+										{
+											@bombAccuracy?.ToString("p0")
+										}
+										else
+										{
+											<text>&nbsp;</text>
+										}
+									</div>
+									<div title="Gun Accuracy: @gameStats.BulletHitCount/@gameStats.BulletFireCount">
+										@if (gunAccuracy is not null)
+										{
+											@gunAccuracy?.ToString("p0")
+										}
+										else
+										{
+											<text>&nbsp;</text>
+										}
+									</div>
+								</td>
+								<td>
+									<div>@((int)(gameStats.WastedEnergy / gameStats.PlayDuration.TotalMinutes))</div>
+									<div>TODO</div>
+								</td>
+								<td>
+									<div>@gameStats.WastedRepel</div>
+									<div>@gameStats.WastedRocket</div>
+									<div>@gameStats.MineFireCount</div>
+								</td>
+								<td class="text-center">
+									<div>@gameStats.PlayDuration.ToDisplayString()</div>
+									<div>
+										@if (gameStats.FirstOut == FirstOut.YesCritical)
+										{
+											<span class="text-danger">XX</span>
+										}
+										else if (gameStats.FirstOut == FirstOut.Yes)
+										{
+											<span class="text-danger">X</span>
+										}
+									</div>
+								</td>
+								<td class="text-center">
+									<div>@gameStats.TimePlayed.UpperBound.ToString("yyyy-MM-dd")</div>
+									<div>@gameStats.TimePlayed.UpperBound.ToString("HH:mm:ss")</div>
+									
+								</td>
+							</tr>
+						}
+					</tbody>
+					<tfoot>
+						<tr>
+							<th colspan="17" class="text-center">
+								@Model.SelectedPeriod.GameType.GetDisplayName() Game History
+								@{
+									if (Model.GameStatsPaging.Offset > 0)
+									{
+										int offset = Math.Max(0, Model.GameStatsPaging.Offset - Model.GameStatsPaging.Limit);
+										@Html.ActionLink("Previous", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameType, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = offset }, new { @class = "float-start"})
+									}
+
+									if (Model.GameStatsPaging.HasMore)
+									{
+										if (action is not null)
+										{
+											@Html.ActionLink("Next", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameType, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = Model.GameStatsPaging.Offset + Model.GameStatsPaging.Limit }, new { @class = "float-end"})
+										}
+									}
+								}
+							</th>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
+		</div>
+		<div class="col-12 col-lg-3">
+			<div>
+				<table class="table table-striped table-bordered table-hover text-end text-nowrap">
+					<thead>
+						<tr>
+							<th scope="colgroup" colspan="7" class="text-center">Ship Stats</th>
+						</tr>
+						<tr class="table-secondary">
+							<th scope="col" class="text-center">Ship</th>
+							<th scope="col" title="Kills">K</th>
+							<th scope="col" title="Deaths">D</th>
+							<th scope="col" title="Knockouts">KO</th>
+							<th scope="col" title="Solo Kills">SK</th>
+							<th scope="col" title="Games Used" class="d-sm-table-cell d-lg-none">Games</th>
+							<th scope="col" title="Usage Duration" class="d-sm-table-cell d-sm-table-cell d-lg-none">Usage</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var shipStats in Model.ShipStatsList)
+						{
+							<tr>
+								<th scope="row" class="text-center"><img src="@GetShipImage(shipStats.ShipType)" alt="@shipStats.ShipType" title="@shipStats.ShipType" width="24" /></th>
+								<td>@shipStats.Kills</td>
+								<td>@shipStats.Deaths</td>
+								<td>@shipStats.Knockouts</td>
+								<td>@shipStats.SoloKills</td>
+								<td class="d-sm-table-cell d-sm-table-cell d-lg-none">@shipStats.GameUseCount</td>
+								<td class="d-sm-table-cell d-sm-table-cell d-lg-none">@shipStats.UseDuration.ToDisplayString()</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+			<div>
+				<table class="table table-striped table-bordered table-hover text-nowrap text-end">
+					<thead>
+						<tr>
+							<th scope="colgroup" colspan="5" class="text-center">Kill Stats</th>
+						</tr>
+						<tr class="table-secondary">
+							<th scope="col" class="text-start">Player</th>
+							<th scope="col" title="Kills">K</th>
+							<th scope="col" title="Deaths">D</th>
+							<th scope="col" title="Ratio">Ratio</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var killStats in Model.KillStatsList)
+						{
+							float ratio = killStats.Deaths == 0 ? killStats.Kills : (float)killStats.Kills / killStats.Deaths;
+							<tr>
+								<td class="text-start">
+									<a asp-controller="Player" asp-action="Index" asp-route-playerName="@killStats.PlayerName" asp-route-gameType="@Model.SelectedPeriod.GameType" asp-route-period="@Model.SelectedPeriod.StatPeriodId">@killStats.PlayerName</a>
+								</td>
+								<td>@killStats.Kills</td>
+								<td>@killStats.Deaths</td>
+								<td>@ratio.ToString("0.#")</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<script type="text/javascript">
+		$(document).ready(function () {
+			var periodSelect = $("#periodSelect");
+			periodSelect.on("change", function () {
+				periodSelect.closest("form").submit();
+			});
+		});
+	</script>
+}

@@ -1,0 +1,513 @@
+﻿@using SubspaceStats.Models.GameDetails.TeamVersus;
+@using SubspaceStats.Models.GameDetails.TeamVersus.Events;
+@using System.Text;
+@model SubspaceStats.Models.GameDetails.Game
+
+@{
+	ViewData["Title"] = $"Game {Model.Id}";
+}
+
+@functions {
+	public static string GetShipImage(ShipType shipType)
+	{
+		return shipType switch
+		{
+			ShipType.Warbird => "/img/Warbird.svg",
+			ShipType.Javelin => "/img/Javelin.svg",
+			ShipType.Spider => "/img/Spider.svg",
+			ShipType.Leviathan => "/img/Leviathan.svg",
+			ShipType.Terrier => "/img/Terrier.svg",
+			ShipType.Weasel => "/img/Weasel.svg",
+			ShipType.Lancaster => "/img/Lancaster.svg",
+			ShipType.Shark => "/img/Shark.svg",
+			_ => "",
+		};
+	}
+}
+
+<h1>Game Details</h1>
+
+<div>
+	<hr />
+	<div class="row">
+		<div class="col-12 col-md-6">
+			<dl class="row mb-0">
+				<dt class="col-3">
+					Game ID:
+				</dt>
+				<dd class="col-9">
+					@Model.Id
+				</dd>
+				<dt class="col-3">
+					Game Type:
+				</dt>
+				<dd class="col-9">
+					@Model.GameType.GetDisplayName()
+				</dd>
+				<dt class="col-3">
+					Start Time:
+				</dt>
+				<dd class="col-9">
+					@Model.StartTime.ToString("yyyy-MM-dd HH:mm:ss")
+				</dd>
+				<dt class="col-3">
+					End Time:
+				</dt>
+				<dd class="col-9">
+					@Model.EndTime.ToString("yyyy-MM-dd HH:mm:ss")
+				</dd>
+			</dl>
+		</div>
+		<div class="col-12 col-md-6">
+			<dl class="row">
+				<dt class="col-3">Zone:</dt>
+				<dd class="col-9">@Model.ZoneServerName</dd>
+				<dt class="col-3">Arena:</dt>
+				<dd class="col-9">@Model.ArenaName</dd>
+				<dt class="col-3">Box:</dt>
+				<dd class="col-9">@Model.BoxNumber</dd>
+				<dt class="col-3">Map:</dt>
+				<dd class="col-9">@Model.LvlFileName</dd>
+			</dl>
+		</div>
+
+	</div>
+
+	@if (Model.TeamStats is not null)
+	{
+		StringBuilder scoreBuilder = new();
+		StringBuilder winnerBuilder = new();
+
+		foreach (var teamStats in Model.TeamStats)
+		{
+			if (scoreBuilder.Length > 0)
+				scoreBuilder.Append('-');
+
+			scoreBuilder.Append(teamStats.Score);
+
+			if (teamStats.IsWinner)
+			{
+				if (winnerBuilder.Length > 0)
+					winnerBuilder.Append(", ");
+
+				winnerBuilder.Append($"Freq {teamStats.Freq}");
+			}
+		}
+
+		<h4>
+			Score:
+			@scoreBuilder.ToString()
+			@if (winnerBuilder.Length > 0)
+			{
+				<span>(@winnerBuilder.ToString())</span>
+			}
+		</h4>
+		<div class="table-responsive-xl">
+			<table class="table table-bordered text-end text-nowrap">
+				@foreach (var teamStats in Model.TeamStats)
+				{
+					<thead>
+						<tr class="text-start">
+							<th scope="colgroup" colspan="23">
+								Freq @teamStats.Freq
+								@if (teamStats.IsPremade)
+								{
+									<text>(Premade)</text>
+								}
+							</th>
+						</tr>
+						<tr class="table-secondary align-top">
+							<th scope="col" class="text-start">
+								<div title="Pilot">Pilot</div>
+								<div title="Squad">Squad</div>
+							</th>
+							<th scope="col" class="text-center">
+								<div title="Kills / Deaths">K/D</div>
+								<div title="Forced Repels">FR</div>
+								<div title="Team Kills">TK</div>
+							</th>
+							<th scope="col">
+								<div title="Kill Damage">KDmg</div>
+								<div title="Forced Repel Damage">FRDmg</div>
+								<div title="Team Kill Damage">TKDmg</div>
+							</th>
+							<th scope="col">
+								<div title="Assists">AS</div>
+								<div title="Solo Kills">SK</div>
+								<div title="Knockouts">KO</div>
+							</th>
+							<th scope="col" class="text-center">
+								<div title="Damage Dealt / Damage Taken">DmgD/DmgT</div> <!-- TODO: ability to switch between viewing damage values and damage per minute -->
+								<div title="Team Damage Dealt / Team Damage Taken">TeamD/TeamT</div>
+								<div title="Self Damage">Self Damage</div>
+							</th>
+							<th scope="col">
+								<div title="Damage Efficiency">DmgE</div>
+								<div title="Bomb Accuracy">AccB</div>
+								<div title="Gun Accuracy">AccG</div>
+							</th>
+							<th scope="col">
+								<div title="Mines Used">Mi</div>
+								<div title="Bomb Fire Per Minute">B/m</div>
+								<div title="Gun Fire Per Minute">G/m</div>
+							</th>
+							<th scope="col">
+								<div title="Wasted Energy Per Minute">WE/m</div>
+								<div title="Average Distance to Enemy (tiles)">AvgDE</div>
+							</th>
+							<th scope="col">
+								<div title="Wasted Repels">WR</div>
+								<div title="Wasted Rockets">WRk</div>
+							</th>
+							<th scope="col" class="text-center">
+								<div title="Play Time">PT</div>
+								<div title="Lag Outs">LO</div>
+								<div title="First Out">1Out</div>
+							</th>
+							<th scope="col" title="Rating Change">Rating</th>
+							@* <th scope="col" title="Matchmaking Rating">MMR</th> *@
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var memberStats in teamStats.Members)
+						{
+							int damageDealt = memberStats.BombDamageDealt + memberStats.GunDamageDealt;
+							int damageTaken = memberStats.BombDamageTaken + memberStats.GunDamageTaken + memberStats.TeamDamageTaken + memberStats.SelfDamage;
+							int totalDamage = damageDealt + damageTaken;
+							double? damageEfficiency = totalDamage > 0 ? (float)damageDealt / totalDamage : null;
+							int bombMineFireCount = memberStats.BombFireCount + memberStats.MineFireCount;
+							int bombMineHitCount = memberStats.BombHitCount + memberStats.MineHitCount;
+							float? bombAccuracy = bombMineFireCount > 0 ? (float)bombMineHitCount / bombMineFireCount : null;
+							float? gunAccuracy = memberStats.BulletFireCount > 0 ? (float)memberStats.BulletHitCount / memberStats.BulletFireCount : null;
+
+							<tr>
+								<td class="text-start">
+									<div>@Html.ActionLink(memberStats.PlayerName, "Index", "Player", new { playerName = memberStats.PlayerName, gameType = Model.GameType })</div>
+									<div>@memberStats.SquadName</div>
+								</td>
+								<td class="text-center">
+									<div>@memberStats.Kills/@memberStats.Deaths</div>
+									<div>@memberStats.ForcedReps</div>
+									<div>@memberStats.TeamKills</div>
+								</td>
+								<td>
+									<div>@memberStats.KillDamage</div>
+									<div>@memberStats.ForcedRepDamage</div>
+									<div>@memberStats.TeamKillDamage</div>
+								</td>
+								<td>
+									<div>@memberStats.Assists</div>
+									<div>@memberStats.SoloKills</div>
+									<div>@memberStats.Knockouts</div>
+								</td>
+								<td class="text-center">
+									<div>@damageDealt/@damageTaken</div>
+									<div>@memberStats.TeamDamageDealt/@memberStats.TeamDamageTaken</div>
+									<div>@memberStats.SelfDamage</div>
+								</td>
+								<td>
+									<div title="Damage Efficiency">
+										@if (damageEfficiency is not null)
+										{
+											@damageEfficiency?.ToString("p0")
+										}
+										else
+										{
+											<text>&nbsp;</text>
+										}
+									</div>
+									<div title="Bomb Accuracy: @bombMineHitCount/@bombMineFireCount">
+										@if (bombAccuracy is not null)
+										{
+											@(bombAccuracy?.ToString("p0"))
+										}
+										else
+										{
+											<text>&nbsp;</text>
+										}
+									</div>
+									<div title="Gun Accuracy: @memberStats.BulletHitCount/@memberStats.BulletFireCount">
+										@if (gunAccuracy is not null)
+										{
+											@(gunAccuracy?.ToString("p0"))
+										}
+										else
+										{
+											<text>&nbsp;</text>
+										}
+									</div>
+								</td>
+								<td>
+									<div>@memberStats.MineFireCount</div>
+									<div>@((memberStats.BombFireCount / memberStats.PlayDuration.TotalMinutes).ToString("f1"))</div>
+									<div>@((memberStats.BulletFireCount / memberStats.PlayDuration.TotalMinutes).ToString("f1"))</div>
+								</td>
+								<td>
+									<div>@((int)(memberStats.WastedEnergy / memberStats.PlayDuration.TotalMinutes))</div>
+									<div>TODO</div>
+								</td>
+								<td>
+									<div>@memberStats.WastedRepel</div>
+									<div>@memberStats.WastedRocket</div>
+								</td>
+								<td class="text-center">
+									<div>@memberStats.PlayDuration.ToDisplayString()</div>
+									<div>@memberStats.LagOuts</div>
+									<div>
+										@switch (memberStats.FirstOut)
+										{
+											case FirstOut.YesCritical:
+												<span class="text-danger" title="First Out - Critical">XX</span>
+												break;
+											case FirstOut.Yes:
+												<span class="text-danger" title="First Out - Critical">X</span>
+												break;
+										}
+									</div>
+								</td>
+								<td class="text-end @(memberStats.RatingChange > 0 ? "text-success" : "text-danger")">@memberStats.RatingChange.ToString("+#;-#;0")</td>
+								@* <td class="text-end">TODO</td> *@
+							</tr>
+						}
+					</tbody>
+				}
+			</table>
+		</div>
+	}
+
+	@if (Model.Events is not null)
+	{
+		<h4>Events</h4>
+		<div class="table-responsive">
+			<table class="table table-bordered text-nowrap">
+				<thead>
+					<tr>
+						<th scope="colgroup" colspan="6">Kill History</th>
+					</tr>
+					<tr class="table-secondary">
+						<th scope="col">Killed (Rating)</th>
+						<th scope="col">
+							<div class="d-flex">
+								<div class="flex-grow-1">
+									Killer (Rating)
+								</div>
+								<div>
+									<span class="badge bg-secondary">Damage</span>
+								</div>
+							</div>
+						</th>
+						<th scope="col">
+							<div class="d-flex">
+								<div class="flex-grow-1">
+									Assist(s)
+								</div>
+								<div>
+									<span class="badge bg-secondary">Damage</span>
+								</div>
+							</div>
+						</th>
+						<th scope="col">Score</th>
+						<th scope="col">Remaining</th>
+						<th scope="col" class="text-end">Game Time</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var gameEvent in Model.Events)
+					{
+						@if (gameEvent is PlayerKillEvent killEvent)
+						{
+							TimeSpan gameTime = killEvent.Timestamp - Model.StartTime;
+							int? killerDamage = null;
+							List<(string PlayerName, int Damage)> assistList = new();
+							foreach ((string playerName, int damage) in killEvent.DamageStats!)
+							{
+								if (string.Equals(killEvent.KillerPlayerName, playerName, StringComparison.OrdinalIgnoreCase))
+								{
+									killerDamage = damage;
+								}
+								else
+								{
+									assistList.Add((playerName, damage));
+								}
+							}
+							assistList.Sort((x, y) => -x.Damage.CompareTo(y.Damage));
+
+							<tr>
+								<td>
+									<img src="@GetShipImage(killEvent.KilledShip)" alt="@killEvent.KilledShip" title="@killEvent.KilledShip" width="24" />
+									@Html.ActionLink(killEvent.KilledPlayerName, "Index", "Player", new { playerName = killEvent.KilledPlayerName, gameType = Model.GameType })
+									@if (killEvent.RatingChanges!.TryGetValue(killEvent.KilledPlayerName, out float killedRating))
+									{
+
+										<span title="Rating">(@killedRating.ToString("+#;-#;0"))</span>
+									}
+								</td>
+								<td class="text-nowrap">
+									<div class="d-flex">
+										<div class="flex-grow-1">
+											<img src="@GetShipImage(killEvent.KillerShip)" alt="@killEvent.KillerShip" title="@killEvent.KillerShip" width="24" />
+											@Html.ActionLink(killEvent.KillerPlayerName, "Index", "Player", new { playerName = killEvent.KillerPlayerName, gameType = Model.GameType })
+											@if (killEvent.RatingChanges.TryGetValue(killEvent.KillerPlayerName, out float killerRating))
+											{
+												<span title="Rating">(@killerRating.ToString("+#;-#;0"))</span>
+											}
+											@if (killEvent.IsTeamKill)
+											{
+												<span class="badge bg-danger" title="Team Kill">TK</span>
+											}
+
+										</div>
+										<div>
+											<span class="badge bg-secondary" title="Damage">@killerDamage</span>
+										</div>
+									</div>
+								</td>
+								<td>
+									@foreach (var assist in assistList)
+									{
+										<div class="d-flex">
+											<div class="flex-grow-1">
+												@Html.ActionLink(assist.PlayerName, "Index", "Player", new { playerName = assist.PlayerName, gameType = Model.GameType })
+											</div>
+											<div>
+												<span class="badge bg-secondary" title="Damage">@assist.Damage</span>
+											</div>
+										</div>
+									}
+								</td>
+								<td>
+									@string.Join('-', killEvent.Score)
+								</td>
+								<td>
+									@string.Join('v', killEvent.RemainingSlots)
+									@if (killEvent.IsKnockout)
+									{
+										<span class="badge bg-danger" title="Knockout">OUT</span>
+									}
+								</td>
+								<td class="text-end">
+									@gameTime.ToDisplayString()
+								</td>
+							</tr>
+						}
+					}
+				</tbody>
+			</table>
+		</div>
+		<div>
+			<table class="table table-bordered text-nowrap">
+				<thead>
+					<tr>
+						<th scope="col" colspan="5">All Events</th>
+					</tr>
+					<tr class="table-secondary">
+						<th scope="col" class="text-end">Game Time</th>
+						<th scope="col">Event Type</th>
+						<th scope="col">Event Details</th>
+						<th scope="col">Damage</th>
+						<th scope="col">Rating</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var gameEvent in Model.Events)
+					{
+						TimeSpan gameTime = gameEvent.Timestamp - Model.StartTime;
+						<tr>
+							<td class="text-end">@gameTime.ToDisplayString()</td>
+							<td>
+								@if (gameEvent is AssignSlotEvent)
+								{
+									<text>Assign Slot</text>
+								}
+								else if (gameEvent is ShipChangeEvent)
+								{
+									<text>Ship Change</text>
+								}
+								else if (gameEvent is PlayerKillEvent)
+								{
+									<text>Player Kill</text>
+								}
+								else if (gameEvent is UseItemEvent)
+								{
+									<text>Use Item</text>
+								}
+							</td>
+							<td>
+								@if (gameEvent is AssignSlotEvent assignSlotEvent)
+								{
+									<text>@assignSlotEvent.PlayerName assigned to freq @assignSlotEvent.Freq, slot @assignSlotEvent.SlotIdx</text>
+								}
+								else if (gameEvent is ShipChangeEvent shipChangeEvent)
+								{
+									<text>@shipChangeEvent.PlayerName changed ship to @shipChangeEvent.Ship</text>
+								}
+								else if (gameEvent is PlayerKillEvent killEvent)
+								{
+									<text>@killEvent.KilledPlayerName kb @killEvent.KillerPlayerName at (@killEvent.XCoord, @killEvent.YCoord)</text>
+									if (killEvent.IsKnockout)
+									{
+										<span class="badge bg-danger">KO</span>
+									}
+									if (killEvent.IsTeamKill)
+									{
+										<span class="badge bg-danger">TK</span>
+									}
+								}
+								else if (gameEvent is UseItemEvent useItemEvent)
+								{
+									<text>@useItemEvent.PlayerName used a @useItemEvent.Item</text>
+								}
+							</td>
+							<td>
+								@if (gameEvent.DamageStats is not null)
+								{
+									List<(string PlayerName, int Damage)> damageList = new();
+									foreach ((string playerName, int damage) in gameEvent.DamageStats)
+									{
+										damageList.Add((playerName, damage));
+									}
+									damageList.Sort((x, y) => -x.Damage.CompareTo(y.Damage));
+
+									<table class="table-sm">
+										<tbody>
+											@foreach ((string playerName, int damage) in damageList)
+											{
+												<tr>
+													<td class="text-end w-25"><span class="badge bg-secondary" title="Damage">@damage</span></td>
+													<td class="w-75"><a asp-controller="Player" asp-action="Index" asp-route-playerName="@playerName" asp-route-gameType="@Model.GameType">@playerName</a></td>
+												</tr>
+											}
+										</tbody>
+									</table>
+								}
+							</td>
+							<td class="text-start">
+								@if (gameEvent.RatingChanges is not null)
+								{
+									List<(string PlayerName, float RatingChange)> ratingList = new();
+									foreach ((string playerName, float ratingChange) in gameEvent.RatingChanges)
+									{
+										ratingList.Add((playerName, ratingChange));
+									}
+									ratingList.Sort((x, y) => -x.RatingChange.CompareTo(y.RatingChange));
+
+									<table class="table-sm table-borderless">
+										<tbody>
+											@foreach ((string playerName, float ratingChange) in ratingList)
+											{
+												<tr>
+													<td class="text-end w-25"><span class="@(ratingChange >= 0 ? "text-success" : "text-danger")" title="Damage">@ratingChange.ToString("+#;-#;0")</span></td>
+													<td class="w-75"><a asp-controller="Player" asp-action="Index" asp-route-playerName="@playerName" asp-route-gameType="@Model.GameType">@playerName</a></td>
+												</tr>
+											}
+										</tbody>
+									</table>
+								}
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	}
+</div>

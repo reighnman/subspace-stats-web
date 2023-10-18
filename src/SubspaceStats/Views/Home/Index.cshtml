@@ -1,0 +1,44 @@
+﻿@using SubspaceStats.Models.Home;
+@{
+	ViewData["Title"] = "Home Page";
+}
+
+@model HomeViewModel;
+
+<div class="text-center">
+	<h1 class="display-4">Welcome to Subspace Stats</h1>
+	<p>This website provides stats for matches played using the matchmaking functionality of <a href="https://github.com/gigamon-dev/SubspaceServer">Subspace Server .NET</a>.</p>
+</div>
+
+<div class="container mt-3 mb-3">
+	<div class="row g-3">
+		@foreach (var topRating in Model.TopRatings)
+		{
+			<div class="col-12 col-md-6 col-lg-4 col-xl-3">
+				<div class="card h-100">
+					<h5 class="card-header text-center">
+						<a asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@topRating.Period.GameType" asp-route-period="@topRating.Period.StatPeriodId">@topRating.Period.GameType.GetDisplayName()</a>
+					</h5>
+					<div class="card-body">
+						<table class="table table-sm table-borderless m-0">
+							<tbody>
+								@foreach (var record in topRating.TopRatingList)
+								{
+									<tr>
+										<td class="fw-bold">@record.Rank</td>
+										<td>
+											<a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@topRating.Period.GameType" asp-route-period="@topRating.Period.StatPeriodId">@record.PlayerName</a>
+										<td class="text-end">@record.Rating</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					<div class="card-footer text-center">
+						@topRating.Period.GetDisplayDescription()
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+</div>
