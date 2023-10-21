@@ -190,7 +190,7 @@ namespace SubspaceStats.Services
                 NpgsqlBatch batch = _dataSource.CreateBatch();
 
                 batch.BatchCommands.Add(
-                    new NpgsqlBatchCommand("select * from get_player_info($1);")
+                    new NpgsqlBatchCommand("select * from ss.get_player_info($1);")
                     {
                         Parameters =
                         {
@@ -199,7 +199,7 @@ namespace SubspaceStats.Services
                     });
 
                 batch.BatchCommands.Add(
-                    new NpgsqlBatchCommand("select * from get_player_stat_periods($1, $2);")
+                    new NpgsqlBatchCommand("select * from ss.get_player_stat_periods($1, $2);")
                     {
                         Parameters =
                         {
