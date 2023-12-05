@@ -7,6 +7,8 @@ using SubspaceStats.Models.GameDetails.TeamVersus;
 using SubspaceStats.Models.Leaderboard;
 using SubspaceStats.Models.Player;
 using SubspaceStats.Options;
+using System.Data;
+using System.Text.Json;
 
 namespace SubspaceStats.Services
 {
@@ -17,10 +19,7 @@ namespace SubspaceStats.Services
 
         public StatsRepository(IOptions<StatRepositoryOptions> options, ILogger<StatsRepository> logger)
         {
-			NpgsqlDataSourceBuilder builder = new(options.Value.ConnectionString);
-			builder.EnableDynamicJson();
-			//builder.ConfigureJsonOptions() // TODO: maybe we can use the source generator with this?
-			_dataSource = builder.Build();
+			_dataSource = NpgsqlDataSource.Create(options.Value.ConnectionString);
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -169,7 +168,7 @@ namespace SubspaceStats.Services
                 using NpgsqlCommand command = _dataSource.CreateCommand("select ss.get_game($1)");
                 command.Parameters.AddWithValue(NpgsqlDbType.Bigint, gameId);
 
-                using var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                using var dataReader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).ConfigureAwait(false);
 
                 if (!await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
                     throw new Exception("Expected a row.");
@@ -177,8 +176,9 @@ namespace SubspaceStats.Services
                 if (await dataReader.IsDBNullAsync(0, cancellationToken).ConfigureAwait(false))
                     return null;
 
-                return await dataReader.GetFieldValueAsync<Game>(0, cancellationToken).ConfigureAwait(false);
-            }
+				using Stream stream = dataReader.GetStream(0);
+				return JsonSerializer.Deserialize(stream, SourceGenerationContext.Default.Game);
+			}
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting game details (gameId:{gameId}).", gameId);
