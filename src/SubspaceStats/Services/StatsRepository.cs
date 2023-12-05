@@ -17,7 +17,10 @@ namespace SubspaceStats.Services
 
         public StatsRepository(IOptions<StatRepositoryOptions> options, ILogger<StatsRepository> logger)
         {
-            _dataSource = NpgsqlDataSource.Create(options.Value.ConnectionString);
+			NpgsqlDataSourceBuilder builder = new(options.Value.ConnectionString);
+			builder.EnableDynamicJson();
+			//builder.ConfigureJsonOptions() // TODO: maybe we can use the source generator with this?
+			_dataSource = builder.Build();
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
