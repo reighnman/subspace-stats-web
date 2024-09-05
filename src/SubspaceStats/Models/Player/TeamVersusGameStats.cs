@@ -14,7 +14,7 @@ namespace SubspaceStats.Models.Player
     {
         public required long GameId { get; init; }
         public required NpgsqlRange<DateTime> TimePlayed { get; init; }
-		public required int[] Score { get; init; }
+        public required int[] Score { get; init; }
         public required GameResult Result { get; init; }
         public required TimeSpan PlayDuration { get; init; }
         public required ShipMask ShipMask { get; init; }
@@ -29,9 +29,9 @@ namespace SubspaceStats.Models.Player
         public required int GunDamageDealt { get; init; }
         public required int BombDamageDealt { get; init; }
         public required int TeamDamageDealt { get; init; }
-		public required int GunDamageTaken { get; init; }
-		public required int BombDamageTaken { get; init; }
-		public required int TeamDamageTaken { get; init; }
+        public required int GunDamageTaken { get; init; }
+        public required int BombDamageTaken { get; init; }
+        public required int TeamDamageTaken { get; init; }
         public required int SelfDamage { get; init; }
         public required int KillDamage { get; init; }
         public required int TeamKillDamage { get; init; }

@@ -9,10 +9,10 @@ namespace SubspaceStats.Models
         public StatPeriodType StatPeriodType { get; set; }
         public NpgsqlRange<DateTime> PeriodRange { get; set; }
 
-		public readonly bool Equals(StatPeriod other)
-		{
+        public readonly bool Equals(StatPeriod other)
+        {
             return StatPeriodId == other.StatPeriodId;
-		}
+        }
 
         public override readonly bool Equals(object? obj)
         {
@@ -40,11 +40,11 @@ namespace SubspaceStats.Models
         public static string GetDisplayDescription(this StatPeriod statPeriod)
         {
             return statPeriod.StatPeriodType switch
-			{
+            {
                 StatPeriodType.Forever => "Lifetime",
-				StatPeriodType.Monthly => statPeriod.PeriodRange.LowerBound.ToString("yyyy-MM"),
-				_ => statPeriod.PeriodRange.ToString(),
-			};
-		}
+                StatPeriodType.Monthly => statPeriod.PeriodRange.LowerBound.ToString("yyyy-MM"),
+                _ => statPeriod.PeriodRange.ToString(),
+            };
+        }
     }
 }

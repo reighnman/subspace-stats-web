@@ -14,14 +14,14 @@ namespace SubspaceStats
             builder.Services.Configure<StatOptions>(
                 builder.Configuration.GetSection(StatOptions.StatsSectionKey));
 
-			// StatRepositoryOptions contains the connection string.
-			// In Development use user-secrets.
-			// In Production use Environment Variables or an online secrets store, depending on your host.
-			builder.Services.AddOptions<StatRepositoryOptions>()
+            // StatRepositoryOptions contains the connection string.
+            // In Development use user-secrets.
+            // In Production use Environment Variables or an online secrets store, depending on your host.
+            builder.Services.AddOptions<StatRepositoryOptions>()
                 .Bind(builder.Configuration.GetSection(StatRepositoryOptions.StatRepositoryOptionsKey))
                 .ValidateDataAnnotations();
 
-			builder.Services.AddSingleton<IStatsRepository, StatsRepository>();
+            builder.Services.AddSingleton<IStatsRepository, StatsRepository>();
             builder.Services.AddControllersWithViews(options =>
             {
                 options.Filters.Add<OperationCanceledExceptionFilter>();

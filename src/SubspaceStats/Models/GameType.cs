@@ -35,11 +35,11 @@
                 GameType.SVS_SoloFFA => GameCategory.Solo,
 
                 GameType.SVS_2v2 or
-                GameType.SVS_3v3 or 
+                GameType.SVS_3v3 or
                 GameType.SVS_4v4 or
                 GameType.SVS_4v4League or
                 GameType.SVS_TeamFFA_2s => GameCategory.TeamVersus,
-                
+
                 GameType.PowerBall_Traditional or
                 GameType.PowerBall_Proball or
                 GameType.PowerBall_Smallpub or

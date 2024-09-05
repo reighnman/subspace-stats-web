@@ -30,8 +30,8 @@ namespace SubspaceStats.Models.GameDetails
         [JsonPropertyName("end_time")]
         public required DateTime EndTime { get; init; }
 
-		[JsonPropertyName("lvl_file_name")]
-		public required string LvlFileName { get; init; }
+        [JsonPropertyName("lvl_file_name")]
+        public required string LvlFileName { get; init; }
 
         [JsonPropertyName("lvl_checksum")]
         public required uint LvlChecksum { get; init; }
@@ -39,31 +39,31 @@ namespace SubspaceStats.Models.GameDetails
         [JsonPropertyName("events")]
         public GameEvent[]? Events { get; init; }
 
-		//[JsonPropertyName("solo_stats")]
-		//public List<SoloPlayerStats>? SoloStats { get; init; }
+        //[JsonPropertyName("solo_stats")]
+        //public List<SoloPlayerStats>? SoloStats { get; init; }
 
-		[JsonPropertyName("team_stats")]
+        [JsonPropertyName("team_stats")]
         public List<TeamStats>? TeamStats { get; init; }
 
-		//[JsonPropertyName("pb_stats")]
-		//public List<PowerballTeamStats>? PowerballStats { get; init; }
-	}
+        //[JsonPropertyName("pb_stats")]
+        //public List<PowerballTeamStats>? PowerballStats { get; init; }
+    }
 
-	//public class SoloGame : Game
-	//{
-	//    [JsonPropertyName("solo_stats")]
-	//    public List<SoloPlayerStats> Stats { get; init; }
-	//}
+    //public class SoloGame : Game
+    //{
+    //    [JsonPropertyName("solo_stats")]
+    //    public List<SoloPlayerStats> Stats { get; init; }
+    //}
 
-	//public class TeamVersusGame : Game
-	//{
-	//    [JsonPropertyName("team_stats")]
-	//    public List<TeamStats> Stats { get; init; }
-	//}
+    //public class TeamVersusGame : Game
+    //{
+    //    [JsonPropertyName("team_stats")]
+    //    public List<TeamStats> Stats { get; init; }
+    //}
 
-	//public class PowerballGame : Game
-	//{
-	//    [JsonPropertyName("pb_stats")]
-	//    public List<PowerballTeamStats> Stats { get; init; }
-	//}
+    //public class PowerballGame : Game
+    //{
+    //    [JsonPropertyName("pb_stats")]
+    //    public List<PowerballTeamStats> Stats { get; init; }
+    //}
 }

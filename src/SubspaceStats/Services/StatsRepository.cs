@@ -12,7 +12,7 @@ using System.Text.Json;
 
 namespace SubspaceStats.Services
 {
-	public class StatsRepository(IOptions<StatRepositoryOptions> options, ILogger<StatsRepository> logger) : IStatsRepository
+    public class StatsRepository(IOptions<StatRepositoryOptions> options, ILogger<StatsRepository> logger) : IStatsRepository
     {
         private readonly ILogger<StatsRepository> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         private readonly NpgsqlDataSource _dataSource = NpgsqlDataSource.Create(options.Value.ConnectionString);
@@ -22,8 +22,8 @@ namespace SubspaceStats.Services
             try
             {
                 NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_stat_periods($1,$2,$3,$4);");
-				await using (command.ConfigureAwait(false))
-				{
+                await using (command.ConfigureAwait(false))
+                {
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)gameType);
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)statPeriodType);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, limit);
@@ -61,19 +61,19 @@ namespace SubspaceStats.Services
 
         public async Task<StatPeriod?> GetForeverStatPeriod(GameType gameType, CancellationToken cancellationToken)
         {
-			try
-			{
-				NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_stat_periods($1,$2,$3,$4);");
-				await using (command.ConfigureAwait(false))
-				{
+            try
+            {
+                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_stat_periods($1,$2,$3,$4);");
+                await using (command.ConfigureAwait(false))
+                {
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)gameType);
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)StatPeriodType.Forever);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, 1);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, 0);
 
                     var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-					await using (dataReader.ConfigureAwait(false))
-					{
+                    await using (dataReader.ConfigureAwait(false))
+                    {
                         int column_statPeriodId = dataReader.GetOrdinal("stat_period_id");
                         int column_periodRange = dataReader.GetOrdinal("period_range");
 
@@ -91,28 +91,28 @@ namespace SubspaceStats.Services
                         return null;
                     }
                 }
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error getting forever stat period (gameType:{gameType}).", gameType);
-				throw;
-			}
-		}
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting forever stat period (gameType:{gameType}).", gameType);
+                throw;
+            }
+        }
 
         public async Task<List<TeamVersusLeaderboardStats>> GetTeamVersusLeaderboardAsync(long statPeriodId, int limit, int offset, CancellationToken cancellationToken)
         {
             try
             {
                 NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_team_versus_leaderboard($1,$2,$3);");
-				await using (command.ConfigureAwait(false))
-				{
+                await using (command.ConfigureAwait(false))
+                {
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, limit);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, offset);
 
                     var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-					await using (dataReader.ConfigureAwait(false))
-					{
+                    await using (dataReader.ConfigureAwait(false))
+                    {
                         int column_ratingRank = dataReader.GetOrdinal("rating_rank");
                         int column_playerName = dataReader.GetOrdinal("player_name");
                         int column_squadName = dataReader.GetOrdinal("squad_name");
@@ -175,13 +175,13 @@ namespace SubspaceStats.Services
             try
             {
                 NpgsqlCommand command = _dataSource.CreateCommand("select ss.get_game($1)");
-				await using (command.ConfigureAwait(false))
-				{
+                await using (command.ConfigureAwait(false))
+                {
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, gameId);
 
                     var dataReader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).ConfigureAwait(false);
-					await using (dataReader.ConfigureAwait(false))
-					{
+                    await using (dataReader.ConfigureAwait(false))
+                    {
                         if (!await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
                             throw new Exception("Expected a row.");
 
@@ -189,13 +189,13 @@ namespace SubspaceStats.Services
                             return null;
 
                         Stream stream = await dataReader.GetStreamAsync(0, cancellationToken).ConfigureAwait(false);
-						await using (stream.ConfigureAwait(false))
-						{
-							return await JsonSerializer.DeserializeAsync(stream, SourceGenerationContext.Default.Game, cancellationToken).ConfigureAwait(false);
-						}
+                        await using (stream.ConfigureAwait(false))
+                        {
+                            return await JsonSerializer.DeserializeAsync(stream, SourceGenerationContext.Default.Game, cancellationToken).ConfigureAwait(false);
+                        }
                     }
                 }
-			}
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting game details (gameId:{gameId}).", gameId);
@@ -208,8 +208,8 @@ namespace SubspaceStats.Services
             try
             {
                 NpgsqlBatch batch = _dataSource.CreateBatch();
-				await using (batch.ConfigureAwait(false))
-				{
+                await using (batch.ConfigureAwait(false))
+                {
                     batch.BatchCommands.Add(
                         new NpgsqlBatchCommand("select * from ss.get_player_info($1);")
                         {
@@ -230,8 +230,8 @@ namespace SubspaceStats.Services
                         });
 
                     var dataReader = await batch.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-					await using (dataReader.ConfigureAwait(false))
-					{
+                    await using (dataReader.ConfigureAwait(false))
+                    {
                         int column_squadName = dataReader.GetOrdinal("squad_name");
                         int column_xRes = dataReader.GetOrdinal("x_res");
                         int column_yRes = dataReader.GetOrdinal("y_res");
@@ -283,19 +283,19 @@ namespace SubspaceStats.Services
             }
         }
 
-		public async Task<List<ParticipationRecord>> GetPlayerParticipationOverview(string playerName, TimeSpan periodCutoff, CancellationToken cancellationToken)
-		{
-			try
-			{
-				NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_participation_overview($1,$2);");
-				await using (command.ConfigureAwait(false))
-				{
+        public async Task<List<ParticipationRecord>> GetPlayerParticipationOverview(string playerName, TimeSpan periodCutoff, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_participation_overview($1,$2);");
+                await using (command.ConfigureAwait(false))
+                {
                     command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
                     command.Parameters.AddWithValue(NpgsqlDbType.Interval, periodCutoff);
 
                     var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-					await using(dataReader.ConfigureAwait(false))
-					{
+                    await using (dataReader.ConfigureAwait(false))
+                    {
                         int column_statPeriodId = dataReader.GetOrdinal("stat_period_id");
                         int column_gameTypeId = dataReader.GetOrdinal("game_type_id");
                         int column_statPeriodTypeId = dataReader.GetOrdinal("stat_period_type_id");
@@ -323,36 +323,36 @@ namespace SubspaceStats.Services
                         return participationRecordList;
                     }
                 }
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error getting player participation overview (playerName:{playerName}, periodCutoff:{periodCutoff}).", playerName, periodCutoff);
-				throw;
-			}
-		}
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting player participation overview (playerName:{playerName}, periodCutoff:{periodCutoff}).", playerName, periodCutoff);
+                throw;
+            }
+        }
 
-		public async Task<(StatPeriod, List<TopRatingRecord>)?> GetTopPlayersByRating(GameType gameType, StatPeriodType statPeriodType, int top, CancellationToken cancellationToken)
-		{
+        public async Task<(StatPeriod, List<TopRatingRecord>)?> GetTopPlayersByRating(GameType gameType, StatPeriodType statPeriodType, int top, CancellationToken cancellationToken)
+        {
             List<StatPeriod> statPeriodList = await GetStatPeriods(gameType, statPeriodType, 1, 0, cancellationToken).ConfigureAwait(false);
             if (statPeriodList.Count == 0)
                 return null;
 
-			return (statPeriodList[0], await GetTopPlayersByRating(statPeriodList[0].StatPeriodId, top, cancellationToken).ConfigureAwait(false));
-		}
+            return (statPeriodList[0], await GetTopPlayersByRating(statPeriodList[0].StatPeriodId, top, cancellationToken).ConfigureAwait(false));
+        }
 
-		public async Task<List<TopRatingRecord>> GetTopPlayersByRating(long statPeriodId, int top, CancellationToken cancellationToken)
+        public async Task<List<TopRatingRecord>> GetTopPlayersByRating(long statPeriodId, int top, CancellationToken cancellationToken)
         {
-			try
-			{
-				NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_top_players_by_rating($1,$2);");
-				await using (command.ConfigureAwait(false))
-				{
+            try
+            {
+                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_top_players_by_rating($1,$2);");
+                await using (command.ConfigureAwait(false))
+                {
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, top);
 
                     var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-					await using(dataReader.ConfigureAwait(false))
-					{
+                    await using (dataReader.ConfigureAwait(false))
+                    {
                         int column_topRank = dataReader.GetOrdinal("top_rank");
                         int column_playerName = dataReader.GetOrdinal("player_name");
                         int column_rating = dataReader.GetOrdinal("rating");
@@ -371,28 +371,28 @@ namespace SubspaceStats.Services
                         return topList;
                     }
                 }
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error getting top players by rating (statPeriodId:{statPeriodId}, top:{top}).", statPeriodId, top);
-				throw;
-			}
-		}
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting top players by rating (statPeriodId:{statPeriodId}, top:{top}).", statPeriodId, top);
+                throw;
+            }
+        }
 
-		public async Task<List<TopAvgRatingRecord>> GetTopTeamVersusPlayersByAvgRating(long statPeriodId, int top, int minGamesPlayed, CancellationToken cancellationToken)
-		{
-			try
-			{
-				NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_top_versus_players_by_avg_rating($1,$2,$3);");
-				await using(command.ConfigureAwait(false))
-				{
+        public async Task<List<TopAvgRatingRecord>> GetTopTeamVersusPlayersByAvgRating(long statPeriodId, int top, int minGamesPlayed, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_top_versus_players_by_avg_rating($1,$2,$3);");
+                await using (command.ConfigureAwait(false))
+                {
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, top);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, minGamesPlayed);
 
                     var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-					await using (dataReader.ConfigureAwait(false))
-					{
+                    await using (dataReader.ConfigureAwait(false))
+                    {
                         int column_topRank = dataReader.GetOrdinal("top_rank");
                         int column_playerName = dataReader.GetOrdinal("player_name");
                         int column_avgRating = dataReader.GetOrdinal("avg_rating");
@@ -411,28 +411,28 @@ namespace SubspaceStats.Services
                         return topList;
                     }
                 }
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error getting top versus game players by avg rating (statPeriodId:{statPeriodId}, top:{top}).", statPeriodId, top);
-				throw;
-			}
-		}
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting top versus game players by avg rating (statPeriodId:{statPeriodId}, top:{top}).", statPeriodId, top);
+                throw;
+            }
+        }
 
-		public async Task<List<TopKillsPerMinuteRecord>> GetTopTeamVersusPlayersByKillsPerMinute(long statPeriodId, int top, int minGamesPlayed, CancellationToken cancellationToken)
-		{
-			try
-			{
-				NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_top_versus_players_by_kills_per_minute($1,$2);");
-				await using (command.ConfigureAwait(false))
-				{
+        public async Task<List<TopKillsPerMinuteRecord>> GetTopTeamVersusPlayersByKillsPerMinute(long statPeriodId, int top, int minGamesPlayed, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_top_versus_players_by_kills_per_minute($1,$2);");
+                await using (command.ConfigureAwait(false))
+                {
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, top);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, minGamesPlayed);
 
                     var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-					await using (dataReader.ConfigureAwait(false))
-					{
+                    await using (dataReader.ConfigureAwait(false))
+                    {
                         int column_topRank = dataReader.GetOrdinal("top_rank");
                         int column_playerName = dataReader.GetOrdinal("player_name");
                         int column_killsPerMinute = dataReader.GetOrdinal("kills_per_minute");
@@ -451,31 +451,31 @@ namespace SubspaceStats.Services
                         return topList;
                     }
                 }
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error getting top versus game players by kills per minute (statPeriodId:{statPeriodId}, top:{top}).", statPeriodId, top);
-				throw;
-			}
-		}
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting top versus game players by kills per minute (statPeriodId:{statPeriodId}, top:{top}).", statPeriodId, top);
+                throw;
+            }
+        }
 
-		public async Task<List<TeamVersusPeriodStats>> GetTeamVersusPeriodStats(string playerName, List<StatPeriod> statPeriodList, CancellationToken cancellationToken)
-		{
-			ArgumentException.ThrowIfNullOrEmpty(playerName);
-			ArgumentNullException.ThrowIfNull(statPeriodList);
+        public async Task<List<TeamVersusPeriodStats>> GetTeamVersusPeriodStats(string playerName, List<StatPeriod> statPeriodList, CancellationToken cancellationToken)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(playerName);
+            ArgumentNullException.ThrowIfNull(statPeriodList);
 
-			if (statPeriodList.Count == 0)
-				throw new ArgumentException("At least one period is required.", nameof(statPeriodList));
+            if (statPeriodList.Count == 0)
+                throw new ArgumentException("At least one period is required.", nameof(statPeriodList));
 
-			List<long> statPeriodIdList = new(statPeriodList.Count);
-			foreach (StatPeriod statPeriod in statPeriodList)
-				statPeriodIdList.Add(statPeriod.StatPeriodId);
+            List<long> statPeriodIdList = new(statPeriodList.Count);
+            foreach (StatPeriod statPeriod in statPeriodList)
+                statPeriodIdList.Add(statPeriod.StatPeriodId);
 
-			try
-			{
-				NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_period_stats($1,$2);");
-				await using (command.ConfigureAwait(false))
-				{
+            try
+            {
+                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_period_stats($1,$2);");
+                await using (command.ConfigureAwait(false))
+                {
                     command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
                     command.Parameters.AddWithValue(NpgsqlDbType.Array | NpgsqlDbType.Bigint, statPeriodIdList);
 
@@ -592,19 +592,19 @@ namespace SubspaceStats.Services
                         return periodStatsList;
                     }
                 }
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error getting team versus period stats (playerName:{playerName}, statPeriodIds:{statPeriodIds}).", playerName, string.Join(',', statPeriodIdList));
-				throw;
-			}
-		}
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting team versus period stats (playerName:{playerName}, statPeriodIds:{statPeriodIds}).", playerName, string.Join(',', statPeriodIdList));
+                throw;
+            }
+        }
 
-		public async Task<List<TeamVersusGameStats>> GetTeamVersusGameStats(string playerName, long statPeriodId, int limit, int offset, CancellationToken cancellationToken)
-		{
-			try
-			{
-				NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_game_stats($1,$2,$3,$4);");
+        public async Task<List<TeamVersusGameStats>> GetTeamVersusGameStats(string playerName, long statPeriodId, int limit, int offset, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_game_stats($1,$2,$3,$4);");
                 await using (command.ConfigureAwait(false))
                 {
                     command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
@@ -708,19 +708,19 @@ namespace SubspaceStats.Services
                         return statsList;
                     }
                 }
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error getting team versus game stats (playerName:{playerName} statPeriodId:{statPeriodId}, limit:{limit}, offset:{offset}).", playerName, statPeriodId, limit, offset);
-				throw;
-			}
-		}
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting team versus game stats (playerName:{playerName} statPeriodId:{statPeriodId}, limit:{limit}, offset:{offset}).", playerName, statPeriodId, limit, offset);
+                throw;
+            }
+        }
 
-		public async Task<List<TeamVersusShipStats>> GetTeamVersusShipStats(string playerName, long statPeriodId, CancellationToken cancellationToken)
-		{
-			try
-			{
-				NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_ship_stats($1,$2);");
+        public async Task<List<TeamVersusShipStats>> GetTeamVersusShipStats(string playerName, long statPeriodId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_ship_stats($1,$2);");
                 await using (command.ConfigureAwait(false))
                 {
                     command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
@@ -755,19 +755,19 @@ namespace SubspaceStats.Services
                         return shipStatsList;
                     }
                 }
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error getting team versus ship stats (playerName:{playerName}, statPeriodId:{statPeriodId}).", playerName, statPeriodId);
-				throw;
-			}
-		}
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting team versus ship stats (playerName:{playerName}, statPeriodId:{statPeriodId}).", playerName, statPeriodId);
+                throw;
+            }
+        }
 
-		public async Task<List<KillStats>> GetTeamVersusKillStats(string playerName, long statPeriodId, int limit, CancellationToken cancellationToken)
-		{
-			try
-			{
-				NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_kill_stats($1,$2,$3);");
+        public async Task<List<KillStats>> GetTeamVersusKillStats(string playerName, long statPeriodId, int limit, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_kill_stats($1,$2,$3);");
                 await using (command.ConfigureAwait(false))
                 {
                     command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
@@ -795,12 +795,12 @@ namespace SubspaceStats.Services
                         return killStatsList;
                     }
                 }
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error getting team versus kill stats (playerName:{playerName}, statPeriodId:{statPeriodId}).", playerName, statPeriodId);
-				throw;
-			}
-		}
-	}
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting team versus kill stats (playerName:{playerName}, statPeriodId:{statPeriodId}).", playerName, statPeriodId);
+                throw;
+            }
+        }
+    }
 }

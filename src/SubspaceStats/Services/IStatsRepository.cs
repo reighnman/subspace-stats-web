@@ -107,7 +107,7 @@ namespace SubspaceStats.Services
         /// <param name="minGamesPlayed">The minimum # of games a player must have played to be included in the result.</param>
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The records of the top players.</returns>
-        Task<List<TopKillsPerMinuteRecord>> GetTopTeamVersusPlayersByKillsPerMinute(long statPeriodId, int top, int minGamesPlayed,CancellationToken cancellationToken);
+        Task<List<TopKillsPerMinuteRecord>> GetTopTeamVersusPlayersByKillsPerMinute(long statPeriodId, int top, int minGamesPlayed, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets a player's team versus stats for a specified set of stat periods.
@@ -147,5 +147,5 @@ namespace SubspaceStats.Services
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The player's kill stats records.</returns>
         Task<List<KillStats>> GetTeamVersusKillStats(string playerName, long statPeriodId, int limit, CancellationToken cancellationToken);
-	}
+    }
 }
