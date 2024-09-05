@@ -7,63 +7,56 @@ using SubspaceStats.Options;
 using SubspaceStats.Services;
 using System.Diagnostics;
 
-namespace SubspaceStats.Controllers
+namespace SubspaceStats.Controllers;
+
+public class HomeController(
+    IOptions<StatOptions> options,
+    IStatsRepository statsRepository) : Controller
 {
-    public class HomeController : Controller
+    private readonly StatOptions _options = options.Value;
+    private readonly IStatsRepository _statsRepository = statsRepository;
+
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-		private readonly StatOptions _options;
-		private readonly IStatsRepository _statsRepository;
-
-		public HomeController(
-            IOptions<StatOptions> options, 
-			IStatsRepository statsRepository)
+        List<Task<(StatPeriod Period, List<TopRatingRecord> TopRatingList)?>> topRatingTasks = new(_options.Home.Ratings.Count);
+        foreach (var ratingSettings in _options.Home.Ratings)
         {
-			_options = options.Value;
-			_statsRepository = statsRepository;
-		}
+            topRatingTasks.Add(
+                _statsRepository.GetTopPlayersByRating(
+                    ratingSettings.GameType,
+                    ratingSettings.PeriodType,
+                    ratingSettings.Top,
+                    cancellationToken));
+        }
 
-        public async Task<IActionResult> Index(CancellationToken cancellationToken)
+        await Task.WhenAll(topRatingTasks);
+
+        List<(StatPeriod Period, List<TopRatingRecord> TopRatingList)> topRatings = new(_options.Home.Ratings.Count);
+        foreach (var task in topRatingTasks)
         {
-            List<Task<(StatPeriod Period, List<TopRatingRecord> TopRatingList)?>> topRatingTasks = new(_options.Home.Ratings.Count);
-			foreach (var ratingSettings in _options.Home.Ratings)
+            (StatPeriod Period, List<TopRatingRecord> TopRatingList)? topRatingInfo = task.Result;
+
+            if (topRatingInfo is not null)
             {
-                topRatingTasks.Add(
-                    _statsRepository.GetTopPlayersByRating(
-                        ratingSettings.GameType,
-                        ratingSettings.PeriodType,
-                        ratingSettings.Top,
-                        cancellationToken));
+                topRatings.Add(topRatingInfo.Value);
             }
-
-            await Task.WhenAll(topRatingTasks);
-
-			List<(StatPeriod Period, List<TopRatingRecord> TopRatingList)> topRatings = new(_options.Home.Ratings.Count);
-			foreach (var task in topRatingTasks)
-            {
-				(StatPeriod Period, List<TopRatingRecord> TopRatingList)? topRatingInfo = task.Result;
-
-				if (topRatingInfo is not null)
-				{
-					topRatings.Add(topRatingInfo.Value);
-				}
-			}
-
-			return View(
-                new HomeViewModel
-                {
-					TopRatings = topRatings,
-                });
         }
 
-        public IActionResult Privacy()
+        return View(
+        new HomeViewModel
         {
-            return View();
-        }
+            TopRatings = topRatings,
+        });
+    }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }
