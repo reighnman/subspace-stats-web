@@ -37,7 +37,7 @@ namespace SubspaceStats.Services
         /// <param name="offset">The offset of the records to return (for pagination).</param>
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The leaderboard.</returns>
-		Task<List<TeamVersusLeaderboardStats>> GetTeamVersusLeaderboardAsync(long statPeriodId, int limit, int offset, CancellationToken cancellationToken);
+        Task<List<TeamVersusLeaderboardStats>> GetTeamVersusLeaderboardAsync(long statPeriodId, int limit, int offset, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets details about a single game.
@@ -63,7 +63,7 @@ namespace SubspaceStats.Services
         /// <param name="periodCutoff">How far back in time to look for data.</param>
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The player's participation records.</returns>
-		Task<List<ParticipationRecord>> GetPlayerParticipationOverview(string playerName, TimeSpan periodCutoff, CancellationToken cancellationToken);
+        Task<List<ParticipationRecord>> GetPlayerParticipationOverview(string playerName, TimeSpan periodCutoff, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets the top players by rating for the latest stat period of a given <paramref name="gameType"/> and <paramref name="statPeriodType"/>.
@@ -73,7 +73,7 @@ namespace SubspaceStats.Services
         /// <param name="top"><inheritdoc cref="GetTopPlayersByRating(long, int, CancellationToken)" path="/param[@name='top']"/></param>
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The latest stat period and the records for the top players in the period, or <see langword="null"/> if not found.</returns>
-		Task<(StatPeriod, List<TopRatingRecord>)?> GetTopPlayersByRating(GameType gameType, StatPeriodType statPeriodType, int top, CancellationToken cancellationToken);
+        Task<(StatPeriod, List<TopRatingRecord>)?> GetTopPlayersByRating(GameType gameType, StatPeriodType statPeriodType, int top, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets the top players by rating for a specified stat period.
@@ -87,7 +87,7 @@ namespace SubspaceStats.Services
         /// </param>
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The records of the top players.</returns>
-		Task<List<TopRatingRecord>> GetTopPlayersByRating(long statPeriodId, int top, CancellationToken cancellationToken);
+        Task<List<TopRatingRecord>> GetTopPlayersByRating(long statPeriodId, int top, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets the top players by average rating for a specified stat period.
@@ -136,7 +136,7 @@ namespace SubspaceStats.Services
         /// <param name="statPeriodId">Id of the stat period to get data for.</param>
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The player's ship stats records.</returns>
-		Task<List<TeamVersusShipStats>> GetTeamVersusShipStats(string playerName, long statPeriodId, CancellationToken cancellationToken);
+        Task<List<TeamVersusShipStats>> GetTeamVersusShipStats(string playerName, long statPeriodId, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets a player's team versus kill stats for a specified stat period.
