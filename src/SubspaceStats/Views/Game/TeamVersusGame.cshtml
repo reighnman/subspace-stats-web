@@ -191,7 +191,7 @@
 
 							<tr>
 								<td class="text-start">
-									<div>@Html.ActionLink(memberStats.PlayerName, "Index", "Player", new { playerName = memberStats.PlayerName, gameType = Model.GameType })</div>
+									<div class="@(memberStats.MemberIdx > 1 ? "ps-2" : null)">@Html.ActionLink(memberStats.PlayerName, "Index", "Player", new { playerName = memberStats.PlayerName, gameType = Model.GameType })</div>
 									<div>@memberStats.SquadName</div>
 								</td>
 								<td class="text-center">
