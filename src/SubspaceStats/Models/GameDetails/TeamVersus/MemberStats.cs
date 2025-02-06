@@ -125,5 +125,17 @@ namespace SubspaceStats.Models.GameDetails.TeamVersus
 
         [JsonPropertyName("rating_change")]
         public required int RatingChange { get; init; }
+
+        [JsonPropertyName("enemy_distance_sum")]
+        public long? EnemyDistanceSum { get; init; }
+
+        [JsonPropertyName("enemy_distance_samples")]
+        public int? EnemyDistanceSamples { get; init; }
+
+        [JsonPropertyName("team_distance_sum")]
+        public long? TeamDistanceSum { get; init; }
+
+        [JsonPropertyName("team_distance_samples")]
+        public int? TeamDistanceSamples { get; init; }
     }
 }

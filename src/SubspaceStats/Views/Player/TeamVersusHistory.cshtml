@@ -140,7 +140,8 @@
 							</th>
 							<th scope="col">
 								<div title="Wasted Energy Per Minute">WE/m</div>
-								<div title="Average Distance to Enemy (tiles)">AvgDE</div>
+								<div title="Average Distance to Enemy (tiles)">dE</div>
+								<div title="Average Distance to Team (tiles)">dT</div>
 							</th>
 							<th scope="col">
 								<div title="Wasted Repels Per Game">WR/g</div>
@@ -166,6 +167,14 @@
 							float? periodBombAccuracy = periodBombMineFireCount > 0 ? (float)periodBombMineHitCount / periodBombMineFireCount : null;
 							float? periodGunAccuracy = periodStats.BulletFireCount > 0 ? (float)periodStats.BulletHitCount / periodStats.BulletFireCount : null;
 							double playDurationTotalMinutes = periodStats.PlayDuration.TotalMinutes;
+
+							// Note: Distance is stored in pixels, but printed in tiles. 16 pixels = 1 tile
+							long? avgEnemyDistance = (periodStats.EnemyDistanceSum is not null && periodStats.EnemyDistanceSamples is not null && periodStats.EnemyDistanceSamples.Value > 0)
+								? periodStats.EnemyDistanceSum.Value / periodStats.EnemyDistanceSamples.Value / 16
+								: null;
+							long? avgTeamDistance = (periodStats.TeamDistanceSum is not null && periodStats.TeamDistanceSamples is not null && periodStats.TeamDistanceSamples.Value > 0)
+								? periodStats.TeamDistanceSum.Value / periodStats.TeamDistanceSamples.Value / 16
+								: null;
 						
 							<tr>
 								<th scope="row" class="text-start">
@@ -254,7 +263,8 @@
 								</td>
 								<td>
 									<div>@((int)(periodStats.WastedEnergy / periodStats.PlayDuration.TotalMinutes))</div>
-									<div>TODO</div>
+									<div>@avgEnemyDistance</div>
+									<div>@avgTeamDistance</div>
 								</td>
 								<td>
 									<div>@((periodStats.WastedRepel/(double)periodStats.Games).ToString("f1"))</div>
@@ -334,7 +344,8 @@
 							</th>
 							<th scope="col">
 								<div title="Wasted Energy Per Minute">WE/m</div>
-								<div title="Average Distance to Enemy">AvgDE</div>
+								<div title="Average Distance to Enemy (tiles)">dE</div>
+								<div title="Average Distance to Team (tiles)">dT</div>
 							</th>
 							<th scope="col">
 								<div title="Wasted Repels">WR</div>
@@ -371,6 +382,14 @@
 							int bombMineHitCount = gameStats.BombHitCount + gameStats.MineHitCount;
 							float? bombAccuracy = bombMineFireCount > 0 ? (float)bombMineHitCount / bombMineFireCount : null;
 							float? gunAccuracy = gameStats.BulletFireCount > 0 ? (float)gameStats.BulletHitCount / gameStats.BulletFireCount : null;
+
+							// Note: Distance is stored in pixels, but printed in tiles. 16 pixels = 1 tile
+							long? avgEnemyDistance = (gameStats.EnemyDistanceSum is not null && gameStats.EnemyDistanceSamples is not null && gameStats.EnemyDistanceSamples.Value > 0)
+								? gameStats.EnemyDistanceSum.Value / gameStats.EnemyDistanceSamples.Value / 16
+								: null;
+							long? avgTeamDistance = (gameStats.TeamDistanceSum is not null && gameStats.TeamDistanceSamples is not null && gameStats.TeamDistanceSamples.Value > 0)
+								? gameStats.TeamDistanceSum.Value / gameStats.TeamDistanceSamples.Value / 16
+								: null;
 
 							<tr>
 								<td class="text-center">
@@ -447,7 +466,8 @@
 								</td>
 								<td>
 									<div>@((int)(gameStats.WastedEnergy / gameStats.PlayDuration.TotalMinutes))</div>
-									<div>TODO</div>
+									<div>@avgEnemyDistance</div>
+									<div>@avgTeamDistance</div>
 								</td>
 								<td>
 									<div>@gameStats.WastedRepel</div>

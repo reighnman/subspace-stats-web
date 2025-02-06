@@ -43,5 +43,9 @@
         public required long WastedDecoy { get; init; }
         public required long WastedPortal { get; init; }
         public required long WastedBrick { get; init; }
+        public required long? EnemyDistanceSum { get; init; }
+        public required long? EnemyDistanceSamples { get; init; }
+        public required long? TeamDistanceSum { get; init; }
+        public required long? TeamDistanceSamples { get; init; }
     }
 }

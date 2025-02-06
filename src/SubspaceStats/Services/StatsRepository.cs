@@ -523,6 +523,10 @@ namespace SubspaceStats.Services
                         int column_wastedDecoy = dataReader.GetOrdinal("wasted_decoy");
                         int column_wastedPortal = dataReader.GetOrdinal("wasted_portal");
                         int column_wastedBrick = dataReader.GetOrdinal("wasted_brick");
+                        int column_enemyDistanceSum = dataReader.GetOrdinal("enemy_distance_sum");
+                        int column_enemyDistanceSamples = dataReader.GetOrdinal("enemy_distance_samples");
+                        int column_teamDistanceSum = dataReader.GetOrdinal("team_distance_sum");
+                        int column_teamDistanceSamples = dataReader.GetOrdinal("team_distance_samples");
 
                         List<TeamVersusPeriodStats> periodStatsList = [];
 
@@ -586,6 +590,10 @@ namespace SubspaceStats.Services
                                     WastedDecoy = dataReader.GetInt64(column_wastedDecoy),
                                     WastedPortal = dataReader.GetInt64(column_wastedPortal),
                                     WastedBrick = dataReader.GetInt64(column_wastedBrick),
+                                    EnemyDistanceSum = await dataReader.IsDBNullAsync(column_enemyDistanceSum, cancellationToken) ? null : dataReader.GetInt64(column_enemyDistanceSum),
+                                    EnemyDistanceSamples = await dataReader.IsDBNullAsync(column_enemyDistanceSamples, cancellationToken) ? null : dataReader.GetInt64(column_enemyDistanceSamples),
+                                    TeamDistanceSum = await dataReader.IsDBNullAsync(column_teamDistanceSum, cancellationToken) ? null : dataReader.GetInt64(column_teamDistanceSum),
+                                    TeamDistanceSamples = await dataReader.IsDBNullAsync(column_teamDistanceSamples, cancellationToken) ? null : dataReader.GetInt64(column_teamDistanceSamples),
                                 });
                         }
 
@@ -655,6 +663,10 @@ namespace SubspaceStats.Services
                         int column_wastedPortal = dataReader.GetOrdinal("wasted_portal");
                         int column_wastedBrick = dataReader.GetOrdinal("wasted_brick");
                         int column_ratingChange = dataReader.GetOrdinal("rating_change");
+                        int column_enemyDistanceSum = dataReader.GetOrdinal("enemy_distance_sum");
+                        int column_enemyDistanceSamples = dataReader.GetOrdinal("enemy_distance_samples");
+                        int column_teamDistanceSum = dataReader.GetOrdinal("team_distance_sum");
+                        int column_teamDistanceSamples = dataReader.GetOrdinal("team_distance_samples");
 
                         List<TeamVersusGameStats> statsList = new(limit);
 
@@ -702,6 +714,10 @@ namespace SubspaceStats.Services
                                 WastedPortal = dataReader.GetInt16(column_wastedPortal),
                                 WastedBrick = dataReader.GetInt16(column_wastedBrick),
                                 RatingChange = dataReader.GetInt32(column_ratingChange),
+                                EnemyDistanceSum = await dataReader.IsDBNullAsync(column_enemyDistanceSum, cancellationToken) ? null : dataReader.GetInt64(column_enemyDistanceSum),
+                                EnemyDistanceSamples = await dataReader.IsDBNullAsync(column_enemyDistanceSamples, cancellationToken) ? null : dataReader.GetInt32(column_enemyDistanceSamples),
+                                TeamDistanceSum = await dataReader.IsDBNullAsync(column_teamDistanceSum, cancellationToken) ? null : dataReader.GetInt64(column_teamDistanceSum),
+                                TeamDistanceSamples = await dataReader.IsDBNullAsync(column_teamDistanceSamples, cancellationToken) ? null : dataReader.GetInt32(column_teamDistanceSamples),
                             });
                         }
 

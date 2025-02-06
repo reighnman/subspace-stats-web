@@ -153,7 +153,8 @@
 							</th>
 							<th scope="col">
 								<div title="Wasted Energy Per Minute">WE/m</div>
-								<div title="Average Distance to Enemy (tiles)">AvgDE</div>
+								<div title="Average Distance to Enemy (tiles)">dE</div>
+								<div title="Average Distance to Team (tiles)">dT</div>
 							</th>
 							<th scope="col">
 								<div title="Wasted Repels">WR</div>
@@ -179,6 +180,14 @@
 							int bombMineHitCount = memberStats.BombHitCount + memberStats.MineHitCount;
 							float? bombAccuracy = bombMineFireCount > 0 ? (float)bombMineHitCount / bombMineFireCount : null;
 							float? gunAccuracy = memberStats.BulletFireCount > 0 ? (float)memberStats.BulletHitCount / memberStats.BulletFireCount : null;
+
+							// Note: Distance is stored in pixels, but printed in tiles. 16 pixels = 1 tile
+							long? avgEnemyDistance = (memberStats.EnemyDistanceSum is not null && memberStats.EnemyDistanceSamples is not null && memberStats.EnemyDistanceSamples.Value > 0)
+								? memberStats.EnemyDistanceSum.Value / memberStats.EnemyDistanceSamples.Value / 16
+								: null;
+							long? avgTeamDistance = (memberStats.TeamDistanceSum is not null && memberStats.TeamDistanceSamples is not null && memberStats.TeamDistanceSamples.Value > 0)
+								? memberStats.TeamDistanceSum.Value / memberStats.TeamDistanceSamples.Value / 16
+								: null;
 
 							<tr>
 								<td class="text-start">
@@ -244,7 +253,8 @@
 								</td>
 								<td>
 									<div>@((int)(memberStats.WastedEnergy / memberStats.PlayDuration.TotalMinutes))</div>
-									<div>TODO</div>
+									<div>@avgEnemyDistance</div>
+									<div>@avgTeamDistance</div>
 								</td>
 								<td>
 									<div>@memberStats.WastedRepel</div>
@@ -266,7 +276,7 @@
 									</div>
 								</td>
 								<td class="text-end @(memberStats.RatingChange > 0 ? "text-success" : "text-danger")">@memberStats.RatingChange.ToString("+#;-#;0")</td>
-								@* <td class="text-end">TODO</td> *@
+								@* <td class="text-end">TODO: MMR</td> *@
 							</tr>
 						}
 					</tbody>

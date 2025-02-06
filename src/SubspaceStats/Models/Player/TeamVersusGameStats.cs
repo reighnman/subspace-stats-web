@@ -52,5 +52,9 @@ namespace SubspaceStats.Models.Player
         public required short WastedPortal { get; init; }
         public required short WastedBrick { get; init; }
         public required int RatingChange { get; init; }
+        public required long? EnemyDistanceSum { get; init; }
+        public required int? EnemyDistanceSamples { get; init; }
+        public required long? TeamDistanceSum { get; init; }
+        public required int? TeamDistanceSamples { get; init; }
     }
 }
