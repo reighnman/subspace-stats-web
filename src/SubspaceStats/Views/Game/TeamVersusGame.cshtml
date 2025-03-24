@@ -108,13 +108,7 @@
 				{
 					<thead>
 						<tr class="text-start">
-							<th scope="colgroup" colspan="23">
-								Freq @teamStats.Freq
-								@if (teamStats.IsPremade)
-								{
-									<text>(Premade)</text>
-								}
-							</th>
+							<th scope="colgroup" colspan="23">Freq @teamStats.Freq</th>
 						</tr>
 						<tr class="table-secondary align-top">
 							<th scope="col" class="text-start">
@@ -191,7 +185,13 @@
 
 							<tr>
 								<td class="text-start">
-									<div class="@(memberStats.MemberIdx > 1 ? "ps-2" : null)">@Html.ActionLink(memberStats.PlayerName, "Index", "Player", new { playerName = memberStats.PlayerName, gameType = Model.GameType })</div>
+									<div class="@(memberStats.MemberIdx > 1 ? "ps-2" : null)">
+										@Html.ActionLink(memberStats.PlayerName, "Index", "Player", new { playerName = memberStats.PlayerName, gameType = Model.GameType })
+										@if (memberStats.PremadeGroup is not null)
+										{
+											<span class="badge text-bg-secondary" title="Premade Group">Premade @memberStats.PremadeGroup</span>
+										}
+									</div>
 									<div>@memberStats.SquadName</div>
 								</td>
 								<td class="text-center">

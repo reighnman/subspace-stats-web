@@ -18,6 +18,9 @@ namespace SubspaceStats.Models.GameDetails.TeamVersus
         [JsonPropertyName("squad")]
         public required string? SquadName { get; init; }
 
+        [JsonPropertyName("premade_group")]
+        public required short? PremadeGroup { get; init; }
+
         [JsonPropertyName("play_duration")]
         public required TimeSpan PlayDuration { get; init; }
 
@@ -127,15 +130,15 @@ namespace SubspaceStats.Models.GameDetails.TeamVersus
         public required int RatingChange { get; init; }
 
         [JsonPropertyName("enemy_distance_sum")]
-        public long? EnemyDistanceSum { get; init; }
+        public required long? EnemyDistanceSum { get; init; }
 
         [JsonPropertyName("enemy_distance_samples")]
-        public int? EnemyDistanceSamples { get; init; }
+        public required int? EnemyDistanceSamples { get; init; }
 
         [JsonPropertyName("team_distance_sum")]
-        public long? TeamDistanceSum { get; init; }
+        public required long? TeamDistanceSum { get; init; }
 
         [JsonPropertyName("team_distance_samples")]
-        public int? TeamDistanceSamples { get; init; }
+        public required int? TeamDistanceSamples { get; init; }
     }
 }

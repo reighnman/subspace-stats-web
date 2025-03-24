@@ -9,9 +9,6 @@ namespace SubspaceStats.Models.GameDetails.TeamVersus
         [JsonPropertyName("freq")]
         public required short Freq { get; init; }
 
-        [JsonPropertyName("is_premade")]
-        public required bool IsPremade { get; init; }
-
         [JsonPropertyName("is_winner")]
         public required bool IsWinner { get; init; }
 
