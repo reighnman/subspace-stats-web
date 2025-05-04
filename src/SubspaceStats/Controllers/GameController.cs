@@ -32,7 +32,8 @@ public class GameController(
 
             case GameCategory.Solo:
                 //TODO: return View("SoloGame", game);
-                goto default;
+                //For now just use the TeamVersus view
+                return View("TeamVersusGame", game);
 
             case GameCategory.Powerball:
                 //TODO: return View("PowerballGame", game);

@@ -97,7 +97,8 @@ public class PlayerController(
             }
 
             // Different data/view based on game category.
-            if (gameCategory.Value == GameCategory.TeamVersus)
+            // TODO: Make a solo view
+            if (gameCategory.Value == GameCategory.TeamVersus || gameCategory.Value == GameCategory.Solo)
             {
                 var periodStatsTask = GetPeriodStats(selectedPeriod.Value);
                 var gameStatsTask = _statsRepository.GetTeamVersusGameStats(playerName, selectedPeriod.Value.StatPeriodId, limit + 1, offset, cancellationToken);
