@@ -329,26 +329,29 @@
 							TimeSpan gameTime = killEvent.Timestamp - Model.StartTime;
 							int? killerDamage = null;
 							List<(string PlayerName, int Damage)> assistList = new();
-							foreach ((string playerName, int damage) in killEvent.DamageStats!)
+							if (killEvent.DamageStats is not null)
 							{
-								if (string.Equals(killEvent.KillerPlayerName, playerName, StringComparison.OrdinalIgnoreCase))
+								foreach ((string playerName, int damage) in killEvent.DamageStats)
 								{
-									killerDamage = damage;
+									if (string.Equals(killEvent.KillerPlayerName, playerName, StringComparison.OrdinalIgnoreCase))
+									{
+										killerDamage = damage;
+									}
+									else
+									{
+										assistList.Add((playerName, damage));
+									}
 								}
-								else
-								{
-									assistList.Add((playerName, damage));
-								}
+
+								assistList.Sort((x, y) => -x.Damage.CompareTo(y.Damage));
 							}
-							assistList.Sort((x, y) => -x.Damage.CompareTo(y.Damage));
 
 							<tr>
 								<td>
 									<img src="@GetShipImage(killEvent.KilledShip)" alt="@killEvent.KilledShip" title="@killEvent.KilledShip" width="24" />
 									@Html.ActionLink(killEvent.KilledPlayerName, "Index", "Player", new { playerName = killEvent.KilledPlayerName, gameType = Model.GameType })
-									@if (killEvent.RatingChanges!.TryGetValue(killEvent.KilledPlayerName, out float killedRating))
+									@if (killEvent.RatingChanges is not null && killEvent.RatingChanges.TryGetValue(killEvent.KilledPlayerName, out float killedRating))
 									{
-
 										<span title="Rating">(@killedRating.ToString("+#;-#;0"))</span>
 									}
 								</td>
@@ -357,7 +360,7 @@
 										<div class="flex-grow-1">
 											<img src="@GetShipImage(killEvent.KillerShip)" alt="@killEvent.KillerShip" title="@killEvent.KillerShip" width="24" />
 											@Html.ActionLink(killEvent.KillerPlayerName, "Index", "Player", new { playerName = killEvent.KillerPlayerName, gameType = Model.GameType })
-											@if (killEvent.RatingChanges.TryGetValue(killEvent.KillerPlayerName, out float killerRating))
+											@if (killEvent.RatingChanges is not null && killEvent.RatingChanges.TryGetValue(killEvent.KillerPlayerName, out float killerRating))
 											{
 												<span title="Rating">(@killerRating.ToString("+#;-#;0"))</span>
 											}
