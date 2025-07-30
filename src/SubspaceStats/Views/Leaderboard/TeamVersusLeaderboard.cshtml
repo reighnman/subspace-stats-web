@@ -182,7 +182,7 @@ TODO: TOP 5 lists
 					double avgRating = (pilotStats.Rating - 500) / pilotStats.GamesPlayed;
 					string? avgRatingClass = avgRating >= 0 ? "text-success" : "text-danger";
 
-					double firstOutRatio = pilotStats.FirstOut / pilotStats.GamesPlayed;
+					double firstOutRatio = (double)pilotStats.FirstOut / pilotStats.GamesPlayed;
 					string? firstOutClass = null;
 					if (firstOutRatio == 0d)
 						firstOutClass = "text-success";
