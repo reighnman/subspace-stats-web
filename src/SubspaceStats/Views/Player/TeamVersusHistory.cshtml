@@ -275,7 +275,7 @@
 									<div title="Play Time">@periodStats.PlayDuration.ToDisplayString()</div>
 									<div>
 										<div>
-											<span title="Critical First Out">@periodStats.FirstOutCritical</span> / <span title="Regular First Out">@periodStats.FirstOutRegular</span> / <span title="First Out Game Percentage">@(((periodStats.FirstOutCritical + periodStats.FirstOutRegular) / periodStats.Games).ToString("p0"))</span>
+											<span title="Critical First Out">@periodStats.FirstOutCritical</span> / <span title="Regular First Out">@periodStats.FirstOutRegular</span> / <span title="First Out Game Percentage">@(((double)periodStats.FirstOutRegular / periodStats.Games).ToString("p0"))</span>
 										</div>
 									</div>
 								</td>
