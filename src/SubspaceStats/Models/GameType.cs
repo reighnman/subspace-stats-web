@@ -15,7 +15,8 @@
         PowerBall_mediumpub = 11,
         SVS_4v4League = 12,
         SVS_SoloFFA = 13,
-        SVS_TeamFFA_2s = 14
+        SVS_TeamFFA_2s = 14,
+        SVS_2v2League = 15,
     }
 
     public enum GameCategory
@@ -38,7 +39,8 @@
                 GameType.SVS_3v3 or
                 GameType.SVS_4v4 or
                 GameType.SVS_4v4League or
-                GameType.SVS_TeamFFA_2s => GameCategory.TeamVersus,
+                GameType.SVS_TeamFFA_2s or
+                GameType.SVS_2v2League => GameCategory.TeamVersus,
 
                 GameType.PowerBall_Traditional or
                 GameType.PowerBall_Proball or
@@ -70,6 +72,7 @@
                 GameType.SVS_4v4League => "SVS 4v4 League",
                 GameType.SVS_SoloFFA => "SVS Solo FFA",
                 GameType.SVS_TeamFFA_2s => "SVS Team FFA 2s",
+                GameType.SVS_2v2League => "SVS 2v2 League",
                 _ => gameType.ToString(),
             };
         }

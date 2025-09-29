@@ -1,0 +1,40 @@
+﻿@using SubspaceStats.Areas.League.Models
+@using SubspaceStats.Areas.League.Models.Season
+@using System.Text.Json
+@model LeagueSeasonChooserViewModel
+
+@{
+	LeagueWithSeasons? selectedLeague = null;
+	string? currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+	string? currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+
+<div class="container mb-2">
+	<form id="leagueSeasonChooser" method="get">
+		<div class="row p-2">
+			<div class="col-md-4 p-1">
+				<select id="leagueSeasonChooser_leagueIdSelect" class="form-select">
+					@foreach (var league in Model.LeaguesWithSeasons)
+					{
+						if (league.LeagueId == Model.SelectedLeagueId)
+							selectedLeague = league;
+
+						<option value="@league.LeagueId" selected="@(league == selectedLeague)">@league.LeagueName</option>
+					}
+				</select>
+			</div>
+			<div class="col-md-4 p-1">
+				<select id="leagueSeasonChooser_seasonIdSelect" class="form-select" name="seasonId">
+					@if (selectedLeague is not null)
+					{
+						foreach (var season in selectedLeague.Seasons)
+						{
+							<option value="@season.SeasonId" selected="@(season.SeasonId == Model.SelectedSeasonId)" data-url="@season.Url">@season.SeasonName</option>
+						}
+					}
+				</select>
+			</div>
+			<div class="col-md-1 align-content-center"><input id="leagueSeasonChooser_submit" class="btn btn-primary visually-hidden" type="submit" value="GO" /><a id="leagueSeasonChooser_submit_noScript" asp-controller="Home" asp-action="Nav" asp-route-leagueId="@Model.SelectedLeagueId" asp-route-seasonId="@Model.SelectedSeasonId" class="btn btn-primary">GO</a></div>
+		</div>
+	</form>
+</div>

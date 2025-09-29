@@ -8,10 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
     <PackageReference Include="Npgsql" Version="9.0.2" />
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Areas\League\Data\" />
     <Folder Include="Models\GameDetails\SoloVersus\" />
     <Folder Include="Models\GameDetails\Powerball\" />
   </ItemGroup>

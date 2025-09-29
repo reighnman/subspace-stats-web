@@ -1,0 +1,99 @@
+﻿@using Microsoft.Extensions.Options
+@using SubspaceStats.Areas.League.Models.Season
+@using SubspaceStats.Options
+@model SeasonViewModel
+@inject IOptions<LeagueOptions> leagueOptions
+
+@{
+	ViewData["Title"] = "Season";
+}
+
+<h1>Season</h1>
+
+@await Html.PartialAsync("_SeasonNav")
+@await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
+
+<div class="container">
+	<div class="row">
+		<div class="col">
+			<table class="table table-striped table-bordered table-hover text-nowrap">
+				<thead>
+					<tr>
+						<th colspan="5" class="text-center">Upcoming Matches</th>
+					</tr>
+					<tr>
+						<th>Time (ET)</th>
+						<th>Teams</th>
+						<th>Round</th>
+						<th>Status</th>
+						<th>Game ID</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var scheduledGame in Model.ScheduledGames)
+					{
+						DateTime? gameTime = scheduledGame.ScheduledTimestamp is not null
+							? TimeZoneInfo.ConvertTimeFromUtc(scheduledGame.ScheduledTimestamp.Value, leagueOptions.Value.TimeZone)
+							: null;
+
+						<tr>
+							<td>
+								@if (gameTime is null)
+								{
+									<span class="fst-italic">Not scheduled</span>
+								}
+								else
+								{
+									<text>@gameTime.Value.ToString("yyyy-MM-dd hh:mm tt")</text>
+								}
+							</td>
+							<td>@scheduledGame.Teams</td>
+							<td>
+								@if (!string.IsNullOrWhiteSpace(scheduledGame.RoundName))
+								{
+									@scheduledGame.RoundName
+								}
+								else if (scheduledGame.RoundNumber is not null)
+								{
+									@scheduledGame.RoundNumber
+								}
+							</td>
+							<td>@scheduledGame.Status</td>
+							<td class="text-end">@scheduledGame.SeasonGameId</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+		<div class="col">
+			<table class="table table-striped table-bordered table-hover text-nowrap">
+				<thead>
+					<tr>
+						<th colspan="4" class="text-center">Standings</th>
+					</tr>
+					<tr>
+						<th>Team</th>
+						<th class="text-end">Wins</th>
+						<th class="text-end">Losses</th>
+						<th class="text-end">Draws</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var teamStanding in Model.Standings)
+					{
+						<tr>
+							<td><a asp-controller="Team" asp-action="Index" asp-route-id="@teamStanding.TeamId">@teamStanding.TeamName</a></td>
+							<td class="text-end">@teamStanding.Wins</td>
+							<td class="text-end">@teamStanding.Losses</td>
+							<td class="text-end">@teamStanding.Draws</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	@await Html.PartialAsync("_LeagueSeasonChooseScript", Model.LeagueSeasonChooser)
+}

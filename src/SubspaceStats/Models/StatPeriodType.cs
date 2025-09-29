@@ -4,5 +4,6 @@
     {
         Forever = 0,
         Monthly = 1,
+        LeagueSeason = 2,
     }
 }

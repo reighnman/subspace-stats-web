@@ -1,0 +1,34 @@
+﻿@using SubspaceStats.Areas.League.Models.Franchise
+@model Franchise
+
+@{
+    ViewData["Title"] = "Create Franchise";
+}
+
+<h1>Create franchise</h1>
+
+<div class="mb-3">
+    <a asp-action="Index">Back to franchise List</a>
+</div>
+
+<div class="container">
+    <form asp-controller="Franchise" asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="d-flex">
+            <button type="submit" class="btn btn-primary m-2">Create</button>
+            <a asp-action="Index" class="btn btn-secondary m-2">Cancel</a>
+        </div>
+
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

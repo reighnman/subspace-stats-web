@@ -1,0 +1,60 @@
+﻿@using SubspaceStats.Areas.League.Models.League
+@model LeagueViewModel
+
+@{
+    ViewData["Title"] = "Edit League";
+
+    IEnumerable<SelectListItem> gameTypes =
+        from kvp in Model.GameTypes
+        select new SelectListItem(kvp.Value, kvp.Key.ToString());
+}
+
+<h1>Edit league</h1>
+
+<div class="mb-3">
+    <a asp-action="Index">Back to League List</a>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <form asp-action="Edit">
+                
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="mb-3">
+                    <label asp-for="League.Id" class="form-label"></label>
+                    <input type="number" class="form-control" value="@Model.League?.Id" disabled />
+                    <input type="hidden" asp-for="League.Id" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.Name" class="form-label"></label>
+                    <input asp-for="League.Name" class="form-control" />
+                    <span asp-validation-for="League.Name" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.GameType" class="form-label"></label>
+                    <select asp-for="League.GameType" asp-items="@gameTypes" class="form-select" aria-describedby="game-type-note">
+                        <option disabled selected>-- Select a Game Type --</option>
+                    </select>
+                    <span asp-validation-for="League.GameType" class="text-danger"></span>
+                </div>
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-primary m-2">Save</button>
+                    <a asp-action="Index" class="btn btn-secondary m-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+        <div class="col">
+            <h4>Notes:</h4>
+            <div id="game-type-note">
+                <strong>Game Type</strong> controls game-mode and associated configuration used by the zone server (league modules) when matches are started. It also affects which stat period to save match data to. The stat period is linked to a season when the season is <strong><em>started</em></strong>. Changing <strong>Game Type</strong> will not modify the stat period for seasons that have already started.
+            </div> 
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

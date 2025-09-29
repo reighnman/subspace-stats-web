@@ -1,0 +1,62 @@
+﻿@using SubspaceStats.Areas.League.Models
+@model LeagueSeasonChooserViewModel
+
+<script type="text/javascript">
+	$(document).ready(function () {
+		const leaguesWithSeasons = JSON.parse('@Html.Raw(Model.LeaguesWithSeasonsJson)');
+
+		$('#leagueSeasonChooser_submit_noScript').toggleClass('visually-hidden');
+		$('#leagueSeasonChooser_submit').toggleClass('visually-hidden');
+
+		var $leagueSeasonIdChooserForm = $('#leagueSeasonChooser');
+
+		var $leagueIdSelect = $('#leagueSeasonChooser_leagueIdSelect');
+		var leagueIdSelect = $leagueIdSelect.get(0);
+
+		var $seasonIdSelect = $('#leagueSeasonChooser_seasonIdSelect');
+		var seasonIdSelect = $seasonIdSelect.get(0);
+
+		if (leagueIdSelect != null && seasonIdSelect != null) {
+			var currentSeasonId = seasonIdSelect.value;
+
+			$leagueIdSelect.on('change', function () {
+				var selectedLeagueId = leagueIdSelect.value;
+				var selectedLeagueWithSeason = null;
+				for (const leagueWithSeason of leaguesWithSeasons) {
+					if (leagueWithSeason.league_id == selectedLeagueId) {
+						selectedLeagueWithSeason = leagueWithSeason;
+						break;
+					}
+				}
+
+				seasonIdSelect.length = 0;
+				if (selectedLeagueWithSeason !== null) {
+					for (const season of selectedLeagueWithSeason.seasons) {
+						const option = document.createElement('option');
+						option.value = season.season_id;
+						option.text = season.season_name;
+						option.dataset.url = season.url;
+
+						if (season.season_id == currentSeasonId) {
+							option.selected = true;
+						}
+
+						seasonIdSelect.add(option);
+					}
+				}
+
+				if (seasonIdSelect.selectedIndex == -1 && seasonIdSelect.length > 0) {
+					seasonIdSelect.selectedIndex = 0;
+				}
+			});
+
+			$leagueSeasonIdChooserForm.on('submit', function(event) {
+				event.preventDefault();
+				const selectedOptions = seasonIdSelect.selectedOptions;
+				if (selectedOptions.length == 1) {
+					window.location.href = selectedOptions[0].dataset.url;
+				}
+			});
+		}
+	});
+</script>

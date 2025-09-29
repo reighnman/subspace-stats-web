@@ -1,0 +1,69 @@
+﻿@using SubspaceStats.Areas.League.Models
+@model NavViewModel
+
+@{
+    ViewData["Title"] = "Navigate Leagues and Seasons";
+}
+
+<div class="d-flex">
+    <h1>Leagues and Seasons</h1>
+</div>
+
+<div class="mb-3">
+    <a asp-controller="Home" asp-action="Index" class="mx-2 btn btn-link">Home</a> | <a asp-controller="Franchise" asp-action="Index" class="mx-2 btn btn-link disabled">Franchises</a> | <a asp-controller="PlayerSearch" asp-action="Index" class="mx-2 btn btn-link disabled">Player Search</a>
+</div>
+
+<div class="d-flex">
+    <div class="accordion" id="leaguesAccordion">
+        @foreach (var league in Model.LeagueWithSeasons)
+        {
+            string collapseHeaderId = $"league{league.LeagueId}";
+            string collapseId = $"collapse{league.LeagueId}";
+            <div class="accordion-item">
+                <div id="@collapseHeaderId" class="accordion-header rounded-top d-flex align-items-center border-bottom bg-body-tertiary">
+                    <a asp-controller="League" asp-action="Details" asp-route-id="@league.LeagueId" class="text-nowrap mx-3">@league.LeagueName</a>
+                    <button class="accordion-button bg-transparent shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="true" aria-controls="@collapseId">
+                    </button>
+                </div>
+                <div id="@collapseId" class="accordion-collapse collapse show">
+                    <div class="accordion-body bg-dark rounded-bottom">
+                        @foreach (var season in league.Seasons)
+                        {
+                            string seasonElementId = $"season{season.SeasonId}";
+                            <div class="mb-2"><a asp-controller="Season" asp-action="Index" asp-route-id="@season.SeasonId" class="m-3" id="@seasonElementId">@season.SeasonName</a></div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+@{
+        string? elementId = null;
+        if (Model.SeasonId is not null)
+        {
+            elementId = $"season{Model.SeasonId.Value}";
+        }
+        else if(Model.LeagueId is not null)
+        {
+            elementId = $"league{Model.LeagueId.Value}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(elementId))
+        {
+            <script type="text/javascript">
+                $(document).ready(function () {
+                    var $scrollToElement = $('#@elementId');
+                    var topOffset = $scrollToElement.offset().top
+                    if ($scrollToElement != null) {
+                        $('html, body').animate({
+                            scrollTop: topOffset
+                        }, 500);
+                    }
+                });
+            </script>
+        }
+    }
+}

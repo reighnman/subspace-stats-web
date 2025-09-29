@@ -11,8 +11,8 @@ namespace SubspaceStats
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-            builder.Services.Configure<StatOptions>(
-                builder.Configuration.GetSection(StatOptions.StatsSectionKey));
+            builder.Services.Configure<StatOptions>(builder.Configuration.GetSection(StatOptions.StatsSectionKey));
+            builder.Services.Configure<LeagueOptions>(builder.Configuration.GetSection(LeagueOptions.LeagueSectionKey));
 
             // StatRepositoryOptions contains the connection string.
             // In Development use user-secrets.
@@ -20,8 +20,13 @@ namespace SubspaceStats
             builder.Services.AddOptions<StatRepositoryOptions>()
                 .Bind(builder.Configuration.GetSection(StatRepositoryOptions.StatRepositoryOptionsKey))
                 .ValidateDataAnnotations();
+            builder.Services.AddOptions<LeagueRepositoryOptions>()
+                .Bind(builder.Configuration.GetSection(LeagueRepositoryOptions.SectionKey))
+                .ValidateDataAnnotations();
 
+            builder.Services.AddSingleton<ILeagueRepository, LeagueRepository>();
             builder.Services.AddSingleton<IStatsRepository, StatsRepository>();
+
             builder.Services.AddControllersWithViews(options =>
             {
                 options.Filters.Add<OperationCanceledExceptionFilter>();
@@ -59,9 +64,62 @@ namespace SubspaceStats
             //    pattern: "4v4",
             //    defaults: new { controller = "leaderboard", action = "4v4" });
 
+            app.MapAreaControllerRoute(
+                name: "LeagueSeason",
+                areaName: "League",
+                pattern: "League/Season/{id:long}/{action=Index}",
+                defaults: new { controller = "Season" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueList",
+                areaName: "League",
+                pattern: "League/List",
+                defaults: new { controller = "League", action = "Index" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueNav",
+                areaName: "League",
+                pattern: "League/Nav",
+                defaults: new { controller = "Home", action = "Nav" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueCreate",
+                areaName: "League",
+                pattern: "League/Create",
+                defaults: new { controller = "League", action = "Create" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueFranchise",
+                areaName: "League",
+                pattern: "League/Franchise",
+                defaults: new { controller = "Franchise", action = "Index" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueFranchise",
+                areaName: "League",
+                pattern: "League/Franchise/{id:long}/{action=Details}",
+                defaults: new { controller = "Franchise" });
+
+            app.MapAreaControllerRoute(
+                name: "Leagueteam",
+                areaName: "League",
+                pattern: "League/Team/{id:long}/{action=Index}",
+                defaults: new { controller = "Team" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueLeague",
+                areaName: "League",
+                pattern: "League/{id:long}/{action=Details}",
+                defaults: new { controller = "League" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueAreaDefault",
+                areaName: "League",
+                pattern: "League/{controller=Home}/{action=Index}/{id?}");
+
             app.MapControllerRoute(
                 name: "Game",
-                pattern: "Game/{id}",
+                pattern: "Game/{id:long}",
                 defaults: new { controller = "Game", action = "Index" });
 
             app.MapControllerRoute(

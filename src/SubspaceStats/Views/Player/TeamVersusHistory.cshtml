@@ -589,9 +589,9 @@
 @section Scripts {
 	<script type="text/javascript">
 		$(document).ready(function () {
-			var periodSelect = $("#periodSelect");
-			periodSelect.on("change", function () {
-				periodSelect.closest("form").submit();
+			var $periodSelect = $("#periodSelect");
+			$periodSelect.on("change", function () {
+				$periodSelect.closest("form").submit();
 			});
 		});
 	</script>

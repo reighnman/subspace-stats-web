@@ -1,0 +1,77 @@
+﻿@using SubspaceStats.Areas.League.Models.Season
+@model SeasonDetailsViewModel
+
+@{
+	ViewData["Title"] = "Manage Season";
+}
+
+<h1>Manage Season</h1>
+
+@await Html.PartialAsync("_SeasonNav")
+@await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
+
+<div class="container w-50">
+	<dl class="row">
+		<dt class="col-4">Season Name:</dt>
+		<dd class="col-8">@Model.Details.SeasonName</dd>
+
+		<dt class="col-4">Created Time:</dt>
+		<dd class="col-8">@Model.Details.CreatedTimestamp</dd>
+
+		<dt class="col-4">Start Date:</dt>
+		<dd class="col-8">@Model.Details.StartDate</dd>
+
+		<dt class="col-4">End Date:</dt>
+		<dd class="col-8">@Model.Details.EndDate</dd>
+
+		<dt class="col-4">Stat Period:</dt>
+		<dd class="col-8">
+			@if (Model.Details.StatPeriodRange is not null)
+			{
+				<text>@Model.Details.StatPeriodRange.Value.ToString()</text>
+			}
+		</dd>
+
+		<dt class="col-4">Stat Game Type:</dt>
+		<dd class="col-8">
+			@if (Model.Details.StatGameTypeId is not null 
+				&& Model.GameTypes.TryGetValue(Model.Details.StatGameTypeId.Value, out string? statGameType))
+			{
+				<text>@statGameType</text>
+			}
+		</dd>
+
+		<dt class="col-4">League Game Type:</dt>
+		<dd class="col-8">
+			@if (Model.Details.LeagueGameTypeId is not null
+				&& Model.GameTypes.TryGetValue(Model.Details.LeagueGameTypeId.Value, out string? leagueGameType))
+			{
+				<text>@leagueGameType</text>
+			}
+		</dd>
+	</dl>
+</div>
+<div>
+	@if (Model.Details.StartDate is null)
+	{
+		<div class="card">
+			<div class="card-header">Season is not yet started</div>
+			<div>When it is time, use this to start the season. It will set the season's <strong>Start Date</strong> and will create a <strong>Stat Period</strong> to store league stats into.</div>
+		</div>
+		<form asp-action="StartSeason">
+			<input type="hidden" name="SeasonId" value="@Model.LeagueSeasonChooser.SelectedSeasonId!" />
+			<div class="mb-3">
+				<label for="StartDate" class="form-label"></label>
+				<input type="date" name="StartDate" class="form-control" />
+				<button type="reset">Reset</button>
+			</div>
+			<div class="d-flex">
+				<button type="submit">Start Season</button>
+			</div>
+		</form>
+	}
+</div>
+
+@section Scripts {
+	@await Html.PartialAsync("_LeagueSeasonChooseScript", Model.LeagueSeasonChooser)
+}

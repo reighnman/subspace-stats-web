@@ -1,0 +1,44 @@
+﻿@using SubspaceStats.Areas.League.Models.Season
+@model TeamsViewModel
+
+@{
+	ViewData["Title"] = "Season Teams";
+}
+
+<h1>Season Teams</h1>
+
+@await Html.PartialAsync("_SeasonNav")
+@await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
+
+<div class="table-responsive">
+	<table class="table table-striped table-bordered table-hover">
+		<thead>
+			<tr>
+				<th>Team Name</th>
+				<th>Banner (small)</th>
+				<th>Banner (large)</th>
+				<th>Is Enabled</th>
+				<th>Franchise</th>
+				<th colspan="2">Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var team in Model.Teams)
+			{
+				<tr>
+					<td><a asp-controller="Team" asp-action="Index" asp-route-id="@team.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@team.Name</a></td>
+					<td>@team.BannerSmall</td>
+					<td>@team.BannerLarge</td>
+					<td>@team.IsEnabled</td>
+					<td>@team.FranchiseId</td>
+					<td><a asp-controller="Team" asp-action="Edit" asp-route-id="@team.Id">Edit</a></td>
+					<td><a asp-controller="Team" asp-action="Delete" asp-route-id="@team.Id">Delete</a></td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+@section Scripts {
+	@await Html.PartialAsync("_LeagueSeasonChooseScript", Model.LeagueSeasonChooser)
+}

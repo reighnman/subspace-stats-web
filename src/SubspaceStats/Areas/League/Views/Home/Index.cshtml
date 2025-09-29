@@ -1,0 +1,55 @@
+﻿@using SubspaceStats.Areas.League.Models
+@model List<SeasonStandings>
+
+@{
+	ViewData["Title"] = "Latest Standings";
+}
+
+<div class="d-flex">
+	<h1>Leagues</h1>
+</div>
+
+<div class="mb-3">
+	<a asp-controller="Home" asp-action="Nav" class="mx-2 btn btn-link">Leagues and Seasons</a>
+	<a asp-controller="League" asp-action="Index" class="mx-2 btn btn-link">League List</a>
+	<a asp-controller="Franchise" asp-action="Index" class="mx-2 btn btn-link">Franchises</a>
+	<a asp-controller="PlayerSearch" asp-action="Index" class="mx-2 btn btn-link disabled">Player Search</a>
+</div>
+
+<div class="container mt-3 mb-3">
+	<div class="row g-3">
+		@foreach (var seasonWithStandings in Model)
+		{
+			<div class="col-12 col-md-6 col-lg-4">
+				<div class="card h-100">
+					<h5 class="card-header text-center position-relative link">
+						<a asp-controller="Season" asp-action="Index" asp-route-Id="@seasonWithStandings.SeasonId" class="stretched-link link-underline link-underline-opacity-0 link-underline-opacity-50-hover">@seasonWithStandings.LeagueName<br />@seasonWithStandings.SeasonName</a>
+					</h5>
+					<div class="card-body">
+						<table class="table table-sm table-borderless table-hover m-0">
+							<thead>
+								<tr>
+									<th>Team</th>
+									<th class="text-end">Wins</th>
+									<th class="text-end">Losses</th>
+									<th class="text-end">Draws</th>
+								</tr>
+							</thead>
+							<tbody>
+								@foreach (var standing in seasonWithStandings.Standings)
+								{
+									<tr>
+										<td><a asp-controller="Team" asp-action="Index" asp-route-id="@standing.TeamId">@standing.TeamName</a></td>
+										<td class="text-end">@standing.Wins</td>
+										<td class="text-end">@standing.Losses</td>
+										<td class="text-end">@standing.Draws</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+</div>
