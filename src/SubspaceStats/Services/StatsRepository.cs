@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Caching.Hybrid;
-using Microsoft.Extensions.Options;
 using Npgsql;
 using NpgsqlTypes;
 using SubspaceStats.Models;
@@ -7,20 +6,29 @@ using SubspaceStats.Models.GameDetails;
 using SubspaceStats.Models.GameDetails.TeamVersus;
 using SubspaceStats.Models.Leaderboard;
 using SubspaceStats.Models.Player;
-using SubspaceStats.Options;
 using System.Data;
 using System.Text.Json;
 
 namespace SubspaceStats.Services
 {
-    public class StatsRepository(
-        HybridCache cache,
-        IOptions<StatRepositoryOptions> options, 
-        ILogger<StatsRepository> logger) : IStatsRepository
+    public class StatsRepository : IStatsRepository
     {
-        private HybridCache _cache = cache;
-        private readonly ILogger<StatsRepository> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        private readonly NpgsqlDataSource _dataSource = NpgsqlDataSource.Create(options.Value.ConnectionString);
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<StatsRepository> _logger;
+        private readonly HybridCache _cache;
+        private readonly NpgsqlDataSource _dataSource;
+
+        public StatsRepository(
+            IConfiguration configuration,
+            ILogger<StatsRepository> logger,
+            HybridCache cache)
+        {
+            _configuration = configuration;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _cache = cache;
+            _dataSource = NpgsqlDataSource.Create(
+                _configuration.GetConnectionString("SubspaceStats") ?? throw new Exception("Missing 'SubspaceStats' connection string."));
+        }
 
         public async Task<OrderedDictionary<long, GameType>> GetGameTypesAsync(CancellationToken cancellationToken)
         {

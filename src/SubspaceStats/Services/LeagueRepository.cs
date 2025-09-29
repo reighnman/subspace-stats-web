@@ -1,23 +1,30 @@
-﻿using Microsoft.Extensions.Options;
-using Npgsql;
+﻿using Npgsql;
 using NpgsqlTypes;
 using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Areas.League.Models.Season;
 using SubspaceStats.Areas.League.Models.Team;
-using SubspaceStats.Options;
 using System.Data;
 using System.Text.Json;
 
 namespace SubspaceStats.Services
 {
-    public class LeagueRepository(
-        IOptions<StatRepositoryOptions> options, 
-        ILogger<StatsRepository> logger) : ILeagueRepository
+    public class LeagueRepository : ILeagueRepository
     {
-        private readonly ILogger<StatsRepository> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        private readonly NpgsqlDataSource _dataSource = NpgsqlDataSource.Create(options.Value.ConnectionString);
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<StatsRepository> _logger;
+        private readonly NpgsqlDataSource _dataSource;
+
+        public LeagueRepository(
+            IConfiguration configuration,
+            ILogger<StatsRepository> logger)
+        {
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _dataSource = NpgsqlDataSource.Create(
+                _configuration.GetConnectionString("SubspaceStats") ?? throw new Exception("Missing 'SubspaceStats' connection string."));
+        }
 
         public async Task<List<SeasonStandings>?> GetLatestSeasonsStandingsAsync(long[] leagueIds, CancellationToken cancellationToken)
         {
@@ -836,60 +843,67 @@ namespace SubspaceStats.Services
         {
             try
             {
-                await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
-                await using NpgsqlCommand command = new("select * from league.get_team_games($1)", connection);
-
-                command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = teamId });
-                await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
-
-                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-                int column_seasonGameId = reader.GetOrdinal("season_game_id");
-                int column_roundNumber = reader.GetOrdinal("round_number");
-                int column_roundName = reader.GetOrdinal("round_name");
-                int column_gameTimestamp = reader.GetOrdinal("game_timestamp");
-                int column_gameId = reader.GetOrdinal("game_id");
-                int column_teams = reader.GetOrdinal("teams");
-                int column_winLoseDraw = reader.GetOrdinal("win_lose_draw");
-                int column_scores = reader.GetOrdinal("scores");
-
-                List<TeamGameRecord> records = new(32);
-                while (await reader.ReadAsync(cancellationToken))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    long seasonGameId = reader.GetInt64(column_seasonGameId);
-                    int? roundNumber = reader.IsDBNull(column_roundNumber) ? null : reader.GetInt32(column_roundNumber);
-                    string? roundName = reader.IsDBNull(column_roundName) ? null : reader.GetString(column_roundName);
-                    DateTime? gameTimestamp = reader.IsDBNull(column_gameTimestamp) ? null : reader.GetDateTime(column_gameTimestamp);
-                    long? gameId = reader.IsDBNull(column_gameId) ? null : reader.GetInt64(column_gameId);
-                    string teams = reader.GetString(column_teams);
-                    char? winLoseDraw = reader.IsDBNull(column_winLoseDraw) ? null : reader.GetChar(column_winLoseDraw);
-                    GameResult? result = winLoseDraw is null
-                        ? null
-                        : winLoseDraw.Value switch
-                        {
-                            'W' => GameResult.Win,
-                            'L' => GameResult.Loss,
-                            'D' => GameResult.Draw,
-                            _ => null
-                        };
+                    NpgsqlCommand command = new("select * from league.get_team_games($1)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = teamId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                    string? scores = reader.IsDBNull(column_scores) ? null : reader.GetString(column_scores);
-
-                    records.Add(
-                        new TeamGameRecord()
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            SeasonGameId = seasonGameId,
-                            RoundNumber = roundNumber,
-                            RoundName = roundName,
-                            GameTimestamp = gameTimestamp,
-                            GameId = gameId,
-                            Teams = teams,
-                            Result = result,
-                            Scores = scores,
-                        });
+                            int column_seasonGameId = reader.GetOrdinal("season_game_id");
+                            int column_roundNumber = reader.GetOrdinal("round_number");
+                            int column_roundName = reader.GetOrdinal("round_name");
+                            int column_gameTimestamp = reader.GetOrdinal("game_timestamp");
+                            int column_gameId = reader.GetOrdinal("game_id");
+                            int column_teams = reader.GetOrdinal("teams");
+                            int column_winLoseDraw = reader.GetOrdinal("win_lose_draw");
+                            int column_scores = reader.GetOrdinal("scores");
+
+                            List<TeamGameRecord> records = new(32);
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                long seasonGameId = reader.GetInt64(column_seasonGameId);
+                                int? roundNumber = reader.IsDBNull(column_roundNumber) ? null : reader.GetInt32(column_roundNumber);
+                                string? roundName = reader.IsDBNull(column_roundName) ? null : reader.GetString(column_roundName);
+                                DateTime? gameTimestamp = reader.IsDBNull(column_gameTimestamp) ? null : reader.GetDateTime(column_gameTimestamp);
+                                long? gameId = reader.IsDBNull(column_gameId) ? null : reader.GetInt64(column_gameId);
+                                string teams = reader.GetString(column_teams);
+                                char? winLoseDraw = reader.IsDBNull(column_winLoseDraw) ? null : reader.GetChar(column_winLoseDraw);
+                                GameResult? result = winLoseDraw is null
+                                    ? null
+                                    : winLoseDraw.Value switch
+                                    {
+                                        'W' => GameResult.Win,
+                                        'L' => GameResult.Loss,
+                                        'D' => GameResult.Draw,
+                                        _ => null
+                                    };
+
+                                string? scores = reader.IsDBNull(column_scores) ? null : reader.GetString(column_scores);
+
+                                records.Add(
+                                    new TeamGameRecord()
+                                    {
+                                        SeasonGameId = seasonGameId,
+                                        RoundNumber = roundNumber,
+                                        RoundName = roundName,
+                                        GameTimestamp = gameTimestamp,
+                                        GameId = gameId,
+                                        Teams = teams,
+                                        Result = result,
+                                        Scores = scores,
+                                    });
+                            }
+
+                            return records;
+                        }
+                    }
                 }
-
-                return records;
             }
             catch (Exception ex)
             {

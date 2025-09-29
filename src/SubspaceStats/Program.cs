@@ -15,15 +15,9 @@ namespace SubspaceStats
             builder.Services.Configure<StatOptions>(builder.Configuration.GetSection(StatOptions.StatsSectionKey));
             builder.Services.Configure<LeagueOptions>(builder.Configuration.GetSection(LeagueOptions.LeagueSectionKey));
 
-            // StatRepositoryOptions contains the connection string.
+            // The connection string the services use is named: "SubspaceStats"
             // In Development use user-secrets.
             // In Production use Environment Variables or an online secrets store, depending on your host.
-            builder.Services.AddOptions<StatRepositoryOptions>()
-                .Bind(builder.Configuration.GetSection(StatRepositoryOptions.StatRepositoryOptionsKey))
-                .ValidateDataAnnotations();
-            builder.Services.AddOptions<LeagueRepositoryOptions>()
-                .Bind(builder.Configuration.GetSection(LeagueRepositoryOptions.SectionKey))
-                .ValidateDataAnnotations();
 
             builder.Services.AddHybridCache();
 

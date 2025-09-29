@@ -37,15 +37,4 @@ namespace SubspaceStats.Options
 
 
     }
-
-    public class LeagueRepositoryOptions
-    {
-        public const string SectionKey = $"{LeagueOptions.LeagueSectionKey}:Repository";
-
-        /// <summary>
-        /// The connection string for the Subspace Stats database.
-        /// </summary>
-        [Required]
-        public required string ConnectionString { get; set; }
-    }
 }
