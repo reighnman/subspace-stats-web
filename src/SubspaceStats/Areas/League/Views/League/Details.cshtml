@@ -7,7 +7,7 @@
 @{
     ViewData["Title"] = "League Details";
 
-    Model.GameTypes.TryGetValue(Model.League.GameType, out string? gameTypeName);
+    string gameTypeName = Model.GameTypes.TryGetValue(Model.League.GameTypeId, out GameType? gameType) ? gameType.Name : Model.League.GameTypeId.ToString();
 }
 
 <h1>League Details</h1>
@@ -30,7 +30,7 @@
                 @Html.DisplayFor(model => model.League.Name)
             </div>
             <div class="mb-3">
-                <label asp-for="League.GameType" class="form-label"></label>
+                <label asp-for="League.GameTypeId" class="form-label"></label>
                 <label class="form-control">@gameTypeName</label>
             </div>
         </div>

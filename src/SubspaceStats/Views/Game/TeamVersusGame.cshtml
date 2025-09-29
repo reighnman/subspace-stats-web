@@ -1,10 +1,10 @@
 ﻿@using SubspaceStats.Models.GameDetails.TeamVersus;
 @using SubspaceStats.Models.GameDetails.TeamVersus.Events;
 @using System.Text;
-@model SubspaceStats.Models.GameDetails.Game
+@model SubspaceStats.Models.GameDetails.GameDetailsViewModel
 
 @{
-	ViewData["Title"] = $"Game {Model.Id}";
+	ViewData["Title"] = $"Game {Model.Game.Id}";
 }
 
 @functions {
@@ -36,49 +36,49 @@
 					Game ID:
 				</dt>
 				<dd class="col-9">
-					@Model.Id
+					@Model.Game.Id
 				</dd>
 				<dt class="col-3">
 					Game Type:
 				</dt>
 				<dd class="col-9">
-					@Model.GameType.GetDisplayName()
+					@Model.GameType.Name
 				</dd>
 				<dt class="col-3">
 					Start Time:
 				</dt>
 				<dd class="col-9">
-					@Model.StartTime.ToString("yyyy-MM-dd HH:mm:ss")
+					@Model.Game.StartTime.ToString("yyyy-MM-dd HH:mm:ss")
 				</dd>
 				<dt class="col-3">
 					End Time:
 				</dt>
 				<dd class="col-9">
-					@Model.EndTime.ToString("yyyy-MM-dd HH:mm:ss")
+					@Model.Game.EndTime.ToString("yyyy-MM-dd HH:mm:ss")
 				</dd>
 			</dl>
 		</div>
 		<div class="col-12 col-md-6">
 			<dl class="row">
 				<dt class="col-3">Zone:</dt>
-				<dd class="col-9">@Model.ZoneServerName</dd>
+				<dd class="col-9">@Model.Game.ZoneServerName</dd>
 				<dt class="col-3">Arena:</dt>
-				<dd class="col-9">@Model.ArenaName</dd>
+				<dd class="col-9">@Model.Game.ArenaName</dd>
 				<dt class="col-3">Box:</dt>
-				<dd class="col-9">@Model.BoxNumber</dd>
+				<dd class="col-9">@Model.Game.BoxNumber</dd>
 				<dt class="col-3">Map:</dt>
-				<dd class="col-9">@Model.LvlFileName</dd>
+				<dd class="col-9">@Model.Game.LvlFileName</dd>
 			</dl>
 		</div>
 
 	</div>
 
-	@if (Model.TeamStats is not null)
+	@if (Model.Game.TeamStats is not null)
 	{
 		StringBuilder scoreBuilder = new();
 		StringBuilder winnerBuilder = new();
 
-		foreach (var teamStats in Model.TeamStats)
+		foreach (var teamStats in Model.Game.TeamStats)
 		{
 			if (scoreBuilder.Length > 0)
 				scoreBuilder.Append('-');
@@ -104,7 +104,7 @@
 		</h4>
 		<div class="table-responsive-xl">
 			<table class="table table-bordered text-end text-nowrap">
-				@foreach (var teamStats in Model.TeamStats)
+				@foreach (var teamStats in Model.Game.TeamStats)
 				{
 					<thead>
 						<tr class="text-start">
@@ -186,7 +186,7 @@
 							<tr>
 								<td class="text-start">
 									<div class="@(memberStats.MemberIdx > 1 ? "ps-2" : null)">
-										@Html.ActionLink(memberStats.PlayerName, "Index", "Player", new { playerName = memberStats.PlayerName, gameType = Model.GameType })
+										@Html.ActionLink(memberStats.PlayerName, "Index", "Player", new { playerName = memberStats.PlayerName, gameType = Model.Game.GameTypeId })
 										@if (memberStats.PremadeGroup is not null)
 										{
 											<span class="badge text-bg-secondary" title="Premade Group">Premade @memberStats.PremadeGroup</span>
@@ -285,7 +285,7 @@
 		</div>
 	}
 
-	@if (Model.Events is not null)
+	@if (Model.Game.Events is not null)
 	{
 		<h4>Events</h4>
 		<div class="table-responsive">
@@ -322,11 +322,11 @@
 					</tr>
 				</thead>
 				<tbody>
-					@foreach (var gameEvent in Model.Events)
+					@foreach (var gameEvent in Model.Game.Events)
 					{
 						@if (gameEvent is PlayerKillEvent killEvent)
 						{
-							TimeSpan gameTime = killEvent.Timestamp - Model.StartTime;
+							TimeSpan gameTime = killEvent.Timestamp - Model.Game.StartTime;
 							int? killerDamage = null;
 							List<(string PlayerName, int Damage)> assistList = new();
 							if (killEvent.DamageStats is not null)
@@ -349,7 +349,7 @@
 							<tr>
 								<td>
 									<img src="@GetShipImage(killEvent.KilledShip)" alt="@killEvent.KilledShip" title="@killEvent.KilledShip" width="24" />
-									@Html.ActionLink(killEvent.KilledPlayerName, "Index", "Player", new { playerName = killEvent.KilledPlayerName, gameType = Model.GameType })
+									@Html.ActionLink(killEvent.KilledPlayerName, "Index", "Player", new { playerName = killEvent.KilledPlayerName, gameType = Model.Game.GameTypeId })
 									@if (killEvent.RatingChanges is not null && killEvent.RatingChanges.TryGetValue(killEvent.KilledPlayerName, out float killedRating))
 									{
 										<span title="Rating">(@killedRating.ToString("+#;-#;0"))</span>
@@ -359,7 +359,7 @@
 									<div class="d-flex">
 										<div class="flex-grow-1">
 											<img src="@GetShipImage(killEvent.KillerShip)" alt="@killEvent.KillerShip" title="@killEvent.KillerShip" width="24" />
-											@Html.ActionLink(killEvent.KillerPlayerName, "Index", "Player", new { playerName = killEvent.KillerPlayerName, gameType = Model.GameType })
+											@Html.ActionLink(killEvent.KillerPlayerName, "Index", "Player", new { playerName = killEvent.KillerPlayerName, gameType = Model.Game.GameTypeId })
 											@if (killEvent.RatingChanges is not null && killEvent.RatingChanges.TryGetValue(killEvent.KillerPlayerName, out float killerRating))
 											{
 												<span title="Rating">(@killerRating.ToString("+#;-#;0"))</span>
@@ -380,7 +380,7 @@
 									{
 										<div class="d-flex">
 											<div class="flex-grow-1">
-												@Html.ActionLink(assist.PlayerName, "Index", "Player", new { playerName = assist.PlayerName, gameType = Model.GameType })
+												@Html.ActionLink(assist.PlayerName, "Index", "Player", new { playerName = assist.PlayerName, gameType = Model.Game.GameTypeId })
 											</div>
 											<div>
 												<span class="badge bg-secondary" title="Damage">@assist.Damage</span>
@@ -422,9 +422,9 @@
 					</tr>
 				</thead>
 				<tbody>
-					@foreach (var gameEvent in Model.Events)
+					@foreach (var gameEvent in Model.Game.Events)
 					{
-						TimeSpan gameTime = gameEvent.Timestamp - Model.StartTime;
+						TimeSpan gameTime = gameEvent.Timestamp - Model.Game.StartTime;
 						<tr>
 							<td class="text-end">@gameTime.ToDisplayString()</td>
 							<td>
@@ -487,7 +487,7 @@
 											{
 												<tr>
 													<td class="text-end w-25"><span class="badge bg-secondary" title="Damage">@damage</span></td>
-													<td class="w-75"><a asp-controller="Player" asp-action="Index" asp-route-playerName="@playerName" asp-route-gameType="@Model.GameType">@playerName</a></td>
+													<td class="w-75"><a asp-controller="Player" asp-action="Index" asp-route-playerName="@playerName" asp-route-gameType="@Model.Game.GameTypeId">@playerName</a></td>
 												</tr>
 											}
 										</tbody>
@@ -510,7 +510,7 @@
 											{
 												<tr>
 													<td class="text-end w-25"><span class="@(ratingChange >= 0 ? "text-success" : "text-danger")" title="Damage">@ratingChange.ToString("+#;-#;0")</span></td>
-													<td class="w-75"><a asp-controller="Player" asp-action="Index" asp-route-playerName="@playerName" asp-route-gameType="@Model.GameType">@playerName</a></td>
+													<td class="w-75"><a asp-controller="Player" asp-action="Index" asp-route-playerName="@playerName" asp-route-gameType="@Model.Game.GameTypeId">@playerName</a></td>
 												</tr>
 											}
 										</tbody>

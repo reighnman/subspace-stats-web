@@ -43,10 +43,11 @@ public class HomeController(
         }
 
         return View(
-        new HomeViewModel
-        {
-            TopRatings = topRatings,
-        });
+            new HomeViewModel
+            {
+                TopRatings = topRatings,
+                GameTypes = await _statsRepository.GetGameTypesAsync(cancellationToken),
+            });
     }
 
     public IActionResult Privacy()

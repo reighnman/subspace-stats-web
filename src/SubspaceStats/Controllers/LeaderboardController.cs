@@ -15,7 +15,7 @@ public class LeaderboardController(
     private readonly IStatsRepository _statsRepository = statsRepository;
 
     public async Task<IActionResult> Index(
-        GameType gameType,
+        [Bind(Prefix = "gameType")]long gameTypeId,
         CancellationToken cancellationToken,
         long? period = null,
         TeamVersusLeaderboardSort sort = TeamVersusLeaderboardSort.Rating, // TODO: implement sorting
@@ -24,7 +24,13 @@ public class LeaderboardController(
     {
         limit = Math.Clamp(limit, 1, 200);
 
-        List<StatPeriod> periods = await _statsRepository.GetStatPeriods(gameType, StatPeriodType.Monthly, 12, 0, cancellationToken);
+        GameType? gameType = await _statsRepository.GetGameTypeAsync(gameTypeId, cancellationToken);
+        if (gameType is null)
+        {
+            return BadRequest();
+        }
+
+        List<StatPeriod> periods = await _statsRepository.GetStatPeriods(gameType.Id, StatPeriodType.Monthly, 12, 0, cancellationToken);
 
         StatPeriod? selectedPeriod = null;
         StatPeriod? priorPeriod = null;
@@ -36,7 +42,7 @@ public class LeaderboardController(
                 int selectedIndex = periods.FindIndex(rp => rp.StatPeriodId == period);
                 if (selectedIndex == -1)
                 {
-                    return RedirectToAction((string)RouteData.Values["action"]!, new { gameType });
+                    return RedirectToAction((string)RouteData.Values["action"]!, new { gameType = gameType.Id });
                 }
 
                 selectedPeriod = periods[selectedIndex];

@@ -13,7 +13,7 @@ namespace SubspaceStats.Models.GameDetails
         public required long Id { get; init; }
 
         [JsonPropertyName("game_type_id")]
-        public required GameType GameType { get; init; }
+        public required long GameTypeId { get; init; }
 
         [JsonPropertyName("zone_server_name")]
         public required string ZoneServerName { get; init; }

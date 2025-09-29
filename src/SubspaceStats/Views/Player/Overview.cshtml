@@ -21,9 +21,11 @@
 		<div class="row g-3">
 			@foreach (var participationRecord in Model.ParticipationRecordList)
 			{
+				string gameTypeName = Model.GameTypes.TryGetValue(participationRecord.LastStatPeriod.GameTypeId, out GameType? gameType) ? gameType.Name : participationRecord.LastStatPeriod.GameTypeId.ToString();
+				
 				<div class="col-12 col-md-6 col-lg-3">
 					<div class="card h-100">
-						<h5 class="card-header card-title text-center">@participationRecord.LastStatPeriod.GameType.GetDisplayName()</h5>
+						<h5 class="card-header card-title text-center">@gameTypeName</h5>
 						<div class="card-body">
 							<h5>@participationRecord.LastStatPeriod.GetDisplayDescription()</h5>
 							@if (participationRecord.Rating is not null)
@@ -45,7 +47,7 @@
 								<div>345</div>
 							</div>
 							*@
-							@Html.ActionLink("View Stats", "Index", "Player", new { playerName = Model.PlayerName, gameType = participationRecord.LastStatPeriod.GameType, period = participationRecord.LastStatPeriod.StatPeriodId}, new { @class = "btn btn-primary stretched-link" })
+							@Html.ActionLink("View Stats", "Index", "Player", new { playerName = Model.PlayerName, gameType = participationRecord.LastStatPeriod.GameTypeId, period = participationRecord.LastStatPeriod.StatPeriodId}, new { @class = "btn btn-primary stretched-link" })
 						</div>
 					</div>
 				</div>

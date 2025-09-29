@@ -2,6 +2,7 @@
 using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.Season;
 using SubspaceStats.Areas.League.Models.Team;
+using SubspaceStats.Models;
 using SubspaceStats.Services;
 
 namespace SubspaceStats.Areas.League.Controllers
@@ -70,7 +71,7 @@ namespace SubspaceStats.Areas.League.Controllers
             }
 
             Task<List<LeagueWithSeasons>> leagueWithSeasonsTask = _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
-            Task<OrderedDictionary<long, string>> gameTypeTask = _statsRepository.GetGameTypesAsync(cancellationToken);
+            Task<OrderedDictionary<long, GameType>> gameTypeTask = _statsRepository.GetGameTypesAsync(cancellationToken);
 
             await Task.WhenAll(leagueWithSeasonsTask, gameTypeTask);
 

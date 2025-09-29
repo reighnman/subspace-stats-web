@@ -35,18 +35,18 @@
 		<dt class="col-4">Stat Game Type:</dt>
 		<dd class="col-8">
 			@if (Model.Details.StatGameTypeId is not null 
-				&& Model.GameTypes.TryGetValue(Model.Details.StatGameTypeId.Value, out string? statGameType))
+				&& Model.GameTypes.TryGetValue(Model.Details.StatGameTypeId.Value, out GameType? statGameType))
 			{
-				<text>@statGameType</text>
+				<text>@statGameType.Name</text>
 			}
 		</dd>
 
 		<dt class="col-4">League Game Type:</dt>
 		<dd class="col-8">
 			@if (Model.Details.LeagueGameTypeId is not null
-				&& Model.GameTypes.TryGetValue(Model.Details.LeagueGameTypeId.Value, out string? leagueGameType))
+						&& Model.GameTypes.TryGetValue(Model.Details.LeagueGameTypeId.Value, out GameType? leagueGameType))
 			{
-				<text>@leagueGameType</text>
+				<text>@leagueGameType.Name</text>
 			}
 		</dd>
 	</dl>

@@ -6,5 +6,6 @@
         public required PlayerInfo PlayerInfo { get; init; }
 
         public required List<ParticipationRecord> ParticipationRecordList { get; init; }
+        public required OrderedDictionary<long, GameType> GameTypes { get; init; }
     }
 }

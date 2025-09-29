@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Memory;
 using SubspaceStats.Filters;
 using SubspaceStats.Options;
 using SubspaceStats.Services;
@@ -23,6 +24,8 @@ namespace SubspaceStats
             builder.Services.AddOptions<LeagueRepositoryOptions>()
                 .Bind(builder.Configuration.GetSection(LeagueRepositoryOptions.SectionKey))
                 .ValidateDataAnnotations();
+
+            builder.Services.AddHybridCache();
 
             builder.Services.AddSingleton<ILeagueRepository, LeagueRepository>();
             builder.Services.AddSingleton<IStatsRepository, StatsRepository>();
@@ -116,6 +119,11 @@ namespace SubspaceStats
                 name: "LeagueAreaDefault",
                 areaName: "League",
                 pattern: "League/{controller=Home}/{action=Index}/{id?}");
+
+            app.MapAreaControllerRoute(
+                name: "AdminArea",
+                areaName: "Admin",
+                pattern: "Admin/{controller=Home}/{action=Index}/{id?}");
 
             app.MapControllerRoute(
                 name: "Game",

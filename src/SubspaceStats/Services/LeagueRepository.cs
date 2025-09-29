@@ -12,7 +12,9 @@ using System.Text.Json;
 
 namespace SubspaceStats.Services
 {
-    public class LeagueRepository(IOptions<StatRepositoryOptions> options, ILogger<StatsRepository> logger) : ILeagueRepository
+    public class LeagueRepository(
+        IOptions<StatRepositoryOptions> options, 
+        ILogger<StatsRepository> logger) : ILeagueRepository
     {
         private readonly ILogger<StatsRepository> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         private readonly NpgsqlDataSource _dataSource = NpgsqlDataSource.Create(options.Value.ConnectionString);
@@ -468,7 +470,7 @@ namespace SubspaceStats.Services
                                 {
                                     Id = dataReader.GetInt64(column_leagueId),
                                     Name = dataReader.GetString(column_leagueName),
-                                    GameType = dataReader.GetInt64(column_gameTypeId),
+                                    GameTypeId = dataReader.GetInt64(column_gameTypeId),
                                 });
                             }
 
@@ -511,7 +513,7 @@ namespace SubspaceStats.Services
                             {
                                 Id = leagueId,
                                 Name = dataReader.GetString(column_leagueName),
-                                GameType = dataReader.GetInt64(column_gameTypeId),
+                                GameTypeId = dataReader.GetInt64(column_gameTypeId),
                             };
                         }
                     }
@@ -565,7 +567,7 @@ namespace SubspaceStats.Services
                     {
                         command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = league.Id });
                         command.Parameters.AddWithValue(league.Name);
-                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = league.GameType });
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = league.GameTypeId });
                         await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
                         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -574,7 +576,7 @@ namespace SubspaceStats.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating league. (league_id: {league_id}, league_name: {league_name}, game_type_id:{game_type_id})", league.Id, league.Name, league.GameType);
+                _logger.LogError(ex, "Error updating league. (league_id: {league_id}, league_name: {league_name}, game_type_id:{game_type_id})", league.Id, league.Name, league.GameTypeId);
                 throw;
             }
         }

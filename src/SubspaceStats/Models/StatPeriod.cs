@@ -5,7 +5,7 @@ namespace SubspaceStats.Models
     public struct StatPeriod : IEquatable<StatPeriod>
     {
         public long StatPeriodId { get; set; }
-        public GameType GameType { get; set; }
+        public long GameTypeId { get; set; }
         public StatPeriodType StatPeriodType { get; set; }
         public NpgsqlRange<DateTime> PeriodRange { get; set; }
 

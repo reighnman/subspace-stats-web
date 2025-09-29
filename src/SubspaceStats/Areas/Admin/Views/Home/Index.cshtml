@@ -1,0 +1,26 @@
+﻿@model string
+
+@{
+	ViewData["Title"] = "Administrator Dashboard";
+}
+
+<h1>Administrator Dashboard</h1>
+
+@if (!string.IsNullOrWhiteSpace(Model))
+{
+	<div class="alert alert-primary" role="alert">@Model</div>
+}
+
+<div class="container">
+	<div class="card">
+		<div class="card-header">
+			Clear Cache - Game Type
+		</div>
+		<div class="card-body">
+			The web server caches <strong>Game Type</strong> data. If a new record is added to the <em>ss.game_type</em> table, the server will not see it. Clearing the cache will force the server to read the data from the database the next time it's needed.
+			<form asp-action="ClearGameTypeCache">
+				<button class="btn btn-primary" type="submit">Clear Cache</button>
+			</form>
+		</div>
+	</div>
+</div>

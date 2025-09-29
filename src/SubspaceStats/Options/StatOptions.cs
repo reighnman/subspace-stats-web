@@ -25,7 +25,10 @@ namespace SubspaceStats.Options
     /// </summary>
     public class NavbarOptions
     {
-        public List<GameType> LeaderboardGameTypes { get; set; } = new();
+        /// <summary>
+        /// Which Game Type IDs to show links for on the navigation bar.
+        /// </summary>
+        public long[] LeaderboardGameTypes { get; set; } = [];
     }
 
     /// <summary>
@@ -44,7 +47,7 @@ namespace SubspaceStats.Options
     /// </summary>
     public class RatingSettings
     {
-        public GameType GameType { get; set; }
+        public long GameType { get; set; }
         public StatPeriodType PeriodType { get; set; }
         public int Top { get; set; }
     }

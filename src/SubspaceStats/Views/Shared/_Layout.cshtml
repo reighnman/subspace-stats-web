@@ -1,6 +1,8 @@
 ﻿@using Microsoft.Extensions.Options
 @using SubspaceStats.Options;
+@using SubspaceStats.Services
 @inject IOptions<StatOptions> statOptions
+@inject IStatsRepository statsRepository
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,11 +37,15 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
-                        @foreach(GameType gameType in statOptions.Value.Navbar.LeaderboardGameTypes)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@gameType">@gameType.GetDisplayName()</a>
-                            </li>
+                        @{
+                            var gameTypes = await statsRepository.GetGameTypesAsync(Context.RequestAborted);
+                            foreach (long gameTypeId in statOptions.Value.Navbar.LeaderboardGameTypes)
+                            {
+                                string gameTypeName = gameTypes.TryGetValue(gameTypeId, out GameType? gameType) ? gameType.Name : gameTypeId.ToString();
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@gameTypeId">@gameTypeName</a>
+                                </li>
+                            }
                         }
                         <li class="nav-item">
                             <a class="nav-link" asp-area="League" asp-controller="Home" asp-action="Index">Leagues</a>

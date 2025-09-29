@@ -14,10 +14,11 @@
 	<div class="row g-3">
 		@foreach (var topRating in Model.TopRatings)
 		{
+			string gameTypeName = Model.GameTypes.TryGetValue(topRating.Period.GameTypeId, out GameType? gameType) ? gameType.Name : topRating.Period.GameTypeId.ToString();
 			<div class="col-12 col-md-6 col-lg-4 col-xl-3">
 				<div class="card h-100">
 					<h5 class="card-header text-center">
-						<a asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@topRating.Period.GameType" asp-route-period="@topRating.Period.StatPeriodId">@topRating.Period.GameType.GetDisplayName()</a>
+						<a asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@topRating.Period.GameTypeId" asp-route-period="@topRating.Period.StatPeriodId">@gameTypeName</a>
 					</h5>
 					<div class="card-body">
 						<table class="table table-sm table-borderless m-0">
@@ -27,7 +28,7 @@
 									<tr>
 										<td class="fw-bold">@record.Rank</td>
 										<td>
-											<a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@topRating.Period.GameType" asp-route-period="@topRating.Period.StatPeriodId">@record.PlayerName</a>
+											<a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@topRating.Period.GameTypeId" asp-route-period="@topRating.Period.StatPeriodId">@record.PlayerName</a>
 										<td class="text-end">@record.Rating</td>
 									</tr>
 								}

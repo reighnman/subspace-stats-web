@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SubspaceStats.Areas.League.Models.League;
+using SubspaceStats.Models;
 using SubspaceStats.Services;
 
 namespace SubspaceStats.Areas.League.Controllers
@@ -16,7 +17,7 @@ namespace SubspaceStats.Areas.League.Controllers
         public async Task<ActionResult> Index(CancellationToken cancellationToken)
         {
             Task<List<LeagueModel>> leagueListTask = _leagueRepository.GetLeagueListAsync(cancellationToken);
-            Task<OrderedDictionary<long, string>> gameTypesTask = _statsRepository.GetGameTypesAsync(cancellationToken);
+            Task<OrderedDictionary<long, GameType>> gameTypesTask = _statsRepository.GetGameTypesAsync(cancellationToken);
 
             await Task.WhenAll(leagueListTask, gameTypesTask);
 
@@ -67,19 +68,19 @@ namespace SubspaceStats.Areas.League.Controllers
         // POST: League/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create([Bind("Name", "GameType", Prefix ="League")]LeagueModel league, CancellationToken cancellationToken)
+        public async Task<ActionResult> Create([Bind("Name", "GameTypeId", Prefix ="League")]LeagueModel league, CancellationToken cancellationToken)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                long leagueId = await _leagueRepository.InsertLeagueAsync(
-                    league.Name!,
-                    league.GameType,
-                    cancellationToken);
-
-                return RedirectToAction(nameof(Details), "League", new { id = leagueId });
+                return BadRequest();
             }
 
-            return View(league);
+            long leagueId = await _leagueRepository.InsertLeagueAsync(
+                    league.Name!,
+                    league.GameTypeId,
+                    cancellationToken);
+
+            return RedirectToAction(nameof(Details), "League", new { id = leagueId });
         }
 
         // GET: League/5/Edit
@@ -107,7 +108,7 @@ namespace SubspaceStats.Areas.League.Controllers
         // POST: League/5/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(long? id, [Bind("Id", "Name", "GameType", Prefix = "League")] LeagueModel league, CancellationToken cancellationToken)
+        public async Task<ActionResult> Edit(long? id, [Bind("Id", "Name", "GameTypeId", Prefix = "League")] LeagueModel league, CancellationToken cancellationToken)
         {
             if (id is null || id != league.Id)
             {
@@ -116,18 +117,11 @@ namespace SubspaceStats.Areas.League.Controllers
 
             if (!ModelState.IsValid)
             {
-                return View();
+                return BadRequest();
             }
 
-            try
-            {
-                await _leagueRepository.UpdateLeagueAsync(league, cancellationToken);
-                return RedirectToAction(nameof(Details));
-            }
-            catch
-            {
-                return View(league);
-            }
+            await _leagueRepository.UpdateLeagueAsync(league, cancellationToken);
+            return RedirectToAction(nameof(Details));
         }
 
         // GET: League/5/Delete

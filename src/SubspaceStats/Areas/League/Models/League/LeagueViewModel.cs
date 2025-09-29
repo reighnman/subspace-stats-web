@@ -1,8 +1,10 @@
-﻿namespace SubspaceStats.Areas.League.Models.League
+﻿using SubspaceStats.Models;
+
+namespace SubspaceStats.Areas.League.Models.League
 {
     public class LeagueViewModel
     {
         public LeagueModel? League { get; set; }
-        public required OrderedDictionary<long, string> GameTypes { get; init; }
+        public required OrderedDictionary<long, GameType> GameTypes { get; init; }
     }
 }

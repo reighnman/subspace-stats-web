@@ -6,7 +6,7 @@
 
     IEnumerable<SelectListItem> gameTypes =
         from kvp in Model.GameTypes
-        select new SelectListItem(kvp.Value, kvp.Key.ToString());
+        select new SelectListItem(kvp.Value.Id.ToString(), kvp.Key.ToString());
 }
 
 <h1>Delete league</h1>
@@ -31,11 +31,11 @@
                     <span asp-validation-for="League.Name" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="League.GameType" class="form-label"></label>
-                    <select asp-for="League.GameType" asp-items="@gameTypes" class="form-select" disabled>
+                    <label asp-for="League.GameTypeId" class="form-label"></label>
+                    <select asp-for="League.GameTypeId" asp-items="@gameTypes" class="form-select" disabled>
                         <option disabled selected>-- Select a Game Type --</option>
                     </select>
-                    <span asp-validation-for="League.GameType" class="text-danger"></span>
+                    <span asp-validation-for="League.GameTypeId" class="text-danger"></span>
                 </div>
                 <div class="d-flex">
                     <button type="submit" class="btn btn-primary m-2">Delete</button>

@@ -10,7 +10,9 @@ namespace SubspaceStats.Services
     /// </summary>
     public interface IStatsRepository
     {
-        Task<OrderedDictionary<long, string>> GetGameTypesAsync(CancellationToken cancellationToken);
+        Task<OrderedDictionary<long, GameType>> GetGameTypesAsync(CancellationToken cancellationToken);
+
+        Task<GameType?> GetGameTypeAsync(long gameTypeId, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets the available stats periods for a specified game type and period type.
@@ -21,7 +23,7 @@ namespace SubspaceStats.Services
         /// <param name="offset">The offset of the stat periods to return.</param>
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The stat periods.</returns>
-        Task<List<StatPeriod>> GetStatPeriods(GameType gameType, StatPeriodType statPeriodType, int? limit, int offset, CancellationToken cancellationToken);
+        Task<List<StatPeriod>> GetStatPeriods(long gameType, StatPeriodType statPeriodType, int? limit, int offset, CancellationToken cancellationToken);
 
         /// <summary>
         /// Get the forever (lifetime) stat period for a specified game type.
@@ -29,7 +31,7 @@ namespace SubspaceStats.Services
         /// <param name="gameType">The game type to get the stat period for.</param>
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The stat period, or <see langword="null"/> if not found.</returns>
-        Task<StatPeriod?> GetForeverStatPeriod(GameType gameType, CancellationToken cancellationToken);
+        Task<StatPeriod?> GetForeverStatPeriod(long gameType, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets the leaderboard for a team versus stat period.
@@ -75,7 +77,7 @@ namespace SubspaceStats.Services
         /// <param name="top"><inheritdoc cref="GetTopPlayersByRating(long, int, CancellationToken)" path="/param[@name='top']"/></param>
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The latest stat period and the records for the top players in the period, or <see langword="null"/> if not found.</returns>
-        Task<(StatPeriod, List<TopRatingRecord>)?> GetTopPlayersByRating(GameType gameType, StatPeriodType statPeriodType, int top, CancellationToken cancellationToken);
+        Task<(StatPeriod, List<TopRatingRecord>)?> GetTopPlayersByRating(long gameTypeId, StatPeriodType statPeriodType, int top, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets the top players by rating for a specified stat period.

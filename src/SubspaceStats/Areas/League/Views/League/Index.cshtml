@@ -29,15 +29,12 @@
 		<tbody>
 			@foreach(var league in Model.Leagues)
 			{
-				if (!Model.GameTypes.TryGetValue(league.GameType, out string? gameType))
-				{
-					gameType = league.GameType.ToString();
-				}
+				string gameTypeName = Model.GameTypes.TryGetValue(league.GameTypeId, out GameType? gameType) ? gameType.Name : league.GameTypeId.ToString();
 
 				<tr>
 					<td class="text-end">@league.Id</td>
 					<td><a asp-action="Details" asp-route-id="@league.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@league.Name</a></td>
-					<td>@gameType</td>
+					<td>@gameTypeName</td>
 					<td><a asp-action="Edit" asp-route-id="@league.Id">Edit</a></td>
 					<td><a asp-action="Delete" asp-route-id="@league.Id">Delete</a></td>
 				</tr>

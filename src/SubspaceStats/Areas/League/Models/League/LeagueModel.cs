@@ -14,6 +14,6 @@ namespace SubspaceStats.Areas.League.Models.League
 
         [Display(Name = "Game Type")]
         [Required]
-        public long GameType { get; set; }
+        public long GameTypeId { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Options;
 using Npgsql;
 using NpgsqlTypes;
 using SubspaceStats.Models;
@@ -12,12 +13,33 @@ using System.Text.Json;
 
 namespace SubspaceStats.Services
 {
-    public class StatsRepository(IOptions<StatRepositoryOptions> options, ILogger<StatsRepository> logger) : IStatsRepository
+    public class StatsRepository(
+        HybridCache cache,
+        IOptions<StatRepositoryOptions> options, 
+        ILogger<StatsRepository> logger) : IStatsRepository
     {
+        private HybridCache _cache = cache;
         private readonly ILogger<StatsRepository> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         private readonly NpgsqlDataSource _dataSource = NpgsqlDataSource.Create(options.Value.ConnectionString);
 
-        public async Task<OrderedDictionary<long, string>> GetGameTypesAsync(CancellationToken cancellationToken)
+        public async Task<OrderedDictionary<long, GameType>> GetGameTypesAsync(CancellationToken cancellationToken)
+        {
+            return await _cache.GetOrCreateAsync(
+                CacheKeys.GameTypes,
+                async cancel =>
+                {
+                    return await GetAndCacheGameTypesAsync(cancellationToken).ConfigureAwait(false);
+                },
+                cancellationToken: cancellationToken);
+        }
+
+        public async Task<GameType?> GetGameTypeAsync(long gameTypeId, CancellationToken cancellationToken)
+        {
+            (await GetGameTypesAsync(cancellationToken)).TryGetValue(gameTypeId, out GameType? gameType);
+            return gameType;
+        }
+
+        private async Task<OrderedDictionary<long, GameType>> GetAndCacheGameTypesAsync(CancellationToken cancellationToken)
         {
             try
             {
@@ -33,14 +55,23 @@ namespace SubspaceStats.Services
                         await using (reader.ConfigureAwait(false))
                         {
                             int column_gameTypeId = reader.GetOrdinal("game_type_id");
-                            int column_gameTypeName = reader.GetOrdinal("game_type_description");
-                            // TODO: add game_mode_id?
+                            int column_gameTypeName = reader.GetOrdinal("game_type_name");
+                            int column_gameModeId = reader.GetOrdinal("game_mode_id");
 
-                            OrderedDictionary<long, string> dictionary = new(32);
+                            OrderedDictionary<long, GameType> dictionary = new(32);
 
                             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                             {
-                                dictionary[reader.GetInt64(column_gameTypeId)] = reader.GetString(column_gameTypeName);
+                                long gameTypeId = reader.GetInt64(column_gameTypeId);
+                                string gameTypeName = reader.GetString(column_gameTypeName);
+                                long gameModeId = reader.GetInt64(column_gameModeId);
+
+                                dictionary[gameTypeId] = new GameType
+                                {
+                                    Id = gameTypeId,
+                                    Name = gameTypeName,
+                                    GameMode = (GameMode)gameModeId,
+                                };
                             }
 
                             return dictionary;
@@ -55,14 +86,14 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task<List<StatPeriod>> GetStatPeriods(GameType gameType, StatPeriodType statPeriodType, int? limit, int offset, CancellationToken cancellationToken)
+        public async Task<List<StatPeriod>> GetStatPeriods(long gameTypeId, StatPeriodType statPeriodType, int? limit, int offset, CancellationToken cancellationToken)
         {
             try
             {
                 NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_stat_periods($1,$2,$3,$4);");
                 await using (command.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)gameType);
+                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)gameTypeId);
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)statPeriodType);
 
                     if (limit is not null)
@@ -85,7 +116,7 @@ namespace SubspaceStats.Services
                             periodList.Add(new StatPeriod()
                             {
                                 StatPeriodId = dataReader.GetInt64(column_statPeriodId),
-                                GameType = gameType,
+                                GameTypeId = gameTypeId,
                                 StatPeriodType = statPeriodType,
                                 PeriodRange = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
                             });
@@ -97,19 +128,19 @@ namespace SubspaceStats.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting stat periods (gameType:{gameType}, statPeriodType:{statPeriodType}).", gameType, statPeriodType);
+                _logger.LogError(ex, "Error getting stat periods (gameType:{gameType}, statPeriodType:{statPeriodType}).", gameTypeId, statPeriodType);
                 throw;
             }
         }
 
-        public async Task<StatPeriod?> GetForeverStatPeriod(GameType gameType, CancellationToken cancellationToken)
+        public async Task<StatPeriod?> GetForeverStatPeriod(long gameTypeId, CancellationToken cancellationToken)
         {
             try
             {
                 NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_stat_periods($1,$2,$3,$4);");
                 await using (command.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)gameType);
+                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)gameTypeId);
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)StatPeriodType.Forever);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, 1);
                     command.Parameters.AddWithValue(NpgsqlDbType.Integer, 0);
@@ -125,7 +156,7 @@ namespace SubspaceStats.Services
                             return new StatPeriod()
                             {
                                 StatPeriodId = dataReader.GetInt64(column_statPeriodId),
-                                GameType = gameType,
+                                GameTypeId = gameTypeId,
                                 StatPeriodType = StatPeriodType.Forever,
                                 PeriodRange = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
                             };
@@ -137,7 +168,7 @@ namespace SubspaceStats.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting forever stat period (gameType:{gameType}).", gameType);
+                _logger.LogError(ex, "Error getting forever stat period (gameType:{gameType}).", gameTypeId);
                 throw;
             }
         }
@@ -309,7 +340,7 @@ namespace SubspaceStats.Services
                                 new StatPeriod()
                                 {
                                     StatPeriodId = dataReader.GetInt64(column_statPeriodId),
-                                    GameType = (GameType)dataReader.GetInt64(column_gameTypeId),
+                                    GameTypeId = dataReader.GetInt64(column_gameTypeId),
                                     StatPeriodType = (StatPeriodType)dataReader.GetInt64(column_statPeriodTypeId),
                                     PeriodRange = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
                                 });
@@ -355,7 +386,7 @@ namespace SubspaceStats.Services
                                     LastStatPeriod = new StatPeriod()
                                     {
                                         StatPeriodId = dataReader.GetInt64(column_statPeriodId),
-                                        GameType = (GameType)dataReader.GetInt64(column_gameTypeId),
+                                        GameTypeId = dataReader.GetInt64(column_gameTypeId),
                                         StatPeriodType = (StatPeriodType)dataReader.GetInt64(column_statPeriodTypeId),
                                         PeriodRange = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
                                     },
@@ -374,9 +405,9 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task<(StatPeriod, List<TopRatingRecord>)?> GetTopPlayersByRating(GameType gameType, StatPeriodType statPeriodType, int top, CancellationToken cancellationToken)
+        public async Task<(StatPeriod, List<TopRatingRecord>)?> GetTopPlayersByRating(long gameTypeId, StatPeriodType statPeriodType, int top, CancellationToken cancellationToken)
         {
-            List<StatPeriod> statPeriodList = await GetStatPeriods(gameType, statPeriodType, 1, 0, cancellationToken).ConfigureAwait(false);
+            List<StatPeriod> statPeriodList = await GetStatPeriods(gameTypeId, statPeriodType, 1, 0, cancellationToken).ConfigureAwait(false);
             if (statPeriodList.Count == 0)
                 return null;
 

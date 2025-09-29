@@ -11,6 +11,6 @@
         public required PagingInfo GameStatsPaging { get; set; }
         public required List<TeamVersusShipStats> ShipStatsList { get; set; }
         public required List<KillStats> KillStatsList { get; set; }
-
+        public required OrderedDictionary<long, GameType> GameTypes { get; set; }
     }
 }
