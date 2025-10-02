@@ -58,8 +58,8 @@
 					<td>@player.EnrollTimestamp</td>
 					<td>@player.IsCaptain</td>
 					<td>@player.IsSuspended</td>
-					<td><a asp-controller="SeasonPlayer" asp-action="Edit" asp-route-playerName="@player.Name">Edit</a></td>
-					<td><a asp-controller="SeasonPlayer" asp-action="Delete" asp-route-playerName="@player.Name">Delete</a></td>
+					<td><a asp-controller="SeasonPlayer" asp-action="Edit" asp-route-seasonId="@Model.LeagueSeasonChooser.SelectedSeasonId" asp-route-playerName="@player.Name">Edit</a></td>
+					<td><a asp-controller="SeasonPlayer" asp-action="Delete" asp-route-seasonId="@Model.LeagueSeasonChooser.SelectedSeasonId" asp-route-playerName="@player.Name">Delete</a></td>
 				</tr>
 			}
 		</tbody>

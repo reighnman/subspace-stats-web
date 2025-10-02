@@ -2,6 +2,7 @@
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Areas.League.Models.Season;
+using SubspaceStats.Areas.League.Models.SeasonPlayer;
 using SubspaceStats.Areas.League.Models.Team;
 
 namespace SubspaceStats.Services
@@ -61,15 +62,15 @@ namespace SubspaceStats.Services
 
         Task<List<PlayerListItem>> GetSeasonPlayersAsync(long seasonId, CancellationToken cancellationToken);
 
-        // BulkInsertSeasonPlayers()
+        Task<SeasonPlayer?> GetSeasonPlayerAsync(long seasonId, string playerName, CancellationToken cancellationToken);
 
-        // InsertSeasonPlayer
+        Task InsertSeasonPlayersAsync(long seasonId, List<string> nameList, long? teamId, CancellationToken cancellationToken);
 
-        // UpdateSeasonPlayer
+        Task UpdateSeasonPlayerAsync(long seasonId, SeasonPlayer model, CancellationToken cancellationToken);
 
-        // DeleteSeasonPlayer
+        Task DeleteSeasonPlayerAsync(long seasonId, long playerId, CancellationToken cancellationToken);
 
-        // From list of season players (/league/season/<id>/players), check off the ones to assign, click "Assign Team" button (post),
+        // TODO: From list of season players (/league/season/<id>/players), check off the ones to assign, click "Assign Team" button (post),
         // show a page that lists the selection (including if the player already is assigned a team, meaning the team will be switched) and the user selects the team.
         // This should make it easy to assign a single player or multiple players at once.
         // Task AssignToTeamAsync(long teamId, string[] playerNames, CancellationToken cancellationToken)
@@ -87,9 +88,7 @@ namespace SubspaceStats.Services
         //Task UpdateTeamAsync(Team Team, CancellationToken cancellationToken);
         //Task DeleteTeamAsync(long TeamId, CancellationToken cancellationToken);
 
-        #endregion
-
-        
+        #endregion        
 
         #region Season Games
 

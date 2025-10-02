@@ -4,6 +4,7 @@ using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Areas.League.Models.Season;
+using SubspaceStats.Areas.League.Models.SeasonPlayer;
 using SubspaceStats.Areas.League.Models.Team;
 using System.Data;
 using System.Text.Json;
@@ -877,6 +878,140 @@ namespace SubspaceStats.Services
             }
         }
 
+        public async Task<SeasonPlayer?> GetSeasonPlayerAsync(long seasonId, string playerName, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select * from league.get_season_player($1,$2);", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        command.Parameters.AddWithValue(playerName);
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_playerId = reader.GetOrdinal("player_id");
+                            int column_teamId = reader.GetOrdinal("team_id");
+                            int column_isCaptain = reader.GetOrdinal("is_captain");
+                            int column_isSuspended = reader.GetOrdinal("is_suspended");
+
+                            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                return null;
+                            }
+
+                            return new SeasonPlayer
+                            {
+                                PlayerId = reader.GetInt64(column_playerId),
+                                PlayerName = playerName,
+                                TeamId = reader.IsDBNull(column_teamId) ? null : reader.GetInt64(column_teamId),
+                                IsCaptain = reader.GetBoolean(column_isCaptain),
+                                IsSuspended = reader.GetBoolean(column_isSuspended),
+                            };
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting season player. (season_Id: {season_Id}, player_name: {player_name})", seasonId, playerName);
+                throw;
+            }
+        }
+
+        public async Task InsertSeasonPlayersAsync(long seasonId, List<string> nameList, long? teamId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.insert_season_players($1,$2,$3)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        command.Parameters.AddWithValue(nameList);
+
+                        if (teamId is null)
+                            command.Parameters.AddWithValue(DBNull.Value);
+                        else
+                            command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = teamId.Value });
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inserting season players. (season_id: {season_id})", seasonId);
+
+                throw;
+            }
+        }
+
+        public async Task UpdateSeasonPlayerAsync(long seasonId, SeasonPlayer model, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.update_season_player($1,$2,$3,$4,$5)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        command.Parameters.AddWithValue(model.PlayerId);
+
+                        if (model.TeamId is null)
+                            command.Parameters.AddWithValue(DBNull.Value);
+                        else
+                            command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = model.TeamId.Value });
+
+                        command.Parameters.Add(new NpgsqlParameter<bool> { TypedValue = model.IsCaptain });
+                        command.Parameters.Add(new NpgsqlParameter<bool> { TypedValue = model.IsSuspended });
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating season player. (season_id: {season_id}, player_id: {player_id})", seasonId, model.PlayerId);
+
+                throw;
+            }
+        }
+
+        public async Task DeleteSeasonPlayerAsync(long seasonId, long playerId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.delete_season_player($1,$2)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        command.Parameters.AddWithValue(playerId);
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting season player. (season_id: {season_id}, player_id: {player_id})", seasonId, playerId);
+
+                throw;
+            }
+        }
+
         public async Task<List<TeamGameRecord>> GetTeamGames(long teamId, CancellationToken cancellationToken)
         {
             try
@@ -1299,7 +1434,7 @@ namespace SubspaceStats.Services
             {
                 _logger.LogError(
                     ex,
-                    "Error deleting season round. (season_id: {season_id}, round_number: {round_number}",
+                    "Error deleting season round. (season_id: {season_id}, round_number: {round_number})",
                     seasonId,
                     roundNumber);
 

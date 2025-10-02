@@ -48,7 +48,7 @@ namespace SubspaceStats
             app.MapAreaControllerRoute(
                 name: "LeagueSeasonPlayer",
                 areaName: "League",
-                pattern: "League/Season/{seasonId:long}/Player/{action}",
+                pattern: "League/Season/{seasonId:long}/Players/{action}",
                 defaults: new { controller = "SeasonPlayer" });
 
             app.MapAreaControllerRoute(
