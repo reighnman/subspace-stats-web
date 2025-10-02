@@ -10,6 +10,10 @@
 @await Html.PartialAsync("_SeasonNav")
 @await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
 
+<div class="mb-3">
+	<a asp-action="Copy" class="mx-2 text-nowrap">Copy Season</a>
+</div>
+
 <div class="container w-50">
 	<dl class="row">
 		<dt class="col-4">Season Name:</dt>
@@ -56,19 +60,39 @@
 	{
 		<div class="card">
 			<div class="card-header">Season is not yet started</div>
-			<div>When it is time, use this to start the season. It will set the season's <strong>Start Date</strong> and will create a <strong>Stat Period</strong> to store league stats into.</div>
+			<div class="card-body">
+				<div class="alert alert-info">When it is time, use this to start the season. It will set the season's <strong>Start Date</strong> and will create a <strong>Stat Period</strong> to store league stats into.</div>
+				<form asp-action="Start">
+					<input type="hidden" name="SeasonId" value="@Model.LeagueSeasonChooser.SelectedSeasonId" />
+					<div class="mb-3">
+						<label for="StartDate" class="form-label">Start Date</label>
+						<input type="date" name="StartDate" class="form-control" />
+					</div>
+					<div class="d-flex">
+						<button type="submit" class="btn btn-primary">Start Season</button>
+					</div>
+				</form>
+			</div>
 		</div>
-		<form asp-action="StartSeason">
-			<input type="hidden" name="SeasonId" value="@Model.LeagueSeasonChooser.SelectedSeasonId!" />
-			<div class="mb-3">
-				<label for="StartDate" class="form-label"></label>
-				<input type="date" name="StartDate" class="form-control" />
-				<button type="reset">Reset</button>
+	}
+	@if(Model.Details.EndDate is null)
+	{
+		<div class="card">
+			<div class="card-header">End the season</div>
+			<div class="card-body">
+				<div class="alert alert-info">Marks the season as ended, giving it an end date.</div>
+				<form asp-action="End">
+					<input type="hidden" name="SeasonId" value="@Model.LeagueSeasonChooser.SelectedSeasonId" />
+					<div class="mb-3">
+						<label for="EndDate" class="form-label">End Date</label>
+						<input type="date" name="EndDate" class="form-control" />
+					</div>
+					<div class="d-flex">
+						<button type="submit" class="btn btn-primary">End Season</button>
+					</div>
+				</form>
 			</div>
-			<div class="d-flex">
-				<button type="submit">Start Season</button>
-			</div>
-		</form>
+		</div>
 	}
 </div>
 

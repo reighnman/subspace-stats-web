@@ -11,9 +11,9 @@ namespace SubspaceStats.Areas.League.Controllers
     {
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
 
-        public async Task<IActionResult> Index(long id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Index(long teamId, CancellationToken cancellationToken)
         {
-            TeamWithSeasonInfo? teamInfo = await _leagueRepository.GetTeamsWithSeasonInfosync(id, cancellationToken);
+            TeamWithSeasonInfo? teamInfo = await _leagueRepository.GetTeamsWithSeasonInfosync(teamId, cancellationToken);
             if(teamInfo is null)
             {
                 return NotFound();
@@ -26,7 +26,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 new TeamViewModel()
                 {
                     TeamInfo = teamInfo,
-                    GameRecords = await _leagueRepository.GetTeamGames(id, cancellationToken),
+                    GameRecords = await _leagueRepository.GetTeamGames(teamId, cancellationToken),
                 });
         }
     }

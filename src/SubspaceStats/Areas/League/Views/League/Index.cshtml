@@ -33,10 +33,10 @@
 
 				<tr>
 					<td class="text-end">@league.Id</td>
-					<td><a asp-action="Details" asp-route-id="@league.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@league.Name</a></td>
+					<td><a asp-action="Details" asp-route-leagueId="@league.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@league.Name</a></td>
 					<td>@gameTypeName</td>
-					<td><a asp-action="Edit" asp-route-id="@league.Id">Edit</a></td>
-					<td><a asp-action="Delete" asp-route-id="@league.Id">Delete</a></td>
+					<td><a asp-action="Edit" asp-route-leagueId="@league.Id">Edit</a></td>
+					<td><a asp-action="Delete" asp-route-leagueId="@league.Id">Delete</a></td>
 				</tr>
 			}
 		</tbody>

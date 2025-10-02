@@ -19,7 +19,7 @@
 			<div class="col-12 col-md-6 col-lg-4 col-xl-3">
 				<div class="card h-100">
 					<h5 class="card-header text-center">
-						<a asp-controller="Team" asp-action="Index" asp-route-Id="@seasonRoster.TeamId">@seasonRoster.TeamName</a>
+						<a asp-controller="Team" asp-action="Index" asp-route-teamId="@seasonRoster.TeamId">@seasonRoster.TeamName</a>
 					</h5>
 					<div class="card-body">
 						<table class="table table-sm table-borderless table-hover m-0">
@@ -27,7 +27,7 @@
 								@foreach (var rosterItem in seasonRoster.Roster)
 								{
 									<tr>
-										<td><a asp-controller="Player" asp-action="Index" asp-route-id="@rosterItem.PlayerId">@rosterItem.PlayerName</a></td>
+										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@rosterItem.PlayerName">@rosterItem.PlayerName</a></td>
 										<td class="text-end">
 											@if (rosterItem.IsCaptain)
 											{

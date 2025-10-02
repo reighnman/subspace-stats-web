@@ -16,7 +16,7 @@ namespace SubspaceStats.Areas.League.Models
             {
                 foreach (var season in league.Seasons)
                 {
-                    season.Url = urlHelper.Action(null, null, new { id = season.SeasonId });
+                    season.Url = urlHelper.Action(null, null, new { seasonId = season.SeasonId });
 
                     if (season.SeasonId == SelectedSeasonId)
                     {
@@ -29,7 +29,7 @@ namespace SubspaceStats.Areas.League.Models
         }
 
         public long? SelectedLeagueId { get; }
-        public long? SelectedSeasonId { get; }
+        public long SelectedSeasonId { get; }
         public string LeaguesWithSeasonsJson { get; }
 
         public List<LeagueWithSeasons> LeaguesWithSeasons { get; }

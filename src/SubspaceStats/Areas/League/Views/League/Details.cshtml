@@ -13,7 +13,8 @@
 <h1>League Details</h1>
 
 <div class="mb-3">
-    <a asp-action="Index" class="mx-2">Back to League List</a>
+    <a asp-controller="Home" asp-action="Nav" class="mx-2">Leagues and Seasons</a>
+    <a asp-action="Index" class="mx-2">League List</a>
     <a asp-action="Edit" asp-route-id="@Model.League.Id" class="mx-2">Edit</a>
 </div>
 
@@ -22,7 +23,6 @@
         <div class="col">
             <div class="mb-3">
                 <label asp-for="League.Id" class="form-label"></label>
-                @Html.DisplayFor(model => model.League.Id)
                 <label class="form-control">@Model.League.Id</label>
             </div>
             <div class="mb-3">
@@ -58,11 +58,11 @@
 			{
 				<tr>
 					<td class="text-end">@season.Id</td>
-					<td><a asp-controller="Season" asp-action="Index" asp-route-id="@season.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@season.Name</a></td>
+					<td><a asp-controller="Season" asp-action="Index" asp-route-seasonId="@season.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@season.Name</a></td>
                     <td>@TimeZoneInfo.ConvertTimeFromUtc(season.CreatedTimestamp, leagueOptions.Value.TimeZone).ToString("yyyy-MM-dd HH:mm:ss")</td>
-					<td><a asp-controller="Season" asp-action="Edit" asp-route-id="@season.Id">Edit</a></td>
-                    <td><a asp-controller="Season" asp-action="Copy" asp-route-id="@season.Id">Copy</a></td>
-					<td><a asp-controller="Season" asp-action="Delete" asp-route-id="@season.Id">Delete</a></td>
+					<td><a asp-controller="Season" asp-action="Edit" asp-route-seasonId="@season.Id">Edit</a></td>
+                    <td><a asp-controller="Season" asp-action="Copy" asp-route-seasonId="@season.Id">Copy</a></td>
+					<td><a asp-controller="Season" asp-action="Delete" asp-route-seasonId="@season.Id">Delete</a></td>
 				</tr>
 			}
 		</tbody>

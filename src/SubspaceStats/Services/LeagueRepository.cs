@@ -260,22 +260,22 @@ namespace SubspaceStats.Services
 
                     await using (command.ConfigureAwait(false))
                     {
-                        var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                        await using (dataReader.ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            int column_franchiseId = dataReader.GetOrdinal("franchise_id");
-                            int column_franchiseName = dataReader.GetOrdinal("franchise_name");
-                            int column_teams = dataReader.GetOrdinal("teams");
+                            int column_franchiseId = reader.GetOrdinal("franchise_id");
+                            int column_franchiseName = reader.GetOrdinal("franchise_name");
+                            int column_teams = reader.GetOrdinal("teams");
 
                             List<FranchiseListItem> itemList = [];
 
-                            while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                             {
                                 itemList.Add(new FranchiseListItem()
                                 {
-                                    Id = dataReader.GetInt64(column_franchiseId),
-                                    Name = dataReader.GetString(column_franchiseName),
-                                    Teams = dataReader.IsDBNull(column_teams) ? null : dataReader.GetString(column_teams),
+                                    Id = reader.GetInt64(column_franchiseId),
+                                    Name = reader.GetString(column_franchiseName),
+                                    Teams = reader.IsDBNull(column_teams) ? null : reader.GetString(column_teams),
                                 });
                             }
 
@@ -304,16 +304,16 @@ namespace SubspaceStats.Services
 
                     await using (command.ConfigureAwait(false))
                     {
-                        var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                        await using (dataReader.ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            if (!await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                                 return null;
 
                             return new Franchise
                             {
                                 Id = franchiseId,
-                                Name = dataReader.GetString("franchise_name"),
+                                Name = reader.GetString("franchise_name"),
                             };
                         }
                     }
@@ -339,24 +339,28 @@ namespace SubspaceStats.Services
 
                     await using (command.ConfigureAwait(false))
                     {
-                        var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                        await using (dataReader.ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            int column_teamId = dataReader.GetOrdinal("team_id");
-                            int column_teamName = dataReader.GetOrdinal("team_name");
-                            int column_seasonId = dataReader.GetOrdinal("season_id");
-                            int column_seasonName = dataReader.GetOrdinal("season_name");
+                            int column_teamId = reader.GetOrdinal("team_id");
+                            int column_teamName = reader.GetOrdinal("team_name");
+                            int column_seasonId = reader.GetOrdinal("season_id");
+                            int column_seasonName = reader.GetOrdinal("season_name");
+                            int column_leagueId = reader.GetOrdinal("league_id");
+                            int column_leagueName = reader.GetOrdinal("league_name");
 
                             List<TeamAndSeason> itemList = [];
 
-                            while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                             {
                                 itemList.Add(new TeamAndSeason()
                                 {
-                                    TeamId = dataReader.GetInt64(column_teamId),
-                                    TeamName = dataReader.GetString(column_teamName),
-                                    SeasonId = dataReader.GetInt64(column_seasonId),
-                                    SeasonName = dataReader.GetString(column_seasonName),
+                                    TeamId = reader.GetInt64(column_teamId),
+                                    TeamName = reader.GetString(column_teamName),
+                                    SeasonId = reader.GetInt64(column_seasonId),
+                                    SeasonName = reader.GetString(column_seasonName),
+                                    LeagueId = reader.GetInt64(column_leagueId),
+                                    LeagueName = reader.GetString(column_leagueName),
                                 });
                             }
 
@@ -461,23 +465,22 @@ namespace SubspaceStats.Services
 
                     await using (command.ConfigureAwait(false))
                     {
-                        var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                        await using (dataReader.ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            int column_leagueId = dataReader.GetOrdinal("league_id");
-                            int column_leagueName = dataReader.GetOrdinal("league_name");
-                            int column_gameTypeId = dataReader.GetOrdinal("game_type_id");
-                            //int column_gameTypeDescription = dataReader.GetOrdinal("game_type_description");
+                            int column_leagueId = reader.GetOrdinal("league_id");
+                            int column_leagueName = reader.GetOrdinal("league_name");
+                            int column_gameTypeId = reader.GetOrdinal("game_type_id");
 
                             List<LeagueModel> leagueList = [];
 
-                            while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                             {
                                 leagueList.Add(new LeagueModel()
                                 {
-                                    Id = dataReader.GetInt64(column_leagueId),
-                                    Name = dataReader.GetString(column_leagueName),
-                                    GameTypeId = dataReader.GetInt64(column_gameTypeId),
+                                    Id = reader.GetInt64(column_leagueId),
+                                    Name = reader.GetString(column_leagueName),
+                                    GameTypeId = reader.GetInt64(column_gameTypeId),
                                 });
                             }
 
@@ -506,21 +509,20 @@ namespace SubspaceStats.Services
                         command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = leagueId });
                         await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                        var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                        await using (dataReader.ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            int column_leagueName = dataReader.GetOrdinal("league_name");
-                            int column_gameTypeId = dataReader.GetOrdinal("game_type_id");
-                            //int column_gameTypeDescription = dataReader.GetOrdinal("game_type_description");
+                            int column_leagueName = reader.GetOrdinal("league_name");
+                            int column_gameTypeId = reader.GetOrdinal("game_type_id");
 
-                            if (!await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                                 return null;
 
                             return new LeagueModel()
                             {
                                 Id = leagueId,
-                                Name = dataReader.GetString(column_leagueName),
-                                GameTypeId = dataReader.GetInt64(column_gameTypeId),
+                                Name = reader.GetString(column_leagueName),
+                                GameTypeId = reader.GetInt64(column_gameTypeId),
                             };
                         }
                     }
@@ -737,6 +739,42 @@ namespace SubspaceStats.Services
             }
         }
 
+        public async Task<long> CopySeasonAsync(long seasonId, string seasonName, bool includePlayers, bool includeTeams, bool includeGames, bool includeRounds, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.copy_season($1,$2,$3,$4,$5,$6)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        command.Parameters.AddWithValue(seasonName);
+                        command.Parameters.Add(new NpgsqlParameter<bool> { TypedValue = includePlayers });
+                        command.Parameters.Add(new NpgsqlParameter<bool> { TypedValue = includeTeams });
+                        command.Parameters.Add(new NpgsqlParameter<bool> { TypedValue = includeGames });
+                        command.Parameters.Add(new NpgsqlParameter<bool> { TypedValue = includeRounds });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                                throw new Exception("Expected a result");
+
+                            return reader.GetInt64(0);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error copying season. (season_id: {season_id})", seasonId);
+                throw;
+            }
+        }
+
         public async Task<List<TeamModel>> GetSeasonTeamsAsync(long seasonId, CancellationToken cancellationToken)
         {
             try
@@ -787,7 +825,7 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task<List<PlayerModel>> GetSeasonPlayersAsync(long seasonId, CancellationToken cancellationToken)
+        public async Task<List<PlayerListItem>> GetSeasonPlayersAsync(long seasonId, CancellationToken cancellationToken)
         {
             try
             {
@@ -811,11 +849,11 @@ namespace SubspaceStats.Services
                             int column_isCaptain = reader.GetOrdinal("is_captain");
                             int column_isSuspended = reader.GetOrdinal("is_suspended");
 
-                            List<PlayerModel> teams = [];
+                            List<PlayerListItem> teams = [];
 
                             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                             {
-                                teams.Add(new PlayerModel()
+                                teams.Add(new PlayerListItem()
                                 {
                                     Id = reader.GetInt64(column_playerId),
                                     Name = reader.GetString(column_playerName),
@@ -1063,6 +1101,208 @@ namespace SubspaceStats.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting season games. (season_id: {season_id})", seasonId);
+                throw;
+            }
+        }
+
+        public async Task<List<SeasonRound>> GetSeasonRoundsAsync(long seasonId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select * from league.get_season_rounds($1);", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_roundNumber = reader.GetOrdinal("round_number");
+                            int column_roundName = reader.GetOrdinal("round_name");
+                            int column_roundDescription = reader.GetOrdinal("round_description");
+
+                            List<SeasonRound> list = [];
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                list.Add(new SeasonRound
+                                {
+                                    SeasonId = seasonId,
+                                    RoundNumber = reader.GetInt32(column_roundNumber),
+                                    RoundName = reader.GetString(column_roundName),
+                                    RoundDescription = reader.IsDBNull(column_roundDescription) ? null : reader.GetString(column_roundDescription),
+                                });
+                            }
+
+                            return list;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting season rounds. (season_id: {season_id})", seasonId);
+                throw;
+            }
+        }
+
+        public async Task<SeasonRound?> GetSeasonRoundAsync(long seasonId, int roundNumber, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select * from league.get_season_round($1,$2);", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        command.Parameters.Add(new NpgsqlParameter<int> { TypedValue = roundNumber });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_roundName = reader.GetOrdinal("round_name");
+                            int column_roundDescription = reader.GetOrdinal("round_description");
+
+                            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                return null;
+                            }
+
+                            return new SeasonRound
+                            {
+                                SeasonId = seasonId,
+                                RoundNumber = roundNumber,
+                                RoundName = reader.GetString(column_roundName),
+                                RoundDescription = reader.IsDBNull(column_roundDescription) ? null : reader.GetString(column_roundDescription),
+                            };
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting season round. (season_id: {season_id}, round_number: {round_number})", seasonId, roundNumber);
+                throw;
+            }
+        }
+
+        public async Task InsertSeasonRoundAsync(SeasonRound seasonRound, CancellationToken cancellationToken)
+        {
+            if (seasonRound.RoundNumber is null)
+                throw new ArgumentNullException(nameof(seasonRound), "Round number cannot be null.");
+
+            if (seasonRound.RoundName is null)
+                throw new ArgumentNullException(nameof(seasonRound), "Round name cannot be null.");
+
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.insert_season_round($1,$2,$3,$4)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonRound.SeasonId });
+                        command.Parameters.Add(new NpgsqlParameter<int> { TypedValue = seasonRound.RoundNumber.Value });
+                        command.Parameters.AddWithValue(seasonRound.RoundName);
+
+                        if (string.IsNullOrWhiteSpace(seasonRound.RoundDescription))
+                            command.Parameters.AddWithValue(DBNull.Value);
+                        else
+                            command.Parameters.AddWithValue(seasonRound.RoundDescription);
+
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error inserting season round. (season_id: {season_id}, round_number: {round_number}, round_name: {round_name})",
+                    seasonRound.SeasonId,
+                    seasonRound.RoundNumber.Value,
+                    seasonRound.RoundName);
+
+                throw;
+            }
+        }
+
+        public async Task UpdateSeasonRoundAsync(SeasonRound seasonRound, CancellationToken cancellationToken)
+        {
+            if (seasonRound.RoundNumber is null)
+                throw new ArgumentNullException(nameof(seasonRound), "Round number cannot be null.");
+
+            if (seasonRound.RoundName is null)
+                throw new ArgumentNullException(nameof(seasonRound), "Round name cannot be null.");
+
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.update_season_round($1,$2,$3,$4)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonRound.SeasonId });
+                        command.Parameters.Add(new NpgsqlParameter<int> { TypedValue = seasonRound.RoundNumber.Value });
+                        command.Parameters.AddWithValue(seasonRound.RoundName);
+
+                        if (string.IsNullOrWhiteSpace(seasonRound.RoundDescription))
+                            command.Parameters.AddWithValue(DBNull.Value);
+                        else
+                            command.Parameters.AddWithValue(seasonRound.RoundDescription);
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error updating season round. (season_id: {season_id}, round_number: {round_number}, round_name: {round_name})",
+                    seasonRound.SeasonId,
+                    seasonRound.RoundNumber.Value,
+                    seasonRound.RoundName);
+
+                throw;
+            }
+        }
+
+        public async Task DeleteSeasonRoundAsync(long seasonId, int roundNumber, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.delete_season_round($1,$2)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        command.Parameters.Add(new NpgsqlParameter<int> { TypedValue = roundNumber });
+                        
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error deleting season round. (season_id: {season_id}, round_number: {round_number}",
+                    seasonId,
+                    roundNumber);
+
                 throw;
             }
         }

@@ -26,10 +26,10 @@
 			@foreach (var franchise in Model)
 			{
 				<tr>
-					<td><a asp-action="Details" asp-route-id="@franchise.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@franchise.Name</a></td>
+					<td><a asp-action="Details" asp-route-franchiseId="@franchise.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@franchise.Name</a></td>
 					<td>@franchise.Teams</td>
-					<td><a asp-action="Edit" asp-route-id="@franchise.Id">Edit</a></td>
-					<td><a asp-action="Delete" asp-route-id="@franchise.Id">Delete</a></td>
+					<td><a asp-action="Edit" asp-route-franchiseId="@franchise.Id">Edit</a></td>
+					<td><a asp-action="Delete" asp-route-franchiseId="@franchise.Id">Delete</a></td>
 				</tr>
 			}
 		</tbody>

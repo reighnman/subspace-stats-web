@@ -82,7 +82,7 @@
 					@foreach (var teamStanding in Model.Standings)
 					{
 						<tr>
-							<td><a asp-controller="Team" asp-action="Index" asp-route-id="@teamStanding.TeamId">@teamStanding.TeamName</a></td>
+							<td><a asp-controller="Team" asp-action="Index" asp-route-teamId="@teamStanding.TeamId">@teamStanding.TeamName</a></td>
 							<td class="text-end">@teamStanding.Wins</td>
 							<td class="text-end">@teamStanding.Losses</td>
 							<td class="text-end">@teamStanding.Draws</td>

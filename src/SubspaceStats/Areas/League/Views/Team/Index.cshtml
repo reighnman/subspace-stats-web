@@ -22,13 +22,13 @@
                     League:
                 </dt>
                 <dd class="col-8">
-                    <a asp-controller="League" asp-action="Details" asp-route-id="@Model.TeamInfo.LeagueId">@Model.TeamInfo.LeagueName</a>
+                    <a asp-controller="League" asp-action="Details" asp-route-leagueId="@Model.TeamInfo.LeagueId">@Model.TeamInfo.LeagueName</a>
                 </dd>
                 <dt class="col-4">
                     Season:
                 </dt>
                 <dd class="col-8">
-                    <a asp-controller="Season" asp-action="Index" asp-route-id="@Model.TeamInfo.SeasonId">@Model.TeamInfo.SeasonName</a>
+                    <a asp-controller="Season" asp-action="Index" asp-route-seasonId="@Model.TeamInfo.SeasonId">@Model.TeamInfo.SeasonName</a>
                 </dd>
                 @if (Model.TeamInfo.FranchiseId is not null)
                 {
@@ -36,7 +36,7 @@
                         Franchise:
                     </dt>
                     <dd class="col-8">
-                        <a asp-controller="Franchise" asp-action="Details" asp-route-id="@Model.TeamInfo.FranchiseId.Value">@Model.TeamInfo.FranchiseName</a>
+                        <a asp-controller="Franchise" asp-action="Details" asp-route-franchiseId="@Model.TeamInfo.FranchiseId.Value">@Model.TeamInfo.FranchiseName</a>
                     </dd>
                 }
             </dl>

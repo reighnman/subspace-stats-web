@@ -35,7 +35,7 @@
 			{
 
 				<tr>
-					<td><a asp-controller="SeasonGame" asp-action="Index" asp-route-id="@game.SeasonGameId" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@game.SeasonGameId</a></td>
+					<td><a asp-controller="SeasonGame" asp-action="Index" asp-route-seasonGameId="@game.SeasonGameId" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@game.SeasonGameId</a></td>
 					<td>@game.RoundNumber</td>
 					<td>
 						@for (int i = 0; i < game.TeamIds.Length; i++)
@@ -48,19 +48,19 @@
 							long teamId = game.TeamIds[i];
 							if(teamDictionary.TryGetValue(teamId, out TeamModel? team))
 							{
-								<a asp-controller="Team" asp-action="Index" asp-route-id="@teamId">@team.Name</a>
+								<a asp-controller="Team" asp-action="Index" asp-route-teamId="@teamId">@team.Name</a>
 							}
 							else
 							{
-								<a asp-controller="Team" asp-action="Index" asp-route-id="@teamId">@teamId</a>
+								<a asp-controller="Team" asp-action="Index" asp-route-teamId="@teamId">@teamId</a>
 							}
 						}
 					</td>
 					<td>@game.ScheduledTimestamp</td>
 					<td><a asp-area="" asp-controller="Game" asp-action="Index" asp-route-id="@game.GameId">@game.GameId</a></td>
 					<td>@((GameStatus)game.GameStatusId)</td>
-					<td><a asp-controller="Season" asp-action="EditGame" asp-route-id="@game.SeasonGameId">Edit</a></td>
-					<td><a asp-controller="Season" asp-action="DeleteGame" asp-route-id="@game.SeasonGameId">Delete</a></td>
+					<td><a asp-controller="SeasonGame" asp-action="Edit" asp-route-seasonGameId="@game.SeasonGameId">Edit</a></td>
+					<td><a asp-controller="SeasonGame" asp-action="Delete" asp-route-seasonGameId="@game.SeasonGameId">Delete</a></td>
 				</tr>
 			}
 		</tbody>

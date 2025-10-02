@@ -1,6 +1,6 @@
 ﻿namespace SubspaceStats.Areas.League.Models.Season
 {
-    public class PlayerModel
+    public class PlayerListItem
     {
         public long Id { get; set; }
         public required string Name { get; set; }

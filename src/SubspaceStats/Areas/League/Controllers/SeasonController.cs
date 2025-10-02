@@ -9,25 +9,28 @@ namespace SubspaceStats.Areas.League.Controllers
 {
     [Area("League")]
     public class SeasonController(
-        ILogger<SeasonController> logger,
         ILeagueRepository leagueRepository,
         IStatsRepository statsRepository) : Controller
     {
-        private readonly ILogger<SeasonController> _logger = logger;
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
         private readonly IStatsRepository _statsRepository = statsRepository;
 
         // GET Season/5
-        public async Task<ActionResult> IndexAsync(long id, CancellationToken cancellationToken)
+        public async Task<ActionResult> IndexAsync(long? seasonId, CancellationToken cancellationToken)
         {
+            if (seasonId is null)
+            {
+                return NotFound();
+            }
+
             // link to League Details: /League/Season/<season id>/Details
             // TODO: link to manage teams for league/season admins: /League/Season/<season id>/Teams
             // TODO: link to manage games for league/season admins: /League/Season/<season id>/Games
             // TODO: link to edit season for league/season admins
 
             Task<List<LeagueWithSeasons>> leagueWithSeasonsTask = _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
-            Task<List<ScheduledGame>> scheduledGamesTask = _leagueRepository.GetScheduledGamesAsync(id, cancellationToken);
-            Task<List<TeamStanding>> standingsTask = _leagueRepository.GetSeasonStandingsAsync(id, cancellationToken);
+            Task<List<ScheduledGame>> scheduledGamesTask = _leagueRepository.GetScheduledGamesAsync(seasonId.Value, cancellationToken);
+            Task<List<TeamStanding>> standingsTask = _leagueRepository.GetSeasonStandingsAsync(seasonId.Value, cancellationToken);
             // TODO: completed games
 
             await Task.WhenAll(leagueWithSeasonsTask, scheduledGamesTask, standingsTask);
@@ -35,36 +38,36 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(
                 new SeasonViewModel()
                 {
-                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(id, leagueWithSeasonsTask.Result, Url),
+                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(seasonId.Value, leagueWithSeasonsTask.Result, Url),
                     ScheduledGames = scheduledGamesTask.Result,
                     Standings = standingsTask.Result,
                 });
         }
 
         // GET Season/5/Rosters
-        public async Task<ActionResult> Rosters(long id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Rosters(long seasonId, CancellationToken cancellationToken)
         {
             // TODO: link to League Details
             // TODO: link to manage teams for league/season admins
             // TODO: link to manage games for league/season admins
 
             Task<List<LeagueWithSeasons>> leagueWithSeasonsTask = _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
-            Task<List<SeasonRoster>?> getSeasonRostersTask = _leagueRepository.GetSeasonRostersAsync(id, cancellationToken);
+            Task<List<SeasonRoster>?> getSeasonRostersTask = _leagueRepository.GetSeasonRostersAsync(seasonId, cancellationToken);
             
             await Task.WhenAll(leagueWithSeasonsTask, getSeasonRostersTask);
 
             return View(
                 new SeasonRostersViewModel()
                 {
-                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(id, leagueWithSeasonsTask.Result, Url),
+                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(seasonId, leagueWithSeasonsTask.Result, Url),
                     Rosters = getSeasonRostersTask.Result ?? [],
                 });
         }
 
         // GET Season/5/Details
-        public async Task<ActionResult> Details(long id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Details(long seasonId, CancellationToken cancellationToken)
         {
-            SeasonDetails? details = await _leagueRepository.GetSeasonDetailsAsync(id, cancellationToken);
+            SeasonDetails? details = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
             if (details is null)
             {
                 return NotFound();
@@ -78,7 +81,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(
                 new SeasonDetailsViewModel
                 {
-                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(id, leagueWithSeasonsTask.Result, Url),
+                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(seasonId, leagueWithSeasonsTask.Result, Url),
                     Details = details,
                     GameTypes = gameTypeTask.Result,
                 });
@@ -86,9 +89,9 @@ namespace SubspaceStats.Areas.League.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Start(long id, DateTime? startDate, CancellationToken cancellationToken)
+        public async Task<ActionResult> Start(long seasonId, DateTime? startDate, CancellationToken cancellationToken)
         {
-            await _leagueRepository.StartSeasonAsync(id, startDate, cancellationToken);
+            await _leagueRepository.StartSeasonAsync(seasonId, startDate, cancellationToken);
             return RedirectToAction("Details");
         }
 
@@ -114,7 +117,7 @@ namespace SubspaceStats.Areas.League.Controllers
         }
 
         // GET Season/5/Edit
-        public ActionResult Edit(long id)
+        public ActionResult Edit(long seasonId)
         {
             return View();
         }
@@ -122,7 +125,7 @@ namespace SubspaceStats.Areas.League.Controllers
         // POST Season/5/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(long id, IFormCollection collection)
+        public ActionResult Edit(long seasonId, IFormCollection collection)
         {
             try
             {
@@ -135,28 +138,77 @@ namespace SubspaceStats.Areas.League.Controllers
         }
 
         // GET Season/5/Copy
-        public async Task<ActionResult> Copy(long id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Copy(long seasonId, CancellationToken cancellationToken)
         {
-            return View();
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            Task<List<PlayerListItem>> playersTask = _leagueRepository.GetSeasonPlayersAsync(seasonId, cancellationToken);
+            Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
+            Task<List<GameListItem>> gamesTask = _leagueRepository.GetSeasonGamesAsync(seasonId, cancellationToken);
+            Task<List<SeasonRound>> roundsTask = _leagueRepository.GetSeasonRoundsAsync(seasonId, cancellationToken);
+            await Task.WhenAll(playersTask, teamsTask, gamesTask, roundsTask);
+
+            return View(
+                new CopySeasonViewModel
+                {
+                    SourceSeason = seasonDetails,
+                    SourcePlayers = playersTask.Result,
+                    SourceTeams = teamsTask.Result,
+                    SourceGames = gamesTask.Result,
+                    SourceRounds = roundsTask.Result,
+                    SeasonName = "",
+                });
         }
 
         // POST Season/5/Copy
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> CopyConfirm(long id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Copy(
+            long seasonId, 
+            [Bind("SeasonName", "IncludePlayers", "IncludeTeams", "IncludeGames", "IncludeRounds")] CopySeasonViewModel copyInfo, 
+            CancellationToken cancellationToken)
         {
-            // The view model will need to pass:
-            // id of season to copy
-            // season_name
-            // p_include_players boolean
-	        // p_include_teams boolean
-            // p_include_games boolean
-	        // p_include_rounds boolean
-            return View();
+            if (!ModelState.IsValid)
+            {
+                SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+                if (seasonDetails is null)
+                {
+                    return NotFound();
+                }
+
+                Task<List<PlayerListItem>> playersTask = _leagueRepository.GetSeasonPlayersAsync(seasonId, cancellationToken);
+                Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
+                Task<List<GameListItem>> gamesTask = _leagueRepository.GetSeasonGamesAsync(seasonId, cancellationToken);
+                Task<List<SeasonRound>> roundsTask = _leagueRepository.GetSeasonRoundsAsync(seasonId, cancellationToken);
+                await Task.WhenAll(playersTask, teamsTask, gamesTask, roundsTask);
+
+                copyInfo.SourceSeason = seasonDetails;
+                copyInfo.SourcePlayers = playersTask.Result;
+                copyInfo.SourceTeams = teamsTask.Result;
+                copyInfo.SourceGames = gamesTask.Result;
+                copyInfo.SourceRounds = roundsTask.Result;
+
+                return View(copyInfo);
+            }
+
+            long newSeasonId = await _leagueRepository.CopySeasonAsync(
+                seasonId,
+                copyInfo.SeasonName,
+                copyInfo.IncludePlayers,
+                copyInfo.IncludeTeams,
+                copyInfo.IncludeGames,
+                copyInfo.IncludeRounds,
+                cancellationToken);
+
+            return RedirectToAction("Details", "Season", new { seasonId = newSeasonId });
         }
 
         // GET Season/5/Delete
-        public ActionResult Delete(long id)
+        public ActionResult Delete(long seasonId)
         {
             return View();
         }
@@ -164,7 +216,7 @@ namespace SubspaceStats.Areas.League.Controllers
         // POST Season/5/Delete
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirm(long id, IFormCollection collection)
+        public ActionResult DeleteConfirm(long seasonId, IFormCollection collection)
         {
             try
             {
@@ -176,67 +228,88 @@ namespace SubspaceStats.Areas.League.Controllers
             }
         }
 
-        public async Task<ActionResult> Players(long? id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Players(long? seasonId, CancellationToken cancellationToken)
         {
-            if (id is null)
+            if (seasonId is null)
             {
                 return NotFound();
             }
 
             Task<List<LeagueWithSeasons>> leagueWithSeasonsTask = _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
-            Task<List<PlayerModel>> playersTask = _leagueRepository.GetSeasonPlayersAsync(id.Value, cancellationToken);
-            Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(id.Value, cancellationToken);
+            Task<List<PlayerListItem>> playersTask = _leagueRepository.GetSeasonPlayersAsync(seasonId.Value, cancellationToken);
+            Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId.Value, cancellationToken);
 
             await Task.WhenAll(leagueWithSeasonsTask, playersTask);
 
             return View(
                 new PlayersViewModel
                 {
-                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(id.Value, leagueWithSeasonsTask.Result, Url),
+                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(seasonId.Value, leagueWithSeasonsTask.Result, Url),
                     Players = playersTask.Result,
                     Teams = teamsTask.Result,
                 });
         }
 
-        public async Task<ActionResult> Teams(long? id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Teams(long? seasonId, CancellationToken cancellationToken)
         {
-            if (id is null)
+            if (seasonId is null)
             {
                 return NotFound();
             }
 
             Task<List<LeagueWithSeasons>> leagueWithSeasonsTask = _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
-            Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(id.Value, cancellationToken);
+            Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId.Value, cancellationToken);
 
             await Task.WhenAll(leagueWithSeasonsTask, teamsTask);
 
             return View(
                 new TeamsViewModel
                 {
-                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(id.Value, leagueWithSeasonsTask.Result, Url),
+                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(seasonId.Value, leagueWithSeasonsTask.Result, Url),
                     Teams = teamsTask.Result,
                 });
         }
 
-        public async Task<ActionResult> Games(long? id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Games(long? seasonId, CancellationToken cancellationToken)
         {
-            if (id is null)
+            if (seasonId is null)
             {
                 return NotFound();
             }
 
             Task<List<LeagueWithSeasons>> leagueWithSeasonsTask = _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
-            Task<List<GameListItem>> gamesTask = _leagueRepository.GetSeasonGamesAsync(id.Value, cancellationToken);
-            Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(id.Value, cancellationToken);
+            Task<List<GameListItem>> gamesTask = _leagueRepository.GetSeasonGamesAsync(seasonId.Value, cancellationToken);
+            Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId.Value, cancellationToken);
 
             await Task.WhenAll(leagueWithSeasonsTask, gamesTask, teamsTask);
 
             return View(
                 new SeasonGamesViewModel
                 {
-                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(id.Value, leagueWithSeasonsTask.Result, Url),
+                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(seasonId.Value, leagueWithSeasonsTask.Result, Url),
                     Games = gamesTask.Result,
                     Teams = teamsTask.Result,
+                });
+        }
+
+        public async Task<ActionResult> Rounds(long? seasonId, CancellationToken cancellationToken)
+        {
+            if (seasonId is null)
+            {
+                return NotFound();
+            }
+
+            Task<List<LeagueWithSeasons>> leagueWithSeasonsTask = _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
+            Task<List<SeasonRound>> roundsTask = _leagueRepository.GetSeasonRoundsAsync(seasonId.Value, cancellationToken);
+
+            await Task.WhenAll(leagueWithSeasonsTask, roundsTask);
+
+            return View(
+                new SeasonRoundListViewModel
+                {
+                    SeasonId = seasonId.Value,
+                    LeagueSeasonChooser = new LeagueSeasonChooserViewModel(seasonId.Value, leagueWithSeasonsTask.Result, Url),
+                    Rounds = roundsTask.Result,
                 });
         }
     }

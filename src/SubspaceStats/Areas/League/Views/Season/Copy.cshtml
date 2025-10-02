@@ -1,1 +1,82 @@
-﻿
+﻿@using SubspaceStats.Areas.League.Models.Season
+@model CopySeasonViewModel
+
+@{
+    ViewData["Title"] = "Copy Season";
+}
+
+<h1>Copy Season</h1>
+
+<div class="mb-3">
+    <a asp-controller="Season" asp-action="Details">Season Details</a>
+</div>
+
+<div class="container">
+	<div class="row">
+		<div class="col-md-6 order-md-2">
+			<div class="alert alert-info">This allows you to copy a season so that you don't need to input a ton of data. Useful if you want to have a pre-season.</div>
+		</div>
+		<div class="col-md-6 order-md-1">
+
+			<div>
+				<h5>This will copy from season</h5>
+				@* <div>Season ID: @Model.SourceSeason.id</div> *@
+				<div class="mb-2">Name: @Model.SourceSeason.SeasonName</div>
+				<div class="mb-2">
+					Containing:
+					<ul>
+						<li>@Model.SourcePlayers.Count Players</li>
+						<li>@Model.SourceTeams.Count Teams</li>
+						<li>@Model.SourceGames.Count Games</li>
+						<li>@Model.SourceRounds.Count Rounds</li>
+					</ul>
+				</div>
+				
+			</div>
+
+			<form asp-action="Copy">
+				<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+				<div class="mb-3">
+					<div class="mb-3">
+						<label asp-for="SeasonName" class="form-label"></label>
+						<input asp-for="SeasonName" class="form-control" />
+						<span asp-validation-for="SeasonName" class="text-danger"></span>
+					</div>
+
+					<div class="mb-3 form-check">
+						<input asp-for="IncludePlayers" class="form-check-input" />
+						<label asp-for="IncludePlayers" class="form-check-label"></label>
+						<span asp-validation-for="IncludePlayers" class="text-danger d-block"></span>
+					</div>
+
+					<div class="mb-3 form-check">
+						<input asp-for="IncludeTeams" class="form-check-input" />
+						<label asp-for="IncludeTeams" class="form-check-label"></label>
+						<span asp-validation-for="IncludeTeams" class="text-danger d-block"></span>
+					</div>
+
+					<div class="mb-3 form-check">
+						<input asp-for="IncludeGames" class="form-check-input" />
+						<label asp-for="IncludeGames" class="form-check-label"></label>
+						<span asp-validation-for="IncludeGames" class="text-danger d-block"></span>
+					</div>
+
+					<div class="mb-3 form-check">
+						<input asp-for="IncludeRounds" class="form-check-input" />
+						<label asp-for="IncludeRounds" class="form-check-label"></label>
+						<span asp-validation-for="IncludeRounds" class="text-danger d-block"></span>
+					</div>
+				</div>
+				<div class="d-flex">
+					<button type="submit" class="btn btn-primary">Create Copy</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	@{
+		await Html.RenderPartialAsync("_ValidationScriptsPartial");
+	}
+}

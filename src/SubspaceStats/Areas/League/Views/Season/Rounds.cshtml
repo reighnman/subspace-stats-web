@@ -1,0 +1,46 @@
+﻿@using SubspaceStats.Areas.League.Models
+@using SubspaceStats.Areas.League.Models.Season
+@using System.Text.Json
+@model SeasonRoundListViewModel
+
+@{
+	ViewData["Title"] = "Season Rounds";
+}
+
+<h1>Season Rounds</h1>
+
+@await Html.PartialAsync("_SeasonNav")
+@await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
+
+<div class="mb-3">
+	<a asp-controller="SeasonRound" asp-action="Create" asp-route-seasonId="@Model.SeasonId" class="mx-2 text-nowrap">New Round</a>
+</div>
+
+<div class="table-responsive">
+	<table class="table table-striped table-bordered table-hover">
+		<thead>
+			<tr>
+				<th>Number</th>
+				<th>Name</th>
+				<th>Description</th>
+				<th colspan="2">Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var round in Model.Rounds)
+			{
+				<tr>
+					<td>@round.RoundNumber</td>
+					<td>@round.RoundName</td>
+					<td>@round.RoundDescription</td>
+					<td><a asp-controller="SeasonRound" asp-action="Edit" asp-route-seasonId="@Model.SeasonId" asp-route-roundNumber="@round.RoundNumber">Edit</a></td>
+					<td><a asp-controller="SeasonRound" asp-action="Delete" asp-route-seasonId="@Model.SeasonId" asp-route-roundNumber="@round.RoundNumber">Delete</a></td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+@section Scripts {
+	@await Html.PartialAsync("_LeagueSeasonChooseScript", Model.LeagueSeasonChooser)
+}

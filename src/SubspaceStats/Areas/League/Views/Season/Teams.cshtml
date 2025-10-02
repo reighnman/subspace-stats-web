@@ -10,6 +10,10 @@
 @await Html.PartialAsync("_SeasonNav")
 @await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
 
+<div class="mb-3">
+	<a asp-controller="Team" asp-action="Add" asp-route-seasonId="@Model.LeagueSeasonChooser.SelectedSeasonId" class="mx-2 text-nowrap">Add Team</a>
+</div>
+
 <div class="table-responsive">
 	<table class="table table-striped table-bordered table-hover">
 		<thead>
@@ -26,13 +30,13 @@
 			@foreach (var team in Model.Teams)
 			{
 				<tr>
-					<td><a asp-controller="Team" asp-action="Index" asp-route-id="@team.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@team.Name</a></td>
+					<td><a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@team.Name</a></td>
 					<td>@team.BannerSmall</td>
 					<td>@team.BannerLarge</td>
 					<td>@team.IsEnabled</td>
 					<td>@team.FranchiseId</td>
-					<td><a asp-controller="Team" asp-action="Edit" asp-route-id="@team.Id">Edit</a></td>
-					<td><a asp-controller="Team" asp-action="Delete" asp-route-id="@team.Id">Delete</a></td>
+					<td><a asp-controller="Team" asp-action="Edit" asp-route-teamId="@team.Id">Edit</a></td>
+					<td><a asp-controller="Team" asp-action="Delete" asp-route-teamId="@team.Id">Delete</a></td>
 				</tr>
 			}
 		</tbody>

@@ -43,6 +43,8 @@ namespace SubspaceStats.Services
         Task<SeasonDetails?> GetSeasonDetailsAsync(long seasonId, CancellationToken cancellationToken);
         Task StartSeasonAsync(long seasonId, DateTime? startDate, CancellationToken cancellationToken);
 
+        Task<long> CopySeasonAsync(long seasonId, string seasonName, bool includePlayers, bool includeTeams, bool includeGames, bool includeRounds, CancellationToken cancellationToken);
+
         //Task SetSeasonEndDateAsync(long sesaonId, DateTime? endDate, CancellationToken cancellationToken);
 
         // InsertSeasonAsync
@@ -57,7 +59,7 @@ namespace SubspaceStats.Services
 
         #region Season Players
 
-        Task<List<PlayerModel>> GetSeasonPlayersAsync(long seasonId, CancellationToken cancellationToken);
+        Task<List<PlayerListItem>> GetSeasonPlayersAsync(long seasonId, CancellationToken cancellationToken);
 
         // BulkInsertSeasonPlayers()
 
@@ -89,7 +91,7 @@ namespace SubspaceStats.Services
 
         
 
-        #region Season Game
+        #region Season Games
 
         Task<List<GameListItem>> GetSeasonGamesAsync(long seasonId, CancellationToken cancellationToken);
 
@@ -102,6 +104,16 @@ namespace SubspaceStats.Services
         // UpdateSeasonGameResults(
 
         // DeleteSeasonGame
+
+        #endregion
+
+        #region Season Rounds
+
+        Task<List<SeasonRound>> GetSeasonRoundsAsync(long seasonId, CancellationToken cancellationToken);
+        Task<SeasonRound?> GetSeasonRoundAsync(long seasonId, int roundNumber, CancellationToken cancellationToken);
+        Task InsertSeasonRoundAsync(SeasonRound seasonRound, CancellationToken cancellationToken);
+        Task UpdateSeasonRoundAsync(SeasonRound seasonRound, CancellationToken cancellationToken);
+        Task DeleteSeasonRoundAsync(long seasonId, int roundNumber, CancellationToken cancellationToken);
 
         #endregion
     }

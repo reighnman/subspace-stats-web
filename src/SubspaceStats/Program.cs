@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Caching.Memory;
 using SubspaceStats.Filters;
 using SubspaceStats.Options;
 using SubspaceStats.Services;
@@ -46,25 +45,28 @@ namespace SubspaceStats
 
             app.UseAuthorization();
 
-            //app.MapControllerRoute(
-            //    name: "2v2leaderboard",
-            //    pattern: "2v2",
-            //    defaults: new { controller = "leaderboard", action = "2v2" });
+            app.MapAreaControllerRoute(
+                name: "LeagueSeasonPlayer",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/Player/{action}",
+                defaults: new { controller = "SeasonPlayer" });
 
-            //app.MapControllerRoute(
-            //    name: "3v3leaderboard",
-            //    pattern: "3v3",
-            //    defaults: new { controller = "leaderboard", action = "3v3" });
+            app.MapAreaControllerRoute(
+                name: "LeagueSeasonRound",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/Round/{roundNumber:int}/{action=Detail}",
+                defaults: new { controller = "SeasonRound" });
 
-            //app.MapControllerRoute(
-            //    name: "4v4leaderboard",
-            //    pattern: "4v4",
-            //    defaults: new { controller = "leaderboard", action = "4v4" });
+            app.MapAreaControllerRoute(
+                name: "LeagueSeasonRoundCreate",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/Round/Create",
+                defaults: new { controller = "SeasonRound", action = "Create" });
 
             app.MapAreaControllerRoute(
                 name: "LeagueSeason",
                 areaName: "League",
-                pattern: "League/Season/{id:long}/{action=Index}",
+                pattern: "League/Season/{seasonId:long}/{action=Index}",
                 defaults: new { controller = "Season" });
 
             app.MapAreaControllerRoute(
@@ -94,19 +96,19 @@ namespace SubspaceStats
             app.MapAreaControllerRoute(
                 name: "LeagueFranchise",
                 areaName: "League",
-                pattern: "League/Franchise/{id:long}/{action=Details}",
+                pattern: "League/Franchise/{franchiseId:long}/{action=Details}",
                 defaults: new { controller = "Franchise" });
 
             app.MapAreaControllerRoute(
                 name: "Leagueteam",
                 areaName: "League",
-                pattern: "League/Team/{id:long}/{action=Index}",
+                pattern: "League/Team/{teamId:long}/{action=Index}",
                 defaults: new { controller = "Team" });
 
             app.MapAreaControllerRoute(
                 name: "LeagueLeague",
                 areaName: "League",
-                pattern: "League/{id:long}/{action=Details}",
+                pattern: "League/{leagueId:long}/{action=Details}",
                 defaults: new { controller = "League" });
 
             app.MapAreaControllerRoute(

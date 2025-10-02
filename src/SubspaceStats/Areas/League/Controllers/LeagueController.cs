@@ -30,21 +30,20 @@ namespace SubspaceStats.Areas.League.Controllers
         }
 
         // GET: League/5/Details
-        public async Task<ActionResult> Details(long? id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Details(long? leagueId, CancellationToken cancellationToken)
         {
-            if (id is null)
+            if (leagueId is null)
             {
                 return NotFound();
             }
 
-            Task<LeagueModel?> leagueTask = _leagueRepository.GetLeagueAsync(id.Value, cancellationToken);
-            Task<List<SeasonListItem>> seasonsTask = _leagueRepository.GetSeasonsAsync(id.Value, cancellationToken);
-
-            LeagueModel? league = await leagueTask;
+            LeagueModel? league = await _leagueRepository.GetLeagueAsync(leagueId.Value, cancellationToken); ;
             if (league is null)
             {
                 return NotFound();
             }
+
+            Task<List<SeasonListItem>> seasonsTask = _leagueRepository.GetSeasonsAsync(leagueId.Value, cancellationToken);
 
             return View(
                 new LeagueDetailsViewModel
@@ -72,7 +71,12 @@ namespace SubspaceStats.Areas.League.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return View(
+                    new LeagueViewModel()
+                    {
+                        League = league,
+                        GameTypes = await _statsRepository.GetGameTypesAsync(cancellationToken),
+                    });
             }
 
             long leagueId = await _leagueRepository.InsertLeagueAsync(
@@ -80,18 +84,18 @@ namespace SubspaceStats.Areas.League.Controllers
                     league.GameTypeId,
                     cancellationToken);
 
-            return RedirectToAction(nameof(Details), "League", new { id = leagueId });
+            return RedirectToAction(nameof(Details), "League", new { leagueId });
         }
 
         // GET: League/5/Edit
-        public async Task<ActionResult> Edit(long? id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Edit(long? leagueId, CancellationToken cancellationToken)
         {
-            if (id is null)
+            if (leagueId is null)
             {
                 return NotFound();
             }
             
-            var league = await _leagueRepository.GetLeagueAsync(id.Value, cancellationToken);
+            var league = await _leagueRepository.GetLeagueAsync(leagueId.Value, cancellationToken);
             if (league is null)
             {
                 return NotFound();
@@ -108,16 +112,21 @@ namespace SubspaceStats.Areas.League.Controllers
         // POST: League/5/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(long? id, [Bind("Id", "Name", "GameTypeId", Prefix = "League")] LeagueModel league, CancellationToken cancellationToken)
+        public async Task<ActionResult> Edit(long? leagueId, [Bind("Id", "Name", "GameTypeId", Prefix = "League")] LeagueModel league, CancellationToken cancellationToken)
         {
-            if (id is null || id != league.Id)
+            if (leagueId is null || leagueId != league.Id)
             {
                 return NotFound();
             }
 
             if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return View(
+                    new LeagueViewModel
+                    {
+                        League = league,
+                        GameTypes = await _statsRepository.GetGameTypesAsync(cancellationToken),
+                    });
             }
 
             await _leagueRepository.UpdateLeagueAsync(league, cancellationToken);
@@ -125,14 +134,14 @@ namespace SubspaceStats.Areas.League.Controllers
         }
 
         // GET: League/5/Delete
-        public async Task<ActionResult> Delete(long? id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Delete(long? leagueId, CancellationToken cancellationToken)
         {
-            if (id is null)
+            if (leagueId is null)
             {
                 return NotFound();
             }
 
-            var league = await _leagueRepository.GetLeagueAsync(id.Value, cancellationToken);
+            var league = await _leagueRepository.GetLeagueAsync(leagueId.Value, cancellationToken);
             if (league is null)
             {
                 return NotFound();
@@ -149,9 +158,14 @@ namespace SubspaceStats.Areas.League.Controllers
         // POST: League/5/Delete
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> DeleteConfirmed(long id, CancellationToken cancellationToken)
+        public async Task<ActionResult> DeleteConfirmed(long? leagueId, CancellationToken cancellationToken)
         {
-            await _leagueRepository.DeleteLeagueAsync(id, cancellationToken);
+            if (leagueId is null)
+            {
+                return NotFound();
+            }
+
+            await _leagueRepository.DeleteLeagueAsync(leagueId.Value, cancellationToken);
             return RedirectToAction(nameof(Index));
         }
     }

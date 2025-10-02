@@ -15,14 +15,14 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(await _leagueRepository.GetFranchiseListAsync(cancellationToken));
         }
 
-        public async Task<ActionResult> Details(long? id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Details(long? franchiseId, CancellationToken cancellationToken)
         {
-            if (id is null)
+            if (franchiseId is null)
             {
                 return NotFound();
             }
 
-            Franchise? franchise = await _leagueRepository.GetFranchiseAsync(id.Value, cancellationToken);
+            Franchise? franchise = await _leagueRepository.GetFranchiseAsync(franchiseId.Value, cancellationToken);
             if (franchise is null)
             {
                 return NotFound();
@@ -32,7 +32,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 new FranchiseDetails
                 {
                     Franchise = franchise,
-                    TeamsAndSeasons = await _leagueRepository.GetFranchiseTeamsAsync(id.Value, cancellationToken),
+                    TeamsAndSeasons = await _leagueRepository.GetFranchiseTeamsAsync(franchiseId.Value, cancellationToken),
                 });
         }
 
@@ -45,23 +45,23 @@ namespace SubspaceStats.Areas.League.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create([Bind("Name")] Franchise franchise, CancellationToken cancellationToken)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                long franchiseId = await _leagueRepository.InsertFranchiseAsync(franchise.Name, cancellationToken);
-                return RedirectToAction(nameof(Details), new { id = franchiseId });
+                return View(franchise);
             }
 
-            return View(franchise);
+            long franchiseId = await _leagueRepository.InsertFranchiseAsync(franchise.Name, cancellationToken);
+            return RedirectToAction(nameof(Details), new { franchiseId });
         }
 
-        public async Task<ActionResult> Edit(long? id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Edit(long? franchiseId, CancellationToken cancellationToken)
         {
-            if (id is null)
+            if (franchiseId is null)
             {
                 return NotFound();
             }
 
-            Franchise? franchise = await _leagueRepository.GetFranchiseAsync(id.Value, cancellationToken);
+            Franchise? franchise = await _leagueRepository.GetFranchiseAsync(franchiseId.Value, cancellationToken);
             if(franchise is null)
             {
                 return NotFound();
@@ -72,30 +72,30 @@ namespace SubspaceStats.Areas.League.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(long? id, [Bind("Id", "Name")] Franchise franchise, CancellationToken cancellationToken)
+        public async Task<ActionResult> Edit(long? franchiseId, [Bind("Id", "Name")] Franchise franchise, CancellationToken cancellationToken)
         {
-            if (id is null || id != franchise.Id)
+            if (franchiseId is null || franchiseId != franchise.Id)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                await _leagueRepository.UpdateFranchiseAsync(franchise, cancellationToken);
-                return RedirectToAction(nameof(Details), new { id = franchise.Id });
+                return View(franchise);
             }
 
-            return View(franchise);
+            await _leagueRepository.UpdateFranchiseAsync(franchise, cancellationToken);
+            return RedirectToAction(nameof(Details), new { id = franchise.Id });
         }
 
-        public async Task<ActionResult> Delete(long? id, CancellationToken cancellationToken)
+        public async Task<ActionResult> Delete(long? franchiseId, CancellationToken cancellationToken)
         {
-            if (id is null)
+            if (franchiseId is null)
             {
                 return NotFound();
             }
 
-            Franchise? franchise = await _leagueRepository.GetFranchiseAsync(id.Value, cancellationToken);
+            Franchise? franchise = await _leagueRepository.GetFranchiseAsync(franchiseId.Value, cancellationToken);
             if (franchise is null)
             {
                 return NotFound();
@@ -106,9 +106,14 @@ namespace SubspaceStats.Areas.League.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> DeleteConfirmed(long id, CancellationToken cancellationToken)
+        public async Task<ActionResult> DeleteConfirmed(long? franchiseId, CancellationToken cancellationToken)
         {
-            await _leagueRepository.DeleteFranchiseAsync(id, cancellationToken);
+            if (franchiseId is null)
+            {
+                return NotFound();
+            }
+
+            await _leagueRepository.DeleteFranchiseAsync(franchiseId.Value, cancellationToken);
             return RedirectToAction(nameof(Index));
         }
     }

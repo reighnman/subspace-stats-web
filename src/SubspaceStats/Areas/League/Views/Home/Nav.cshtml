@@ -10,7 +10,9 @@
 </div>
 
 <div class="mb-3">
-    <a asp-controller="Home" asp-action="Index" class="mx-2 btn btn-link">Home</a> | <a asp-controller="Franchise" asp-action="Index" class="mx-2 btn btn-link disabled">Franchises</a> | <a asp-controller="PlayerSearch" asp-action="Index" class="mx-2 btn btn-link disabled">Player Search</a>
+    <a asp-controller="Home" asp-action="Index" class="mx-2 p-0 btn btn-link">Home</a>
+    <a asp-controller="Franchise" asp-action="Index" class="mx-2 p-0 btn btn-link disabled">Franchises</a>
+    <a asp-controller="PlayerSearch" asp-action="Index" class="mx-2 p-0 btn btn-link disabled">Player Search</a>
 </div>
 
 <div class="d-flex">
@@ -21,7 +23,7 @@
             string collapseId = $"collapse{league.LeagueId}";
             <div class="accordion-item">
                 <div id="@collapseHeaderId" class="accordion-header rounded-top d-flex align-items-center border-bottom bg-body-tertiary">
-                    <a asp-controller="League" asp-action="Details" asp-route-id="@league.LeagueId" class="text-nowrap mx-3">@league.LeagueName</a>
+                    <a asp-controller="League" asp-action="Details" asp-route-leagueId="@league.LeagueId" class="text-nowrap mx-3">@league.LeagueName</a>
                     <button class="accordion-button bg-transparent shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="true" aria-controls="@collapseId">
                     </button>
                 </div>
@@ -30,7 +32,7 @@
                         @foreach (var season in league.Seasons)
                         {
                             string seasonElementId = $"season{season.SeasonId}";
-                            <div class="mb-2"><a asp-controller="Season" asp-action="Index" asp-route-id="@season.SeasonId" class="m-3" id="@seasonElementId">@season.SeasonName</a></div>
+                            <div class="mb-2"><a asp-controller="Season" asp-action="Index" asp-route-seasonId="@season.SeasonId" class="m-3" id="@seasonElementId">@season.SeasonName</a></div>
                         }
                     </div>
                 </div>
