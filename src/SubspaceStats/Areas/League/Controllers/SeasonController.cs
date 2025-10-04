@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SubspaceStats.Areas.League.Models;
+using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.Season;
 using SubspaceStats.Areas.League.Models.Team;
 using SubspaceStats.Models;
@@ -259,14 +260,16 @@ namespace SubspaceStats.Areas.League.Controllers
 
             Task<List<LeagueWithSeasons>> leagueWithSeasonsTask = _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
             Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId.Value, cancellationToken);
+            Task<OrderedDictionary<long, FranchiseModel>> franchiseTask = _leagueRepository.GetFranchisesAsync(cancellationToken);
 
-            await Task.WhenAll(leagueWithSeasonsTask, teamsTask);
+            await Task.WhenAll(leagueWithSeasonsTask, teamsTask, franchiseTask);
 
             return View(
                 new TeamsViewModel
                 {
                     LeagueSeasonChooser = new LeagueSeasonChooserViewModel(seasonId.Value, leagueWithSeasonsTask.Result, Url),
                     Teams = teamsTask.Result,
+                    Franchises = franchiseTask.Result,
                 });
         }
 

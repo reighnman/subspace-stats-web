@@ -9,7 +9,7 @@ namespace SubspaceStats.Areas.League.Models.Franchise
     // POST /Franchise/Edit
     // GET /Franchise/Delete
     // POST /Franchise/Delete
-    public class Franchise
+    public class FranchiseModel
     {
         [Display(Name = "Franchise ID")]
         public required long Id { get; set; }
@@ -21,7 +21,7 @@ namespace SubspaceStats.Areas.League.Models.Franchise
     }
 
     // For listing on GET /franchise
-    public class FranchiseListItem : Franchise
+    public class FranchiseListItem : FranchiseModel
     {
         public string? Teams { get; set; }
     }

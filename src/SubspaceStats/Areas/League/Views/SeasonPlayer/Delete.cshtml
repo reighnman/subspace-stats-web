@@ -6,7 +6,7 @@
     ViewData["Title"] = "Delete Season Player";
     IEnumerable<SelectListItem> teams =
         from team in Model.Teams
-        select new SelectListItem(team.Name, team.Id.ToString());
+        select new SelectListItem(team.TeamName, team.TeamId.ToString());
 }
 
 <h1>Delete Season Player</h1>

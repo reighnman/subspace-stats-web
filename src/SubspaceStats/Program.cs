@@ -1,3 +1,5 @@
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using SubspaceStats.Filters;
 using SubspaceStats.Options;
 using SubspaceStats.Services;
@@ -39,7 +41,18 @@ namespace SubspaceStats
             }
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
+
+            app.MapStaticAssets();
+
+            IOptions<LeagueOptions> leagueOptions = app.Services.GetRequiredService<IOptions<LeagueOptions>>();
+
+            if(!string.IsNullOrWhiteSpace(leagueOptions.Value.ImagePhysicalPath) && !string.IsNullOrWhiteSpace(leagueOptions.Value.ImageUrlPath))
+            app.UseStaticFiles(
+                new StaticFileOptions()
+                {
+                    FileProvider = new PhysicalFileProvider(leagueOptions.Value.ImagePhysicalPath),
+                    RequestPath = leagueOptions.Value.ImageUrlPath
+                });
 
             app.UseRouting();
 
@@ -52,15 +65,21 @@ namespace SubspaceStats
                 defaults: new { controller = "SeasonPlayer" });
 
             app.MapAreaControllerRoute(
+                name: "LeagueSeasonTeamCreate",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/Teams/Create",
+                defaults: new { controller = "Team", action = "Create" });
+
+            app.MapAreaControllerRoute(
                 name: "LeagueSeasonRound",
                 areaName: "League",
-                pattern: "League/Season/{seasonId:long}/Round/{roundNumber:int}/{action=Detail}",
+                pattern: "League/Season/{seasonId:long}/Rounds/{roundNumber:int}/{action=Detail}",
                 defaults: new { controller = "SeasonRound" });
 
             app.MapAreaControllerRoute(
                 name: "LeagueSeasonRoundCreate",
                 areaName: "League",
-                pattern: "League/Season/{seasonId:long}/Round/Create",
+                pattern: "League/Season/{seasonId:long}/Rounds/Create",
                 defaults: new { controller = "SeasonRound", action = "Create" });
 
             app.MapAreaControllerRoute(
@@ -100,7 +119,7 @@ namespace SubspaceStats
                 defaults: new { controller = "Franchise" });
 
             app.MapAreaControllerRoute(
-                name: "Leagueteam",
+                name: "LeagueTeam",
                 areaName: "League",
                 pattern: "League/Team/{teamId:long}/{action=Index}",
                 defaults: new { controller = "Team" });

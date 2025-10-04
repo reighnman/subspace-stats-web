@@ -22,7 +22,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 return NotFound();
             }
 
-            Franchise? franchise = await _leagueRepository.GetFranchiseAsync(franchiseId.Value, cancellationToken);
+            FranchiseModel? franchise = await _leagueRepository.GetFranchiseAsync(franchiseId.Value, cancellationToken);
             if (franchise is null)
             {
                 return NotFound();
@@ -43,7 +43,7 @@ namespace SubspaceStats.Areas.League.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create([Bind("Name")] Franchise franchise, CancellationToken cancellationToken)
+        public async Task<ActionResult> Create([Bind("Name")] FranchiseModel franchise, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -61,7 +61,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 return NotFound();
             }
 
-            Franchise? franchise = await _leagueRepository.GetFranchiseAsync(franchiseId.Value, cancellationToken);
+            FranchiseModel? franchise = await _leagueRepository.GetFranchiseAsync(franchiseId.Value, cancellationToken);
             if(franchise is null)
             {
                 return NotFound();
@@ -72,7 +72,7 @@ namespace SubspaceStats.Areas.League.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(long? franchiseId, [Bind("Id", "Name")] Franchise franchise, CancellationToken cancellationToken)
+        public async Task<ActionResult> Edit(long? franchiseId, [Bind("Id", "Name")] FranchiseModel franchise, CancellationToken cancellationToken)
         {
             if (franchiseId is null || franchiseId != franchise.Id)
             {
@@ -95,7 +95,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 return NotFound();
             }
 
-            Franchise? franchise = await _leagueRepository.GetFranchiseAsync(franchiseId.Value, cancellationToken);
+            FranchiseModel? franchise = await _leagueRepository.GetFranchiseAsync(franchiseId.Value, cancellationToken);
             if (franchise is null)
             {
                 return NotFound();

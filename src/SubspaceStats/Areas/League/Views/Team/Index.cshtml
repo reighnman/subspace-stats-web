@@ -2,7 +2,7 @@
 @using SubspaceStats.Areas.League.Models
 @using SubspaceStats.Areas.League.Models.Team
 @using SubspaceStats.Options
-@model TeamViewModel
+@model TeamDetailsViewModel
 @inject IOptions<LeagueOptions> leagueOptions
 
 @{
@@ -14,7 +14,7 @@
 </div>
 
 <div class="container">
-    <h3 class="row">@Model.TeamInfo.Name</h3>
+    <h3 class="row">@Model.TeamInfo.TeamName</h3>
     <div class="row">
         <div class="col-6">
             <dl class="row">

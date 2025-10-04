@@ -549,7 +549,7 @@
 						@foreach (var shipStats in Model.ShipStatsList)
 						{
 							<tr>
-								<th scope="row" class="text-center"><img src="@GetShipImage(shipStats.ShipType)" alt="@shipStats.ShipType" title="@shipStats.ShipType" width="24" /></th>
+								<th scope="row" class="text-center"><img src="@GetShipImage(shipStats.ShipType)" alt="@shipStats.ShipType" title="@shipStats.ShipType" width="24" asp-append-version="true" /></th>
 								<td>@shipStats.Kills</td>
 								<td>@shipStats.Deaths</td>
 								<td>@shipStats.Knockouts</td>

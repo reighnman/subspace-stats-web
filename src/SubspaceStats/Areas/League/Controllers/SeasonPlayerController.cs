@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SubspaceStats.Areas.League.Models.Season;
 using SubspaceStats.Areas.League.Models.SeasonPlayer;
+using SubspaceStats.Areas.League.Models.Team;
 using SubspaceStats.Services;
 
 namespace SubspaceStats.Areas.League.Controllers
@@ -28,12 +30,23 @@ namespace SubspaceStats.Areas.League.Controllers
         // GET League/Season/{seasonId}/Players/Add
         public async Task<IActionResult> Add(long seasonId, CancellationToken cancellationToken)
         {
+            var seasonTask = _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+            var teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
+
+            await Task.WhenAll(seasonTask, teamsTask);
+
+            SeasonDetails? seasonDetails = seasonTask.Result;
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
             return View(
                 new AddPlayersViewModel
                 {
-                    SeasonId = seasonId,
+                    Season = seasonDetails,
                     PlayerNames = "",
-                    Teams = await _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken),
+                    Teams = teamsTask.Result,
                 });
         }
 
@@ -99,10 +112,10 @@ namespace SubspaceStats.Areas.League.Controllers
                 nameList.Add(name.ToString());
             }
 
-            var teams = await _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
+            List<TeamModel> teams = await _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
 
             if (model.TeamId is not null
-                && !teams.Any(team => team.Id == model.TeamId.Value))
+                && !teams.Any(team => team.TeamId == model.TeamId.Value))
             {
                 ModelState.AddModelError(nameof(model.TeamId), "Invalid team.");
             }

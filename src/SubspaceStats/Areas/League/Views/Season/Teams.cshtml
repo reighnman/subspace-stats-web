@@ -1,17 +1,21 @@
-﻿@using SubspaceStats.Areas.League.Models.Season
+﻿@using Microsoft.Extensions.Options
+@using SubspaceStats.Areas.League.Models.Franchise
+@using SubspaceStats.Areas.League.Models.Season
+@using SubspaceStats.Options
+@inject IOptions<LeagueOptions> leagueOptions
 @model TeamsViewModel
 
 @{
-	ViewData["Title"] = "Season Teams";
+	ViewData["Title"] = "Manage Teams";
 }
 
-<h1>Season Teams</h1>
+<h1>Manage Teams</h1>
 
 @await Html.PartialAsync("_SeasonNav")
 @await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
 
 <div class="mb-3">
-	<a asp-controller="Team" asp-action="Add" asp-route-seasonId="@Model.LeagueSeasonChooser.SelectedSeasonId" class="mx-2 text-nowrap">Add Team</a>
+	<a asp-controller="Team" asp-action="Create" asp-route-seasonId="@Model.LeagueSeasonChooser.SelectedSeasonId" class="mx-2 text-nowrap">Add Team</a>
 </div>
 
 <div class="table-responsive">
@@ -30,13 +34,29 @@
 			@foreach (var team in Model.Teams)
 			{
 				<tr>
-					<td><a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@team.Name</a></td>
-					<td>@team.BannerSmall</td>
-					<td>@team.BannerLarge</td>
+					<td><a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.TeamId" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@team.TeamName</a></td>
+					<td>
+						@if (!string.IsNullOrWhiteSpace(team.BannerSmall))
+						{
+							<img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{team.BannerSmall}")" asp-append-version="true" />
+						}
+					</td>
+					<td>
+						@if (!string.IsNullOrWhiteSpace(team.BannerLarge))
+						{
+							<img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{team.BannerLarge}")" asp-append-version="true" />
+						}
+					</td>
 					<td>@team.IsEnabled</td>
-					<td>@team.FranchiseId</td>
-					<td><a asp-controller="Team" asp-action="Edit" asp-route-teamId="@team.Id">Edit</a></td>
-					<td><a asp-controller="Team" asp-action="Delete" asp-route-teamId="@team.Id">Delete</a></td>
+					<td>
+						@if (team.FranchiseId is not null)
+						{
+							string? franchiseName = Model.Franchises.TryGetValue(team.FranchiseId.Value, out FranchiseModel? franchise) ? franchise.Name : team.FranchiseId.ToString();
+							<a asp-controller="Franchise" asp-action="Details" asp-route-franchiseId="@team.FranchiseId">@franchiseName</a>
+						}
+					</td>
+					<td><a asp-controller="Team" asp-action="Edit" asp-route-teamId="@team.TeamId">Edit</a></td>
+					<td><a asp-controller="Team" asp-action="Delete" asp-route-teamId="@team.TeamId">Delete</a></td>
 				</tr>
 			}
 		</tbody>

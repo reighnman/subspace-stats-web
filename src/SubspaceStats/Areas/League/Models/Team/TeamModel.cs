@@ -5,12 +5,15 @@ namespace SubspaceStats.Areas.League.Models.Team
     public class TeamModel
     {
         [Display(Name = "Team ID")]
-        public required long Id { get; set; }
+        public required long TeamId { get; set; }
 
         [Display(Name = "Team Name")]
         [Required]
         [StringLength(20, MinimumLength = 1)]
-        public required string Name { get; set; }
+        public required string TeamName { get; set; }
+
+        [Display(Name = "Season ID")]
+        public required long SeasonId { get; set; }
 
         [Display(Name = "Banner (small)")]
         [StringLength(255, MinimumLength = 1)]
@@ -32,7 +35,7 @@ namespace SubspaceStats.Areas.League.Models.Team
         public required string? FranchiseName { get; set; }
         public required long LeagueId { get; set; }
         public required string LeagueName { get; set; }
-        public required long SeasonId { get; set; }
+        //public required long SeasonId { get; set; }
         public required string SeasonName { get; set; }
         public required int? Wins { get; set; }
         public required int? Losses { get; set; }

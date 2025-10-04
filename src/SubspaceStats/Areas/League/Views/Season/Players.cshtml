@@ -3,16 +3,16 @@
 @model PlayersViewModel
 
 @{
-	ViewData["Title"] = "Season Players";
+	ViewData["Title"] = "Manage Players";
 
 	Dictionary<long, TeamModel> teamDictionary = new(Model.Teams.Count);
 	foreach(var team in Model.Teams)
 	{
-		teamDictionary[team.Id] = team;
+		teamDictionary[team.TeamId] = team;
 	}
 }
 
-<h1>Season Players</h1>
+<h1>Manage Players</h1>
 
 @await Html.PartialAsync("_SeasonNav")
 @await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
@@ -48,7 +48,7 @@
 					<td>
 						@if (team is not null)
 						{
-							<a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.Id">@team.Name</a>
+							<a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.TeamId">@team.TeamName</a>
 						}
 						else
 						{

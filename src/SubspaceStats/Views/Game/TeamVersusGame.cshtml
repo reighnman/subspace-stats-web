@@ -348,7 +348,7 @@
 
 							<tr>
 								<td>
-									<img src="@GetShipImage(killEvent.KilledShip)" alt="@killEvent.KilledShip" title="@killEvent.KilledShip" width="24" />
+									<img src="@GetShipImage(killEvent.KilledShip)" alt="@killEvent.KilledShip" title="@killEvent.KilledShip" width="24" asp-append-version="true" />
 									@Html.ActionLink(killEvent.KilledPlayerName, "Index", "Player", new { playerName = killEvent.KilledPlayerName, gameType = Model.Game.GameTypeId })
 									@if (killEvent.RatingChanges is not null && killEvent.RatingChanges.TryGetValue(killEvent.KilledPlayerName, out float killedRating))
 									{
@@ -358,7 +358,7 @@
 								<td class="text-nowrap">
 									<div class="d-flex">
 										<div class="flex-grow-1">
-											<img src="@GetShipImage(killEvent.KillerShip)" alt="@killEvent.KillerShip" title="@killEvent.KillerShip" width="24" />
+											<img src="@GetShipImage(killEvent.KillerShip)" alt="@killEvent.KillerShip" title="@killEvent.KillerShip" width="24" asp-append-version="true" />
 											@Html.ActionLink(killEvent.KillerPlayerName, "Index", "Player", new { playerName = killEvent.KillerPlayerName, gameType = Model.Game.GameTypeId })
 											@if (killEvent.RatingChanges is not null && killEvent.RatingChanges.TryGetValue(killEvent.KillerPlayerName, out float killerRating))
 											{

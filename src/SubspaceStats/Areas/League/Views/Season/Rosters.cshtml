@@ -1,6 +1,9 @@
-﻿@using SubspaceStats.Areas.League.Models
+﻿@using Microsoft.Extensions.Options
+@using SubspaceStats.Areas.League.Models
 @using SubspaceStats.Areas.League.Models.Season
 @using System.Text.Json
+@using SubspaceStats.Options
+@inject IOptions<LeagueOptions> leagueOptions
 @model SeasonRostersViewModel
 
 @{
@@ -19,6 +22,10 @@
 			<div class="col-12 col-md-6 col-lg-4 col-xl-3">
 				<div class="card h-100">
 					<h5 class="card-header text-center">
+						@if(!string.IsNullOrWhiteSpace(seasonRoster.BannerSmall))
+						{
+							<img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{seasonRoster.BannerSmall}")" />
+						}
 						<a asp-controller="Team" asp-action="Index" asp-route-teamId="@seasonRoster.TeamId">@seasonRoster.TeamName</a>
 					</h5>
 					<div class="card-body">
@@ -29,14 +36,14 @@
 									<tr>
 										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@rosterItem.PlayerName">@rosterItem.PlayerName</a></td>
 										<td class="text-end">
-											@if (rosterItem.IsCaptain)
-											{
-												<span>Captain</span>
-											}
-
 											@if (rosterItem.IsSuspended)
 											{
 												<span class="badge text-bg-danger mx-2">Suspended</span>
+											}
+
+											@if (rosterItem.IsCaptain)
+											{
+												<span>Captain</span>
 											}
 										</td>
 									</tr>

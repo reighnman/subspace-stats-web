@@ -249,6 +249,49 @@ namespace SubspaceStats.Services
             }
         }
 
+        public async Task<OrderedDictionary<long, FranchiseModel>> GetFranchisesAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select * from league.get_franchises();", connection);
+                    await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                    await using (command.ConfigureAwait(false))
+                    {
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_franchiseId = reader.GetOrdinal("franchise_id");
+                            int column_franchiseName = reader.GetOrdinal("franchise_name");
+
+                            OrderedDictionary<long, FranchiseModel> dictionary = [];
+
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                var franchise = new FranchiseModel()
+                                {
+                                    Id = reader.GetInt64(column_franchiseId),
+                                    Name = reader.GetString(column_franchiseName),
+                                };
+
+                                dictionary.Add(franchise.Id, franchise);
+                            }
+
+                            return dictionary;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting franchises.");
+                throw;
+            }
+        }
+
         public async Task<List<FranchiseListItem>> GetFranchiseListAsync(CancellationToken cancellationToken)
         {
             try
@@ -287,12 +330,12 @@ namespace SubspaceStats.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting franchise list.");
+                _logger.LogError(ex, "Error getting franchises with teams.");
                 throw;
             }
         }
 
-        public async Task<Franchise?> GetFranchiseAsync(long franchiseId, CancellationToken cancellationToken)
+        public async Task<FranchiseModel?> GetFranchiseAsync(long franchiseId, CancellationToken cancellationToken)
         {
             try
             {
@@ -311,7 +354,7 @@ namespace SubspaceStats.Services
                             if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                                 return null;
 
-                            return new Franchise
+                            return new FranchiseModel
                             {
                                 Id = franchiseId,
                                 Name = reader.GetString("franchise_name"),
@@ -405,7 +448,7 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task UpdateFranchiseAsync(Franchise franchise, CancellationToken cancellationToken)
+        public async Task UpdateFranchiseAsync(FranchiseModel franchise, CancellationToken cancellationToken)
         {
             try
             {
@@ -676,6 +719,8 @@ namespace SubspaceStats.Services
                         await using (reader.ConfigureAwait(false))
                         {
                             int column_seasonName = reader.GetOrdinal("season_name");
+                            int column_leagueId = reader.GetOrdinal("league_id");
+                            int column_leagueName = reader.GetOrdinal("league_name");
                             int column_createdTimestamp = reader.GetOrdinal("created_timestamp");
                             int column_startDate = reader.GetOrdinal("start_date");
                             int column_endDate = reader.GetOrdinal("end_date");
@@ -690,6 +735,9 @@ namespace SubspaceStats.Services
 
                             return new SeasonDetails
                             {
+                                LeagueId = reader.GetInt64(column_leagueId),
+                                LeagueName = reader.GetString(column_leagueName),
+                                SeasonId = seasonId,
                                 SeasonName = reader.GetString(column_seasonName),
                                 CreatedTimestamp = reader.GetDateTime(column_createdTimestamp),
                                 StartDate = reader.IsDBNull(column_startDate) ? null : reader.GetFieldValue<DateOnly>(column_startDate),
@@ -805,8 +853,9 @@ namespace SubspaceStats.Services
                             {
                                 teams.Add(new TeamModel()
                                 {
-                                    Id = reader.GetInt64(column_teamId),
-                                    Name = reader.GetString(column_teamName),
+                                    TeamId = reader.GetInt64(column_teamId),
+                                    TeamName = reader.GetString(column_teamName),
+                                    SeasonId = seasonId,
                                     BannerSmall = reader.IsDBNull(column_bannerSmall) ? null : reader.GetString(column_bannerSmall),
                                     BannerLarge = reader.IsDBNull(column_bannerLarge) ? null : reader.GetString(column_bannerLarge),
                                     IsEnabled = reader.GetBoolean(column_isEnabled),
@@ -942,6 +991,8 @@ namespace SubspaceStats.Services
                         else
                             command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = teamId.Value });
 
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
                         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                     }
                 }
@@ -975,6 +1026,8 @@ namespace SubspaceStats.Services
                         command.Parameters.Add(new NpgsqlParameter<bool> { TypedValue = model.IsCaptain });
                         command.Parameters.Add(new NpgsqlParameter<bool> { TypedValue = model.IsSuspended });
 
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
                         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                     }
                 }
@@ -999,6 +1052,7 @@ namespace SubspaceStats.Services
                     {
                         command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
                         command.Parameters.AddWithValue(playerId);
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
                         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                     }
@@ -1120,8 +1174,8 @@ namespace SubspaceStats.Services
 
                             return new TeamWithSeasonInfo
                             {
-                                Id = teamId,
-                                Name = reader.GetString("team_name"),
+                                TeamId = teamId,
+                                TeamName = reader.GetString("team_name"),
                                 BannerSmall = reader.IsDBNull(column_bannerSmall) ? null : reader.GetString(column_bannerSmall),
                                 BannerLarge = reader.IsDBNull(column_bannerLarge) ? null : reader.GetString(column_bannerLarge),
                                 IsEnabled = reader.GetBoolean(column_isEnabled),
@@ -1141,7 +1195,7 @@ namespace SubspaceStats.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting team. (team_id: {team_id})", teamId);
+                _logger.LogError(ex, "Error getting team with season info. (team_id: {team_id})", teamId);
                 throw;
             }
         }
@@ -1163,6 +1217,7 @@ namespace SubspaceStats.Services
                         await using (reader.ConfigureAwait(false))
                         {
                             int column_teamName = reader.GetOrdinal("team_name");
+                            int column_seasonId = reader.GetOrdinal("season_id");
                             int column_bannerSmall = reader.GetOrdinal("banner_small");
                             int column_bannerLarge = reader.GetOrdinal("banner_large");
                             int column_isEnabled = reader.GetOrdinal("is_enabled");
@@ -1173,8 +1228,9 @@ namespace SubspaceStats.Services
 
                             return new TeamModel
                             {
-                                Id = teamId,
-                                Name = reader.GetString("team_name"),
+                                TeamId = teamId,
+                                TeamName = reader.GetString(column_teamName),
+                                SeasonId =reader.GetInt64(column_seasonId),
                                 BannerSmall = reader.IsDBNull(column_bannerSmall) ? null : reader.GetString(column_bannerSmall),
                                 BannerLarge = reader.IsDBNull(column_bannerLarge) ? null : reader.GetString(column_bannerLarge),
                                 IsEnabled = reader.GetBoolean(column_isEnabled),
@@ -1187,6 +1243,119 @@ namespace SubspaceStats.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting team. (team_id: {team_id})", teamId);
+                throw;
+            }
+        }
+
+        public async Task<long> InsertTeamAsync(long seasonId, string teamName, string? bannerSmall, string? bannerLarge, long? franchiseId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.insert_team($1,$2,$3,$4,$5)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.AddWithValue(teamName);
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+
+                        if (bannerSmall is null)
+                            command.Parameters.AddWithValue(DBNull.Value);
+                        else
+                            command.Parameters.AddWithValue(bannerSmall);
+
+                        if (bannerLarge is null)
+                            command.Parameters.AddWithValue(DBNull.Value);
+                        else
+                            command.Parameters.AddWithValue(bannerLarge);
+
+                        if (franchiseId is null)
+                            command.Parameters.AddWithValue(DBNull.Value);
+                        else
+                            command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = franchiseId.Value });
+
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        object? teamIdObj = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                        if (teamIdObj is null || teamIdObj == DBNull.Value)
+                            throw new Exception("Expected an value.");
+
+                        return (long)teamIdObj;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inserting team. (season_id: {season_id}, team_name: {team_name})", seasonId, teamName);
+
+                throw;
+            }
+        }
+
+        public async Task UpdateTeamAsync(long teamId, string teamName, string? bannerSmall, string? bannerLarge, long? franchiseId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.update_team($1,$2,$3,$4,$5)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = teamId });
+                        command.Parameters.AddWithValue(teamName);
+
+                        if (bannerSmall is null)
+                            command.Parameters.AddWithValue(DBNull.Value);
+                        else
+                            command.Parameters.AddWithValue(bannerSmall);
+
+                        if (bannerLarge is null)
+                            command.Parameters.AddWithValue(DBNull.Value);
+                        else
+                            command.Parameters.AddWithValue(bannerLarge);
+
+                        if (franchiseId is null)
+                            command.Parameters.AddWithValue(DBNull.Value);
+                        else
+                            command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = franchiseId.Value });
+
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating team. (team_id: {team_id})", teamId);
+
+                throw;
+            }
+        }
+
+        public async Task DeleteTeamAsync(long teamId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.delete_team($1)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = teamId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting team. (team_id: {team_id})", teamId);
+
                 throw;
             }
         }

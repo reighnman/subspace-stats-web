@@ -4,18 +4,22 @@
 @model SeasonGamesViewModel
 
 @{
-	ViewData["Title"] = "Season Games";
+	ViewData["Title"] = "Manage Games";
 	Dictionary<long, TeamModel> teamDictionary = new(Model.Teams.Count);
 	foreach(var team in Model.Teams)
 	{
-		teamDictionary[team.Id] = team;
+		teamDictionary[team.TeamId] = team;
 	}
 }
 
-<h1>Season Games</h1>
+<h1>Manage Games</h1>
 
 @await Html.PartialAsync("_SeasonNav")
 @await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
+
+<div class="mb-3">
+	<a asp-controller="SeasonGame" asp-action="Create" asp-route-seasonId="@Model.LeagueSeasonChooser.SelectedSeasonId" class="mx-2 text-nowrap">Add Game</a>
+</div>
 
 <div class="table-responsive">
 	<table class="table table-striped table-bordered table-hover">
@@ -48,7 +52,7 @@
 							long teamId = game.TeamIds[i];
 							if(teamDictionary.TryGetValue(teamId, out TeamModel? team))
 							{
-								<a asp-controller="Team" asp-action="Index" asp-route-teamId="@teamId">@team.Name</a>
+								<a asp-controller="Team" asp-action="Index" asp-route-teamId="@teamId">@team.TeamName</a>
 							}
 							else
 							{

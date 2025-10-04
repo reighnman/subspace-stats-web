@@ -17,9 +17,8 @@
 
 <div class="container">
     <div class="row">
-        <div class="col">
+        <div class="col-md-6 order-md-1">
             <form asp-action="Edit">
-                
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="mb-3">
                     <label asp-for="League.Id" class="form-label"></label>
@@ -44,11 +43,14 @@
                 </div>
             </form>
         </div>
-        <div class="col">
-            <h4>Notes:</h4>
-            <div id="game-type-note">
-                <strong>Game Type</strong> controls game-mode and associated configuration used by the zone server (league modules) when matches are started. It also affects which stat period to save match data to. The stat period is linked to a season when the season is <strong><em>started</em></strong>. Changing <strong>Game Type</strong> will not modify the stat period for seasons that have already started.
-            </div> 
+        <div class="col-md-6 order-md-2">
+            <div class="alert alert-info">
+                <div id="game-type-note">
+                    <div><strong>Game Type</strong> controls game-mode and associated configuration used by the zone server (league modules) when matches are started.</div>
+                    <br />
+                    <div><strong>Game Type</strong> also affects which <strong>stat period</strong> to save match data to. When a season is <strong><em>started</em></strong>, a stat period is linked to that season. Changing <strong>Game Type</strong> will not modify the stat period for seasons that have already started.</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

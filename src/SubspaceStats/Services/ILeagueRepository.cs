@@ -14,16 +14,17 @@ namespace SubspaceStats.Services
         Task<List<TeamStanding>> GetSeasonStandingsAsync(long seasonId, CancellationToken cancellationToken);
         Task<List<ScheduledGame>> GetScheduledGamesAsync(long seasonId, CancellationToken cancellationToken);
         Task<List<LeagueWithSeasons>> GetLeaguesWithSeasonsAsync(CancellationToken cancellationToken);
-        
+
         #region Franchise
 
+        Task<OrderedDictionary<long, FranchiseModel>> GetFranchisesAsync(CancellationToken cancellationToken);
         Task<List<FranchiseListItem>> GetFranchiseListAsync(CancellationToken cancellationToken);
         Task<List<TeamAndSeason>> GetFranchiseTeamsAsync(long franchiseId, CancellationToken cancellationToken);
-        Task<Franchise?> GetFranchiseAsync(long franchiseId, CancellationToken cancellationToken);
+        Task<FranchiseModel?> GetFranchiseAsync(long franchiseId, CancellationToken cancellationToken);
 
         Task<long> InsertFranchiseAsync(string franchiseName, CancellationToken cancellationToken);
 
-        Task UpdateFranchiseAsync(Franchise franchise, CancellationToken cancellationToken);
+        Task UpdateFranchiseAsync(FranchiseModel franchise, CancellationToken cancellationToken);
         Task DeleteFranchiseAsync(long franchiseId, CancellationToken cancellationToken);
 
         #endregion
@@ -82,11 +83,9 @@ namespace SubspaceStats.Services
         Task<List<TeamGameRecord>> GetTeamGames(long teamId, CancellationToken cancellationToken);
         Task<TeamWithSeasonInfo?> GetTeamsWithSeasonInfosync(long teamId, CancellationToken cancellationToken);
         Task<TeamModel?> GetTeamAsync(long teamId, CancellationToken cancellationToken);
-
-        //Task<long> InsertTeamAsync(string teamName, CancellationToken cancellationToken);
-
-        //Task UpdateTeamAsync(Team Team, CancellationToken cancellationToken);
-        //Task DeleteTeamAsync(long TeamId, CancellationToken cancellationToken);
+        Task<long> InsertTeamAsync(long seasonId, string teamName, string? bannerSmall, string? bannerLarge, long? franchiseId, CancellationToken cancellationToken);
+        Task UpdateTeamAsync(long teamId, string teamName, string? bannerSmallPath, string? bannerLargePath, long? franchiseId, CancellationToken cancellationToken);        
+        Task DeleteTeamAsync(long teamId, CancellationToken cancellationToken);
 
         #endregion        
 

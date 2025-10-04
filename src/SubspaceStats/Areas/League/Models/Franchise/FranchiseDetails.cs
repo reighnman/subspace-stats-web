@@ -2,7 +2,7 @@
 {
     public class FranchiseDetails
     {
-        public required Franchise Franchise { get; set; }
+        public required FranchiseModel Franchise { get; set; }
         public required List<TeamAndSeason> TeamsAndSeasons { get; set; }
     }
 }
