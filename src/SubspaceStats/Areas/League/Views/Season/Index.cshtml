@@ -1,19 +1,20 @@
 ﻿@using Microsoft.Extensions.Options
+@using SubspaceStats.Areas.League.Models
 @using SubspaceStats.Areas.League.Models.Season
 @using SubspaceStats.Options
-@model SeasonViewModel
+@using System.Text
+@model OverviewViewModel
 @inject IOptions<LeagueOptions> leagueOptions
 
 @{
 	ViewData["Title"] = "Season";
 }
 
-<h1>Season</h1>
-
-@await Html.PartialAsync("_SeasonNav")
 @await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
+@await Html.PartialAsync("_SeasonNav")
+@* <h1>Season</h1> *@
 
-<div class="container">
+<div class="container mt-3">
 	<div class="row">
 		<div class="col">
 			<table class="table table-striped table-bordered table-hover text-nowrap">
@@ -91,6 +92,94 @@
 				</tbody>
 			</table>
 		</div>
+		<div class="col">
+			<table class="table table-striped table-bordered table-hover text-nowrap">
+				<thead>
+					<tr>
+						<th colspan="4" class="text-center">Match Results</th>
+					</tr>
+					<tr>
+						<th>Date</th>
+						<th>Teams</th>
+						<th>Score</th>
+						<th>Winner</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (GameRecord game in Model.CompletedGames)
+					{
+						DateTime? gameTime = game.GameTimestamp is not null
+							? TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, leagueOptions.Value.TimeZone)
+							: null;
+
+						<tr>
+							<td>
+								@if (gameTime is not null)
+								{
+									@gameTime.Value.ToString("yyyy-MM-dd hh:mm tt")
+								}
+							</td>
+							<td>
+								@for (int i = 0; i < game.Teams.Count; i++)
+								{
+									TeamRecord team = game.Teams[i];
+									if (i > 0)
+									{
+										<text> vs </text>
+									}
+									<a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.TeamId" class="text-nowrap">@team.TeamName</a>
+								}
+							</td>
+							<td>
+								@{
+									StringBuilder builder = new();
+									for (int i = 0; i < game.Teams.Count; i++)
+									{
+										if (i > 0)
+										{
+											builder.Append(" - ");
+										}
+
+										builder.Append(game.Teams[i].Score);
+									}
+
+									if (game.GameId is not null)
+									{
+										<a asp-area="" asp-controller="Game" asp-action="Index" asp-route-id="@game.GameId">@builder.ToString()</a>
+									}
+									else
+									{
+										@builder.ToString()
+									}
+								}
+							</td>
+							<td>
+								@{
+									int winnerCount = 0;
+									for (int i = 0; i < game.Teams.Count; i++)
+									{
+										TeamRecord team = game.Teams[i];
+										if (team.IsWinner)
+										{
+											if (winnerCount++ > 0)
+											{
+												<text>, </text>
+											}
+
+											<a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.TeamId" class="text-nowrap">@team.TeamName</a>
+										}
+									}
+								}
+
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<div class="row">
+		
 	</div>
 </div>
 

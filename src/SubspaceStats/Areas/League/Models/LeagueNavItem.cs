@@ -2,7 +2,7 @@
 
 namespace SubspaceStats.Areas.League.Models
 {
-    public class LeagueWithSeasons
+    public class LeagueNavItem
     {
         [JsonPropertyName("league_id")]
         public required long LeagueId { get; init; }
@@ -11,10 +11,10 @@ namespace SubspaceStats.Areas.League.Models
         public required string LeagueName { get; init; }
 
         [JsonPropertyName("seasons")]
-        public required List<SeasonListItem> Seasons { get; init; }
+        public required List<SeasonNavItem> Seasons { get; init; }
     }
 
-    public class SeasonListItem
+    public class SeasonNavItem
     {
         [JsonPropertyName("season_id")]
         public required long SeasonId { get; init; }
@@ -26,8 +26,8 @@ namespace SubspaceStats.Areas.League.Models
         public string? Url { get; set; }
     }
 
-    [JsonSerializable(typeof(List<LeagueWithSeasons>), GenerationMode = JsonSourceGenerationMode.Metadata)]
-    internal partial class LeagueWithSeasonsSourceGenerationContext : JsonSerializerContext
+    [JsonSerializable(typeof(List<LeagueNavItem>), GenerationMode = JsonSourceGenerationMode.Metadata)]
+    internal partial class SeasonNavSourceGenerationContext : JsonSerializerContext
     {
     }
 }

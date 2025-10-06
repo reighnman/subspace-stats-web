@@ -23,6 +23,6 @@ namespace SubspaceStats.Areas.League.Models.Franchise
     // For listing on GET /franchise
     public class FranchiseListItem : FranchiseModel
     {
-        public string? Teams { get; set; }
+        public required string[] Teams { get; set; }
     }
 }

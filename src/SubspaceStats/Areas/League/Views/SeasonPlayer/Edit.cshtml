@@ -34,10 +34,9 @@
             <form asp-action="Edit">
                 <input asp-for="Model.PlayerId" type="hidden" />
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                <div>Input the names of the players to add, one per line.</div>
                 <div class="mb-3">
                     <label asp-for="Model.PlayerName" class="form-label"></label>
-                    <input asp-for="Model.PlayerName" class="form-control" readonly />
+                    <input asp-for="Model.PlayerName" class="form-control" disabled readonly />
                 </div>
                 <div class="mb-3">
                     <label asp-for="Model.TeamId" class="form-label"></label>

@@ -5,14 +5,14 @@
 	ViewData["Title"] = "Franchise Details";
 }
 
-<div class="d-flex">
-	<h1>Franchise Details</h1>
-</div>
+@await Html.PartialAsync("_FranchiseNav")
+
+<h1>Franchise Details</h1>
 
 <div class="mb-3">
 	<a asp-controller="Home" asp-action="Index" class="mx-2">Home</a>
 	<a asp-action="Index">Franchise List</a>
-	<a asp-action="Edit" class="mx-2">Edit</a>
+	<a asp-action="Edit" class="mx-2">Edit Franchise</a>
 </div>
 
 <div class="table-responsive">

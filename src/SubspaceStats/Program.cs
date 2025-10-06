@@ -89,9 +89,15 @@ namespace SubspaceStats
                 defaults: new { controller = "Season" });
 
             app.MapAreaControllerRoute(
-                name: "LeagueList",
+                name: "LeagueSeasonCreate",
                 areaName: "League",
-                pattern: "League/List",
+                pattern: "League/Season/Create",
+                defaults: new { controller = "Season", action = "Create" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueManage",
+                areaName: "League",
+                pattern: "League/Manage",
                 defaults: new { controller = "League", action = "Index" });
 
             app.MapAreaControllerRoute(

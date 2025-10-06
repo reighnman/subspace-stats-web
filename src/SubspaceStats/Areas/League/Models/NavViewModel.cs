@@ -2,7 +2,7 @@
 {
     public class NavViewModel
     {
-        public required List<LeagueWithSeasons> LeagueWithSeasons { get; init; }
+        public required List<LeagueNavItem> LeagueWithSeasons { get; init; }
 
         public long? LeagueId { get; init; }
         public long? SeasonId { get; init; }

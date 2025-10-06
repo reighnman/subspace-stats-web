@@ -10,37 +10,32 @@
     string gameTypeName = Model.GameTypes.TryGetValue(Model.League.GameTypeId, out GameType? gameType) ? gameType.Name : Model.League.GameTypeId.ToString();
 }
 
-<h1>League Details</h1>
+@await Html.PartialAsync("_LeagueNav")
+@* <h1>League Details</h1> *@
 
 <div class="mb-3">
-    <a asp-controller="Home" asp-action="Nav" class="mx-2">Leagues and Seasons</a>
-    <a asp-action="Index" class="mx-2">League List</a>
+    <a asp-action="Index" class="mx-2">Manage Leagues</a>
     <a asp-action="Edit" asp-route-id="@Model.League.Id" class="mx-2">Edit</a>
 </div>
 
+<h3>@Model.League.Name</h3>
 <div class="container">
-    <div class="row">
-        <div class="col">
-            <div class="mb-3">
-                <label asp-for="League.Id" class="form-label"></label>
-                <label class="form-control">@Model.League.Id</label>
-            </div>
-            <div class="mb-3">
-                <label asp-for="League.Name" class="form-label"></label>
-                @Html.DisplayFor(model => model.League.Name)
-            </div>
-            <div class="mb-3">
-                <label asp-for="League.GameTypeId" class="form-label"></label>
-                <label class="form-control">@gameTypeName</label>
-            </div>
-        </div>
-    </div>
+	<table class="table table-borderless table-sm w-auto">
+		<tr>
+			<td>@Html.DisplayNameFor(m => m.League.Id):</td>
+			<td>@Model.League.Id</td>
+		</tr>
+		<tr>
+			<td>@Html.DisplayNameFor(m => m.League.GameTypeId):</td>
+			<td>@gameTypeName</td>
+		</tr>
+	</table>
 </div>
 
-<h2>Seasons</h2>
+<h4>Seasons</h4>
 
 <div class="mb-3">
-    <a asp-controller="Season" asp-action="Create">New Season</a>
+    <a asp-controller="Season" asp-action="Create" asp-route-leagueId="@Model.League.Id">New Season</a>
 </div>
 
 <div class="table-responsive">

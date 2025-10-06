@@ -10,10 +10,11 @@ namespace SubspaceStats.Services
     public interface ILeagueRepository
     {
         Task<List<SeasonStandings>?> GetLatestSeasonsStandingsAsync(long[] leagueIds, CancellationToken cancellationToken);
-        Task<List<SeasonRoster>?> GetSeasonRostersAsync(long seasonId, CancellationToken cancellationToken);
+        Task<List<SeasonRoster>> GetSeasonRostersAsync(long seasonId, CancellationToken cancellationToken);
         Task<List<TeamStanding>> GetSeasonStandingsAsync(long seasonId, CancellationToken cancellationToken);
         Task<List<ScheduledGame>> GetScheduledGamesAsync(long seasonId, CancellationToken cancellationToken);
-        Task<List<LeagueWithSeasons>> GetLeaguesWithSeasonsAsync(CancellationToken cancellationToken);
+        Task<List<GameRecord>> GetCompletedGamesAsync(long seasonId, CancellationToken cancellationToken);
+        Task<List<LeagueNavItem>> GetLeaguesWithSeasonsAsync(CancellationToken cancellationToken);
 
         #region Franchise
 
@@ -49,11 +50,13 @@ namespace SubspaceStats.Services
 
         //Task SetSeasonEndDateAsync(long sesaonId, DateTime? endDate, CancellationToken cancellationToken);
 
-        // InsertSeasonAsync
+        Task<SeasonModel?> GetSeasonAsync(long seasonId, CancellationToken cancellationToken);
 
-        // UpdateSeasonAsync
+        Task<long> InsertSeasonAsync(string seasonName, long leagueId, CancellationToken cancellationToken);
 
-        // DeleteSeasonAsync
+        Task UpdateSeasonAsync(long seasonId, string seasonName, CancellationToken cancellationToken);
+
+        Task DeleteSeasonAsync(long seasonId, CancellationToken cancellationToken);
 
         Task<List<TeamModel>> GetSeasonTeamsAsync(long seasonId, CancellationToken cancellationToken);
 

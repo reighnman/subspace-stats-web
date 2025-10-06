@@ -2,7 +2,7 @@
 
 namespace SubspaceStats.Areas.League.Models.League
 {
-    public class LeagueDetailsViewModel
+    public class LeagueDetailsViewModel : ILeagueViewModel
     {
         public required LeagueModel League { get; init; }
         public required OrderedDictionary<long, GameType> GameTypes { get; init; }

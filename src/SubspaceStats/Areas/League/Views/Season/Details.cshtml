@@ -1,16 +1,15 @@
 ﻿@using SubspaceStats.Areas.League.Models.Season
-@model SeasonDetailsViewModel
+@model DetailsViewModel
 
 @{
 	ViewData["Title"] = "Manage Season";
 }
 
-<h1>Manage Season</h1>
-
-@await Html.PartialAsync("_SeasonNav")
 @await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
+@await Html.PartialAsync("_SeasonNav")
+@* <h1>Manage Season</h1> *@
 
-<div class="mb-3">
+<div class="mb-3 justify-content-end">
 	<a asp-action="Copy" class="mx-2 text-nowrap">Copy Season</a>
 </div>
 
@@ -63,7 +62,7 @@
 			<div class="card-body">
 				<div class="alert alert-info">When it is time, use this to start the season. It will set the season's <strong>Start Date</strong> and will create a <strong>Stat Period</strong> to store league stats into.</div>
 				<form asp-action="Start">
-					<input type="hidden" name="SeasonId" value="@Model.LeagueSeasonChooser.SelectedSeasonId" />
+					<input type="hidden" name="SeasonId" value="@Model.Season.SeasonId" />
 					<div class="mb-3">
 						<label for="StartDate" class="form-label">Start Date</label>
 						<input type="date" name="StartDate" class="form-control" />
@@ -82,7 +81,7 @@
 			<div class="card-body">
 				<div class="alert alert-info">Marks the season as ended, giving it an end date.</div>
 				<form asp-action="End">
-					<input type="hidden" name="SeasonId" value="@Model.LeagueSeasonChooser.SelectedSeasonId" />
+					<input type="hidden" name="SeasonId" value="@Model.Season.SeasonId" />
 					<div class="mb-3">
 						<label for="EndDate" class="form-label">End Date</label>
 						<input type="date" name="EndDate" class="form-control" />

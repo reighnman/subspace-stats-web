@@ -1,0 +1,13 @@
+﻿namespace SubspaceStats.Areas.League.Models.Season
+{
+    public class OverviewViewModel : ISeasonViewModel
+    {
+        public SeasonPage Page => SeasonPage.Overview;
+        public required LeagueNavItem League { get; set; }
+        public required SeasonNavItem Season { get; init; }
+        public required LeagueSeasonChooserViewModel LeagueSeasonChooser { get; init; }
+        public required List<ScheduledGame> ScheduledGames { get; init; }
+        public required List<TeamStanding> Standings { get; init; }
+        public required List<GameRecord> CompletedGames { get; init; }
+    }
+}

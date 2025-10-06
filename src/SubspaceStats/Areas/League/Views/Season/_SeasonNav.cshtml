@@ -1,9 +1,35 @@
-﻿<div class="mb-3">
-	<a asp-action="Index" class="mx-2 text-nowrap">Season Overview</a>
-	<a asp-action="Rosters" class="mx-2 text-nowrap">View Rosters</a>
-	<a asp-action="Details" class="mx-2 text-nowrap">Manage Season</a>
-	<a asp-action="Players" class="mx-2 text-nowrap">Manage Players</a>
-	<a asp-action="Teams" class="mx-2 text-nowrap">Manage Teams</a>
-	<a asp-action="Games" class="mx-2 text-nowrap">Manage Games</a>
-	<a asp-action="Rounds" class="mx-2 text-nowrap">Manage Rounds</a>
-</div>
+﻿@using SubspaceStats.Areas.League.Models.Season
+@model ISeasonViewModel
+
+<nav aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+		<li class="breadcrumb-item"><a asp-controller="Home" asp-action="Nav">Leagues</a></li>
+		<li class="breadcrumb-item"><a asp-controller="League" asp-action="Details" asp-route-leagueId="@Model.League.LeagueId">@Model.League.LeagueName</a></li>
+		<li class="breadcrumb-item active" aria-current="Page">@Model.Season.SeasonName</li>
+	</ol>
+</nav>
+
+<ul class="nav nav-underline">
+	<li class="nav-item">
+		<a asp-action="Index" class="nav-link @(Model.Page == SeasonPage.Overview ? "active" : "")">Overview</a>
+	</li>
+	<li class="nav-item">
+		<a asp-action="Rosters" class="nav-link @(Model.Page == SeasonPage.Rosters ? "active" : "")">Rosters</a>
+	</li>
+	<li class="nav-item">
+		<a asp-action="Details" class="nav-link @(Model.Page == SeasonPage.Details ? "active" : "")">Manage Season</a>
+	</li>
+	<li class="nav-item">
+		<a asp-action="Players" class="nav-link @(Model.Page == SeasonPage.Players ? "active" : "")">Manage Players</a>
+	</li>
+	<li class="nav-item">
+		<a asp-action="Teams" class="nav-link @(Model.Page == SeasonPage.Teams ? "active" : "")">Manage Teams</a>
+	</li>
+	<li class="nav-item">
+		<a asp-action="Games" class="nav-link @(Model.Page == SeasonPage.Games ? "active" : "")">Manage Games</a>
+	</li>
+	<li class="nav-item">
+		<a asp-action="Rounds" class="nav-link @(Model.Page == SeasonPage.Rounds ? "active" : "")">Manage Rounds</a>
+	</li>
+</ul>

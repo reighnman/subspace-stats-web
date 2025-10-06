@@ -5,16 +5,35 @@
 	ViewData["Title"] = "Latest Standings";
 }
 
-<div class="d-flex">
-	<h1>Leagues</h1>
-</div>
+@* <nav aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item active">Home</li>
+	</ol>
+</nav> *@
 
-<div class="mb-3">
+@* <div class="mb-3">
 	<a asp-controller="Home" asp-action="Nav" class="mx-2 p-0 btn btn-link ">Leagues and Seasons</a>
 	<a asp-controller="League" asp-action="Index" class="mx-2 p-0 btn btn-link ">League List</a>
 	<a asp-controller="Franchise" asp-action="Index" class="mx-2 p-0 btn btn-link ">Franchises</a>
 	<a asp-controller="PlayerSearch" asp-action="Index" class="mx-2 p-0 btn btn-link disabled">Player Search</a>
-</div>
+</div> *@
+
+<ul class="nav nav-underline">
+	<li class="nav-item">
+		<a asp-controller="Home" asp-action="Nav" class="nav-link">Leagues and Seasons</a>
+	</li>
+	<li class="nav-item">
+		<a asp-controller="League" asp-action="Index" class="nav-link">Manage Leagues</a>
+	</li>
+	<li class="nav-item">
+		<a asp-controller="Franchise" asp-action="Index" class="nav-link">Franchises</a>
+	</li>
+	<li class="nav-item">
+		<a asp-controller="PlayerSearch" asp-action="Index" class="nav-link disabled">Player Search</a>
+	</li>	
+</ul>
+
+@* <h1>Leagues</h1> *@
 
 <div class="container mt-3 mb-3">
 	<div class="row g-3">

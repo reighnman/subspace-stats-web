@@ -1,37 +1,34 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
-using SubspaceStats.Areas.League.Models.Season;
 using System.Text.Json;
 
 namespace SubspaceStats.Areas.League.Models
 {
     public class LeagueSeasonChooserViewModel
     {
-        public LeagueSeasonChooserViewModel(long selectedSeasonId, List<LeagueWithSeasons> leaguesWithSeasons, IUrlHelper urlHelper)
+        public LeagueSeasonChooserViewModel(long selectedSeasonId, List<LeagueNavItem> leaguesWithSeasons, IUrlHelper urlHelper)
         {
-            SelectedSeasonId = selectedSeasonId;
             LeaguesWithSeasons = leaguesWithSeasons;
 
-            foreach (LeagueWithSeasons league in LeaguesWithSeasons)
+            foreach (LeagueNavItem league in LeaguesWithSeasons)
             {
                 foreach (var season in league.Seasons)
                 {
                     season.Url = urlHelper.Action(null, null, new { seasonId = season.SeasonId });
 
-                    if (season.SeasonId == SelectedSeasonId)
+                    if (season.SeasonId == selectedSeasonId)
                     {
-                        SelectedLeagueId = league.LeagueId;
+                        SelectedLeague = league;
+                        SelectedSeason = season;
                     }
                 }
             }
 
-            LeaguesWithSeasonsJson = JsonSerializer.Serialize(LeaguesWithSeasons, LeagueWithSeasonsSourceGenerationContext.Default.ListLeagueWithSeasons);
+            LeaguesWithSeasonsJson = JsonSerializer.Serialize(LeaguesWithSeasons, SeasonNavSourceGenerationContext.Default.ListLeagueNavItem);
         }
 
-        public long? SelectedLeagueId { get; }
-        public long SelectedSeasonId { get; }
+        public List<LeagueNavItem> LeaguesWithSeasons { get; }
+        public LeagueNavItem? SelectedLeague { get; }
+        public SeasonNavItem? SelectedSeason { get; }
         public string LeaguesWithSeasonsJson { get; }
-
-        public List<LeagueWithSeasons> LeaguesWithSeasons { get; }
     }
 }

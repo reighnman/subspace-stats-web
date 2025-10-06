@@ -4,7 +4,6 @@
 @model LeagueSeasonChooserViewModel
 
 @{
-	LeagueWithSeasons? selectedLeague = null;
 	string? currentAction = ViewContext.RouteData.Values["action"]?.ToString();
 	string? currentController = ViewContext.RouteData.Values["controller"]?.ToString();
 }
@@ -16,25 +15,22 @@
 				<select id="leagueSeasonChooser_leagueIdSelect" class="form-select">
 					@foreach (var league in Model.LeaguesWithSeasons)
 					{
-						if (league.LeagueId == Model.SelectedLeagueId)
-							selectedLeague = league;
-
-						<option value="@league.LeagueId" selected="@(league == selectedLeague)">@league.LeagueName</option>
+						<option value="@league.LeagueId" selected="@(league == Model.SelectedLeague)">@league.LeagueName</option>
 					}
 				</select>
 			</div>
 			<div class="col-md-4 p-1">
 				<select id="leagueSeasonChooser_seasonIdSelect" class="form-select" name="seasonId">
-					@if (selectedLeague is not null)
+					@if (Model.SelectedLeague is not null)
 					{
-						foreach (var season in selectedLeague.Seasons)
+						foreach (var season in Model.SelectedLeague.Seasons)
 						{
-							<option value="@season.SeasonId" selected="@(season.SeasonId == Model.SelectedSeasonId)" data-url="@season.Url">@season.SeasonName</option>
+							<option value="@season.SeasonId" selected="@(season == Model.SelectedSeason)" data-url="@season.Url">@season.SeasonName</option>
 						}
 					}
 				</select>
 			</div>
-			<div class="col-md-1 align-content-center"><input id="leagueSeasonChooser_submit" class="btn btn-primary visually-hidden" type="submit" value="GO" /><a id="leagueSeasonChooser_submit_noScript" asp-controller="Home" asp-action="Nav" asp-route-leagueId="@Model.SelectedLeagueId" asp-route-seasonId="@Model.SelectedSeasonId" class="btn btn-primary">GO</a></div>
+			<div class="col-md-1 align-content-center"><input id="leagueSeasonChooser_submit" class="btn btn-primary visually-hidden" type="submit" value="GO" /><a id="leagueSeasonChooser_submit_noScript" asp-controller="Home" asp-action="Nav" asp-route-leagueId="@Model.SelectedLeague?.LeagueId" asp-route-seasonId="@Model.SelectedSeason?.SeasonId" class="btn btn-primary">GO</a></div>
 		</div>
 	</form>
 </div>

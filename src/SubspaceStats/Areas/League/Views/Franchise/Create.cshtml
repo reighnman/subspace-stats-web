@@ -2,13 +2,15 @@
 @model FranchiseModel
 
 @{
-    ViewData["Title"] = "Create Franchise";
+    ViewData["Title"] = "New Franchise";
 }
 
-<h1>Create franchise</h1>
+@await Html.PartialAsync("_FranchiseNav")
+
+<h1>New Franchise</h1>
 
 <div class="mb-3">
-    <a asp-action="Index">Back to franchise List</a>
+    <a asp-action="Index" class="mx-2">Back to Franchise List</a>
 </div>
 
 <div class="container">

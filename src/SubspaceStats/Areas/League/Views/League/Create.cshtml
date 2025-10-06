@@ -2,14 +2,16 @@
 @model LeagueViewModel
 
 @{
-    ViewData["Title"] = "Create League";
+    ViewData["Title"] = "New League";
 
     IEnumerable<SelectListItem> gameTypes =
         from kvp in Model.GameTypes
         select new SelectListItem(kvp.Value.Name, kvp.Key.ToString());
 }
 
-<h1>Create league</h1>
+@await Html.PartialAsync("_LeagueNav")
+
+<h1>New League</h1>
 
 <div class="mb-3">
     <a asp-action="Index">Back to League List</a>

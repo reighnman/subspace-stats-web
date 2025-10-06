@@ -33,7 +33,7 @@
         <div class="ms-3">
             <div class="mb-3">
                 <label asp-for="Model.TeamName" class="form-label"></label>
-                <input type="text" value="@Model.Model.TeamName" class="form-control" readonly />
+                <input asp-for="Model.TeamName" class="form-control" disabled readonly />
             </div>
             <div class="mb-3">
                 <label asp-for="Model.BannerSmall" class="form-label"></label>
@@ -51,7 +51,7 @@
             </div>
             <div class="mb-3">
                 <label asp-for="Model.FranchiseId" class="form-label"></label>
-                <input type="text" value="@franchiseName" class="form-control" readonly />
+                <input type="text" value="@franchiseName" class="form-control" disabled readonly />
             </div>
             <div class="d-flex">
                 <button type="submit" class="btn btn-primary m-2">Delete</button>

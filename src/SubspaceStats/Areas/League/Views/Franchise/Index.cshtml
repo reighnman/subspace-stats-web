@@ -5,12 +5,19 @@
 	ViewData["Title"] = "Franchises";
 }
 
-<div class="d-flex">
-	<h1>Franchise List</h1>
-</div>
+<style>
+	.list-inline-item:not(:last-child)::after {
+		content: ",";
+		margin: 0;
+	}
+</style>
+
+@await Html.PartialAsync("_FranchiseNav")
+
+<h1>Franchise List</h1>
 
 <div class="mb-3">
-	<a asp-controller="Home" asp-action="Index" class="mx-2">Home</a> | <a asp-action="Create" class="mx-2">Create</a>
+	<a asp-action="Create" class="mx-2">New Franchise</a>
 </div>
 
 <div class="table-responsive">
@@ -27,7 +34,17 @@
 			{
 				<tr>
 					<td><a asp-action="Details" asp-route-franchiseId="@franchise.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@franchise.Name</a></td>
-					<td>@franchise.Teams</td>
+					<td>
+						@if(franchise.Teams.Length > 0)
+						{
+							<ul class="list-inline">
+								@foreach(string teamName in franchise.Teams)
+								{
+									<li class="list-inline-item text-nowrap">@teamName</li>
+								}
+							</ul>
+						}
+					</td>
 					<td><a asp-action="Edit" asp-route-franchiseId="@franchise.Id">Edit</a></td>
 					<td><a asp-action="Delete" asp-route-franchiseId="@franchise.Id">Delete</a></td>
 				</tr>

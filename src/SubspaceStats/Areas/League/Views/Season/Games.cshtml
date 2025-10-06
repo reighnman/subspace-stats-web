@@ -1,7 +1,7 @@
 ﻿@using SubspaceStats.Areas.League.Models
 @using SubspaceStats.Areas.League.Models.Season
 @using SubspaceStats.Areas.League.Models.Team
-@model SeasonGamesViewModel
+@model GamesViewModel
 
 @{
 	ViewData["Title"] = "Manage Games";
@@ -12,13 +12,12 @@
 	}
 }
 
-<h1>Manage Games</h1>
-
-@await Html.PartialAsync("_SeasonNav")
 @await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
+@await Html.PartialAsync("_SeasonNav")
+@* <h1>Manage Games</h1> *@
 
 <div class="mb-3">
-	<a asp-controller="SeasonGame" asp-action="Create" asp-route-seasonId="@Model.LeagueSeasonChooser.SelectedSeasonId" class="mx-2 text-nowrap">Add Game</a>
+	<a asp-controller="SeasonGame" asp-action="Create" asp-route-seasonId="@Model.Season.SeasonId" class="mx-2 text-nowrap">Add Game</a>
 </div>
 
 <div class="table-responsive">
@@ -44,7 +43,7 @@
 					<td>
 						@for (int i = 0; i < game.TeamIds.Length; i++)
 						{
-							if(i>0)
+							if (i > 0)
 							{
 								<text> vs </text>
 							}
@@ -52,11 +51,11 @@
 							long teamId = game.TeamIds[i];
 							if(teamDictionary.TryGetValue(teamId, out TeamModel? team))
 							{
-								<a asp-controller="Team" asp-action="Index" asp-route-teamId="@teamId">@team.TeamName</a>
+								<a asp-controller="Team" asp-action="Index" asp-route-teamId="@teamId" class="text-nowrap">@team.TeamName</a>
 							}
 							else
 							{
-								<a asp-controller="Team" asp-action="Index" asp-route-teamId="@teamId">@teamId</a>
+								<a asp-controller="Team" asp-action="Index" asp-route-teamId="@teamId" class="text-nowrap">@teamId</a>
 							}
 						}
 					</td>

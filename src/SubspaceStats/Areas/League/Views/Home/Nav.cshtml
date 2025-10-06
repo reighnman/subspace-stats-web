@@ -5,15 +5,14 @@
     ViewData["Title"] = "Navigate Leagues and Seasons";
 }
 
-<div class="d-flex">
-    <h1>Leagues and Seasons</h1>
-</div>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+        <li class="breadcrumb-item active">Leagues</li>
+    </ol>
+</nav>
 
-<div class="mb-3">
-    <a asp-controller="Home" asp-action="Index" class="mx-2 p-0 btn btn-link">Home</a>
-    <a asp-controller="Franchise" asp-action="Index" class="mx-2 p-0 btn btn-link disabled">Franchises</a>
-    <a asp-controller="PlayerSearch" asp-action="Index" class="mx-2 p-0 btn btn-link disabled">Player Search</a>
-</div>
+<h1>Leagues and Seasons</h1>
 
 <div class="d-flex">
     <div class="accordion" id="leaguesAccordion">

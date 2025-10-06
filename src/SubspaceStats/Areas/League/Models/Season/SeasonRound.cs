@@ -11,7 +11,6 @@ namespace SubspaceStats.Areas.League.Models.Season
         [Display(Name = "Round Number")]
         
         [Required]
-        [Range(1, int.MaxValue)]
         [Remote("ValidateSeasonRound", "SeasonRound", "League", AdditionalFields = nameof(SeasonId))]
         public int? RoundNumber { get; set; }
 
