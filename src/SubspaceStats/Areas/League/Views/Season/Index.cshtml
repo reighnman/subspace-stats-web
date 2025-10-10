@@ -23,7 +23,7 @@
 						<th colspan="5" class="text-center">Upcoming Matches</th>
 					</tr>
 					<tr>
-						<th>Time (ET)</th>
+						<th title="Time @leagueOptions.Value.TimeZone.DisplayName">Time</th>
 						<th>Teams</th>
 						<th>Round</th>
 						<th>Status</th>
@@ -110,24 +110,33 @@
 						<th colspan="4" class="text-center">Match Results</th>
 					</tr>
 					<tr>
-						<th>Date</th>
+						<th title="Time @leagueOptions.Value.TimeZone.DisplayName">Time</th>
+						<th>Round</th>
 						<th class="@(isOnly2TeamMatches ? "text-center" : "")">Teams</th>
-						<th>Score</th>
+						<th class="@(isOnly2TeamMatches ? "text-center" : "")">Score</th>
 						<th>Winner</th>
 					</tr>
 				</thead>
 				<tbody>
 					@foreach (GameRecord game in Model.CompletedGames)
 					{
-						DateTime? gameTime = game.GameTimestamp is not null
-						? TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, leagueOptions.Value.TimeZone)
-						: null;
+						DateTime? gameTime = game.GameTimestamp is null ? null : TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, leagueOptions.Value.TimeZone);
 
 						<tr>
 							<td>
 								@if (gameTime is not null)
 								{
 									@gameTime.Value.ToString("yyyy-MM-dd hh:mm tt")
+								}
+							</td>
+							<td>
+								@if(!string.IsNullOrWhiteSpace(game.RoundName))
+								{
+									@game.RoundName
+								}
+								else
+								{
+									@game.RoundNumber
 								}
 							</td>
 							<td>
@@ -157,7 +166,29 @@
 								}
 							</td>
 							<td>
-								@{
+								@if (isOnly2TeamMatches)
+								{
+									if (game.GameId is not null)
+									{
+										<a asp-area="" asp-controller="Game" asp-action="Index" asp-route-id="@game.GameId.Value">
+											<div class="d-flex align-items-center">
+												<div class="col text-end">@game.Teams[0].Score</div>
+												<div class="col-auto">-</div>
+												<div class="col text-start">@game.Teams[1].Score</div>
+											</div>
+										</a>
+									}
+									else
+									{
+										<div class="d-flex align-items-center">
+											<div class="col text-end">@game.Teams[0].Score</div>
+											<div class="col-auto">-</div>
+											<div class="col text-start">@game.Teams[1].Score</div>
+										</div>
+									}
+								}
+								else
+								{
 									StringBuilder builder = new();
 									for (int i = 0; i < game.Teams.Count; i++)
 									{
@@ -171,7 +202,7 @@
 
 									if (game.GameId is not null)
 									{
-										<a asp-area="" asp-controller="Game" asp-action="Index" asp-route-id="@game.GameId">@builder.ToString()</a>
+										<a asp-area="" asp-controller="Game" asp-action="Index" asp-route-id="@game.GameId.Value">@builder.ToString()</a>
 									}
 									else
 									{

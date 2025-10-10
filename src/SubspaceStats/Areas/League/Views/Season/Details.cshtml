@@ -1,5 +1,8 @@
-﻿@using SubspaceStats.Areas.League.Models.Season
+﻿@using Microsoft.Extensions.Options
+@using SubspaceStats.Areas.League.Models.Season
+@using SubspaceStats.Options
 @model DetailsViewModel
+@inject IOptions<LeagueOptions> leagueOptions
 
 @{
 	ViewData["Title"] = "Manage Season";
@@ -17,8 +20,8 @@
 				<td class="text-start">@Model.SeasonDetails.SeasonName</td>
 			</tr>
 			<tr>
-				<td class="text-end fw-bold">Created Time:</td>
-				<td class="text-start">@Model.SeasonDetails.CreatedTimestamp</td>
+				<td class="text-end fw-bold">Created:</td>
+				<td class="text-start">@TimeZoneInfo.ConvertTimeFromUtc(Model.SeasonDetails.CreatedTimestamp, leagueOptions.Value.TimeZone)</td>
 			</tr>
 			<tr>
 				<td class="text-end fw-bold">Start Date:</td>

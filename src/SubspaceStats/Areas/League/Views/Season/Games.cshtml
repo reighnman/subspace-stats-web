@@ -1,9 +1,12 @@
-﻿@using SubspaceStats.Areas.League.Models
+﻿@using Microsoft.Extensions.Options
+@using SubspaceStats.Areas.League.Models
 @using SubspaceStats.Areas.League.Models.Season
 @using SubspaceStats.Areas.League.Models.SeasonGame
 @using SubspaceStats.Areas.League.Models.Team
 @using System.Text
+@using SubspaceStats.Options
 @model GamesViewModel
+@inject IOptions<LeagueOptions> leagueOptions
 
 @{
 	ViewData["Title"] = "Manage Games";
@@ -38,7 +41,7 @@
 				<th class="text-end">Match ID</th>
 				<th>Round</th>
 				<th class="@(isOnly2TeamMatches ? "text-center" : "")">Teams</th>
-				<th class="text-center">Score</th>
+				<th class="@(isOnly2TeamMatches ? "text-center" : "")">Score</th>
 				<th>Time</th>
 				<th>Status</th>
 				<th colspan="2">Actions</th>
@@ -47,6 +50,8 @@
 		<tbody>
 			@foreach (var game in Model.Games)
 			{
+				DateTime? gameTime = game.GameTimestamp is null ? null : TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, leagueOptions.Value.TimeZone);
+
 				<tr>
 					<td class="text-end">@game.SeasonGameId</td>
 					<td>
@@ -108,30 +113,59 @@
 						}
 					</td>
 					<td class="text-center">
-						@if (game.Teams.All(t => t.Score is not null))
+						@if (isOnly2TeamMatches)
 						{
-							StringBuilder builder = new();
-							for (int i = 0; i < game.Teams.Count; i++)
-							{
-								if (i > 0)
-								{
-									builder.Append(" - ");
-								}
-
-								builder.Append(game.Teams[i].Score);
-							}
-
 							if (game.GameId is not null)
 							{
-								<a asp-area="" asp-controller="Game" asp-action="Index" asp-route-id="@game.GameId">@builder.ToString()</a>
+								<a asp-area="" asp-controller="Game" asp-action="Index" asp-route-id="@game.GameId.Value">
+									<div class="d-flex align-items-center">
+										<div class="col text-end">@game.Teams[0].Score</div>
+										<div class="col-auto">-</div>
+										<div class="col text-start">@game.Teams[1].Score</div>
+									</div>
+								</a>
 							}
 							else
 							{
-								@builder.ToString()
+								<div class="d-flex align-items-center">
+									<div class="col text-end">@game.Teams[0].Score</div>
+									<div class="col-auto">-</div>
+									<div class="col text-start">@game.Teams[1].Score</div>
+								</div>
+							}
+						}
+						else
+						{
+							if (game.Teams.All(t => t.Score is not null))
+							{
+								StringBuilder builder = new();
+								for (int i = 0; i < game.Teams.Count; i++)
+								{
+									if (i > 0)
+									{
+										builder.Append(" - ");
+									}
+
+									builder.Append(game.Teams[i].Score);
+								}
+
+								if (game.GameId is not null)
+								{
+									<a asp-area="" asp-controller="Game" asp-action="Index" asp-route-id="@game.GameId.Value">@builder.ToString()</a>
+								}
+								else
+								{
+									@builder.ToString()
+								}
 							}
 						}
 					</td>
-					<td>@game.GameTimestamp</td>
+					<td>
+						@if (gameTime is not null)
+						{
+							@gameTime.Value.ToString("yyyy-MM-dd hh:mm tt")
+						}						
+					</td>
 					<td>
 						@if (game.GameId is not null)
 						{

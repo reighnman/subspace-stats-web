@@ -1,6 +1,9 @@
-﻿@using SubspaceStats.Areas.League.Models.Season
+﻿@using Microsoft.Extensions.Options
+@using SubspaceStats.Areas.League.Models.Season
 @using SubspaceStats.Areas.League.Models.Team
+@using SubspaceStats.Options
 @model PlayersViewModel
+@inject IOptions<LeagueOptions> leagueOptions
 
 @{
 	ViewData["Title"] = "Manage Players";
@@ -19,9 +22,9 @@
 		<thead>
 			<tr>
 				<th>Player</th>
-				<th>Signup Time</th>
+				<th title="Signup Time @leagueOptions.Value.TimeZone.DisplayName">Signup Time</th>
 				<th>Team</th>
-				<th>Enroll Time</th>
+				<th title="Enroll Time @leagueOptions.Value.TimeZone.DisplayName">Enroll Time</th>
 				<th>Is Captain</th>
 				<th>Suspended</th>
 				<th colspan="2">Actions</th>
@@ -37,7 +40,12 @@
 				<tr>
 					@* TODO: Add game_type_id and period to the player link *@
 					<td><a asp-area="" asp-controller="Player" asp-action="Index" asp-route-playerName="@player.Name">@player.Name</a></td>
-					<td>@player.SignupTimestamp</td>
+					<td>
+						@if (player.SignupTimestamp is not null)
+						{
+							@TimeZoneInfo.ConvertTimeFromUtc(player.SignupTimestamp.Value, leagueOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
+						}
+					</td>
 					<td>
 						@if (team is not null)
 						{
@@ -48,7 +56,12 @@
 							<text>@player.TeamId</text>
 						}
 					</td>
-					<td>@player.EnrollTimestamp</td>
+					<td>
+						@if (player.EnrollTimestamp is not null)
+						{
+							@TimeZoneInfo.ConvertTimeFromUtc(player.EnrollTimestamp.Value, leagueOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
+						}
+					</td>
 					<td>@player.IsCaptain</td>
 					<td>@player.IsSuspended</td>
 					<td><a asp-controller="SeasonPlayer" asp-action="Edit" asp-route-seasonId="@Model.Season.SeasonId" asp-route-playerName="@player.Name">Edit</a></td>
