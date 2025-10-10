@@ -177,7 +177,7 @@ namespace SubspaceStats.Services
                             int column_seasonGameId = reader.GetOrdinal("season_game_id");
                             int column_roundNumber = reader.GetOrdinal("round_number");
                             int column_roundName = reader.GetOrdinal("round_name");
-                            int column_scheduledTimestamp = reader.GetOrdinal("scheduled_timestamp");
+                            int column_gameTimestamp = reader.GetOrdinal("game_timestamp");
                             int column_teams = reader.GetOrdinal("teams");
                             int column_gameStatusId = reader.GetOrdinal("game_status_id");
 
@@ -195,7 +195,7 @@ namespace SubspaceStats.Services
                                         SeasonGameId = reader.GetInt64(column_seasonGameId),
                                         RoundNumber = reader.IsDBNull(column_roundNumber) ? null : reader.GetInt32(column_roundNumber),
                                         RoundName = reader.IsDBNull(column_roundName) ? null : reader.GetString(column_roundName),
-                                        ScheduledTimestamp = reader.IsDBNull(column_scheduledTimestamp) ? null : reader.GetDateTime(column_scheduledTimestamp),
+                                        GameTimestamp = reader.IsDBNull(column_gameTimestamp) ? null : reader.GetDateTime(column_gameTimestamp),
                                         Teams = reader.GetString(column_teams),
                                         Status = (GameStatus)reader.GetInt64(column_gameStatusId),
                                     });
@@ -1652,10 +1652,10 @@ namespace SubspaceStats.Services
                         command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
                         command.Parameters.Add(new NpgsqlParameter<int> { TypedValue = game.RoundNumber });
 
-                        if (game.ScheduledTime is null)
+                        if (game.GameTimestamp is null)
                             command.Parameters.AddWithValue(DBNull.Value);
                         else
-                            command.Parameters.Add(new NpgsqlParameter<DateTime> { TypedValue = game.ScheduledTime.Value });
+                            command.Parameters.Add(new NpgsqlParameter<DateTime> { TypedValue = game.GameTimestamp.Value });
 
                         command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = (long)game.Status });
 

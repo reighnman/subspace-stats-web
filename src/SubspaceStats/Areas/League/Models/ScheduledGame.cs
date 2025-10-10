@@ -9,7 +9,7 @@
         public required long SeasonGameId { get; init; }
         public required int? RoundNumber { get; init; }
         public required string? RoundName { get; init; }
-        public required DateTime? ScheduledTimestamp { get; init; }
+        public required DateTime? GameTimestamp { get; init; }
         public required string Teams { get; init; }
         public required GameStatus Status { get; init; }
     }

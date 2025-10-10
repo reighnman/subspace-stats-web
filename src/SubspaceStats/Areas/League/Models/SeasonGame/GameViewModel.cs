@@ -24,10 +24,10 @@ namespace SubspaceStats.Areas.League.Models.SeasonGame
         [Required]
         public required int RoundNumber { get; set; }
 
-        [JsonPropertyName("scheduled_timestamp")]
+        [JsonPropertyName("game_timestamp")]
         [Display(Name = "Game Time")]
         [DataType(DataType.DateTime)]
-        public DateTime? ScheduledTime { get; set; }
+        public DateTime? GameTimestamp { get; set; }
 
         [JsonPropertyName("game_id")]
         public long? GameId { get; set; }

@@ -33,8 +33,8 @@
 				<tbody>
 					@foreach (var scheduledGame in Model.ScheduledGames)
 					{
-						DateTime? gameTime = scheduledGame.ScheduledTimestamp is not null
-							? TimeZoneInfo.ConvertTimeFromUtc(scheduledGame.ScheduledTimestamp.Value, leagueOptions.Value.TimeZone)
+						DateTime? gameTime = scheduledGame.GameTimestamp is not null
+							? TimeZoneInfo.ConvertTimeFromUtc(scheduledGame.GameTimestamp.Value, leagueOptions.Value.TimeZone)
 							: null;
 
 						<tr>
