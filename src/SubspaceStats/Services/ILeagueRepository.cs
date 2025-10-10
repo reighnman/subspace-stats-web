@@ -2,6 +2,7 @@
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Areas.League.Models.Season;
+using SubspaceStats.Areas.League.Models.SeasonGame;
 using SubspaceStats.Areas.League.Models.SeasonPlayer;
 using SubspaceStats.Areas.League.Models.Team;
 
@@ -22,9 +23,7 @@ namespace SubspaceStats.Services
         Task<List<FranchiseListItem>> GetFranchiseListAsync(CancellationToken cancellationToken);
         Task<List<TeamAndSeason>> GetFranchiseTeamsAsync(long franchiseId, CancellationToken cancellationToken);
         Task<FranchiseModel?> GetFranchiseAsync(long franchiseId, CancellationToken cancellationToken);
-
         Task<long> InsertFranchiseAsync(string franchiseName, CancellationToken cancellationToken);
-
         Task UpdateFranchiseAsync(FranchiseModel franchise, CancellationToken cancellationToken);
         Task DeleteFranchiseAsync(long franchiseId, CancellationToken cancellationToken);
 
@@ -34,7 +33,7 @@ namespace SubspaceStats.Services
 
         Task<List<LeagueModel>> GetLeagueListAsync(CancellationToken cancellationToken);
         Task<LeagueModel?> GetLeagueAsync(long leagueId, CancellationToken cancellationToken);
-        Task<long> InsertLeagueAsync(string name, long gameType, CancellationToken cancellationToken);
+        Task<long> InsertLeagueAsync(string name, long gameType, short minTeamsPerGame, short maxTeamsPerGame, short freqStart, short freqIncrement, CancellationToken cancellationToken);
         Task UpdateLeagueAsync(LeagueModel league, CancellationToken cancellationToken);
         Task DeleteLeagueAsync(long leagueId, CancellationToken cancellationToken);
         Task<List<Areas.League.Models.League.SeasonListItem>> GetSeasonsAsync(long leagueId, CancellationToken cancellationToken);
@@ -45,33 +44,21 @@ namespace SubspaceStats.Services
 
         Task<SeasonDetails?> GetSeasonDetailsAsync(long seasonId, CancellationToken cancellationToken);
         Task StartSeasonAsync(long seasonId, DateTime? startDate, CancellationToken cancellationToken);
-
         Task<long> CopySeasonAsync(long seasonId, string seasonName, bool includePlayers, bool includeTeams, bool includeGames, bool includeRounds, CancellationToken cancellationToken);
-
         //Task SetSeasonEndDateAsync(long sesaonId, DateTime? endDate, CancellationToken cancellationToken);
-
         Task<SeasonModel?> GetSeasonAsync(long seasonId, CancellationToken cancellationToken);
-
         Task<long> InsertSeasonAsync(string seasonName, long leagueId, CancellationToken cancellationToken);
-
         Task UpdateSeasonAsync(long seasonId, string seasonName, CancellationToken cancellationToken);
-
         Task DeleteSeasonAsync(long seasonId, CancellationToken cancellationToken);
-
-        Task<List<TeamModel>> GetSeasonTeamsAsync(long seasonId, CancellationToken cancellationToken);
 
         #endregion
 
         #region Season Players
 
         Task<List<PlayerListItem>> GetSeasonPlayersAsync(long seasonId, CancellationToken cancellationToken);
-
         Task<SeasonPlayer?> GetSeasonPlayerAsync(long seasonId, string playerName, CancellationToken cancellationToken);
-
         Task InsertSeasonPlayersAsync(long seasonId, List<string> nameList, long? teamId, CancellationToken cancellationToken);
-
         Task UpdateSeasonPlayerAsync(long seasonId, SeasonPlayer model, CancellationToken cancellationToken);
-
         Task DeleteSeasonPlayerAsync(long seasonId, long playerId, CancellationToken cancellationToken);
 
         // TODO: From list of season players (/league/season/<id>/players), check off the ones to assign, click "Assign Team" button (post),
@@ -83,8 +70,9 @@ namespace SubspaceStats.Services
 
         #region Season Teams
 
+        Task<OrderedDictionary<long, TeamModel>> GetSeasonTeamsAsync(long seasonId, CancellationToken cancellationToken);
         Task<List<TeamGameRecord>> GetTeamGames(long teamId, CancellationToken cancellationToken);
-        Task<TeamWithSeasonInfo?> GetTeamsWithSeasonInfosync(long teamId, CancellationToken cancellationToken);
+        Task<TeamWithSeasonInfo?> GetTeamsWithSeasonInfoAsync(long teamId, CancellationToken cancellationToken);
         Task<TeamModel?> GetTeamAsync(long teamId, CancellationToken cancellationToken);
         Task<long> InsertTeamAsync(long seasonId, string teamName, string? bannerSmall, string? bannerLarge, long? franchiseId, CancellationToken cancellationToken);
         Task UpdateTeamAsync(long teamId, string teamName, string? bannerSmallPath, string? bannerLargePath, long? franchiseId, CancellationToken cancellationToken);        
@@ -94,23 +82,18 @@ namespace SubspaceStats.Services
 
         #region Season Games
 
-        Task<List<GameListItem>> GetSeasonGamesAsync(long seasonId, CancellationToken cancellationToken);
-
-        // InsertSeasonGamesFor2TeamPerMatch(long seasonId, 
-
-        // InsertSeasonGame
-
-        // UpdateSeasonGame
-
-        // UpdateSeasonGameResults(
-
-        // DeleteSeasonGame
+        Task<List<GameModel>> GetSeasonGamesAsync(long seasonId, CancellationToken cancellationToken);
+        Task<GameModel?> GetSeasonGameAsync(long seasonGameId, CancellationToken cancellationToken);
+        Task InsertSeasonGamesForRoundWith2TeamsAsync(long seasonId, FullRoundOf mode, CancellationToken cancellationToken);
+        Task<long> InsertSeasonGameAsync(long seasonId, GameModel game, CancellationToken cancellationToken);
+        Task UpdateSeasonGameAsync(GameModel game, CancellationToken cancellationToken);
+        Task DeleteSeasonGame(long seasonGameId, CancellationToken cancellationToken);
 
         #endregion
 
         #region Season Rounds
 
-        Task<List<SeasonRound>> GetSeasonRoundsAsync(long seasonId, CancellationToken cancellationToken);
+        Task<OrderedDictionary<int, SeasonRound>> GetSeasonRoundsAsync(long seasonId, CancellationToken cancellationToken);
         Task<SeasonRound?> GetSeasonRoundAsync(long seasonId, int roundNumber, CancellationToken cancellationToken);
         Task InsertSeasonRoundAsync(SeasonRound seasonRound, CancellationToken cancellationToken);
         Task UpdateSeasonRoundAsync(SeasonRound seasonRound, CancellationToken cancellationToken);

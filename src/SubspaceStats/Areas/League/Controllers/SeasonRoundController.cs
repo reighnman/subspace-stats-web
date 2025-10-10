@@ -10,12 +10,22 @@ namespace SubspaceStats.Areas.League.Controllers
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
 
         // GET: League/Season/{seasonId}/Round/Create
-        public ActionResult Create(long seasonId, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create(long seasonId, CancellationToken cancellationToken)
         {
+            var rounds = await _leagueRepository.GetSeasonRoundsAsync(seasonId, cancellationToken);
+            int roundNumber = 1;
+            foreach(int round in rounds.Keys)
+            {
+                if (round >= roundNumber)
+                    roundNumber = round + 1;
+            }
+
             return View(
                 new SeasonRound
                 {
-                    SeasonId = seasonId
+                    SeasonId = seasonId,
+                    RoundNumber = roundNumber,
+                    RoundName = "", // dummy
                 });
         }
 

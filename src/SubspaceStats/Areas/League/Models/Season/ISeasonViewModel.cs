@@ -2,6 +2,7 @@
 {
     public interface ISeasonViewModel
     {
+        public SeasonDetails SeasonDetails { get; }
         public SeasonPage Page { get; }
         public LeagueNavItem League { get; }
         public SeasonNavItem Season { get; }

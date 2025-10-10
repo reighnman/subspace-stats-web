@@ -18,12 +18,12 @@ namespace SubspaceStats.Services
         /// Gets the available stats periods for a specified game type and period type.
         /// </summary>
         /// <param name="gameType">The game type to get stat periods for.</param>
-        /// <param name="statPeriodType">The type of stat period to get.</param>
+        /// <param name="statPeriodType">The type of stat period to get. <see langword="null"/> means get all periods (except for 'forever').</param>
         /// <param name="limit">The maximum # of stat periods to return. <see langword="null"/> means no limit.</param>
         /// <param name="offset">The offset of the stat periods to return.</param>
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The stat periods.</returns>
-        Task<List<StatPeriod>> GetStatPeriods(long gameType, StatPeriodType statPeriodType, int? limit, int offset, CancellationToken cancellationToken);
+        Task<List<StatPeriod>> GetStatPeriods(long gameType, StatPeriodType? statPeriodType, int? limit, int offset, CancellationToken cancellationToken);
 
         /// <summary>
         /// Get the forever (lifetime) stat period for a specified game type.

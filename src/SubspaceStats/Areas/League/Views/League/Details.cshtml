@@ -13,12 +13,13 @@
 @await Html.PartialAsync("_LeagueNav")
 @* <h1>League Details</h1> *@
 
+<h3>@Model.League.Name</h3>
+
 <div class="mb-3">
     <a asp-action="Index" class="mx-2">Manage Leagues</a>
     <a asp-action="Edit" asp-route-id="@Model.League.Id" class="mx-2">Edit</a>
 </div>
 
-<h3>@Model.League.Name</h3>
 <div class="container">
 	<table class="table table-borderless table-sm w-auto">
 		<tr>
@@ -28,6 +29,22 @@
 		<tr>
 			<td>@Html.DisplayNameFor(m => m.League.GameTypeId):</td>
 			<td>@gameTypeName</td>
+		</tr>
+		<tr>
+			<td>@Html.DisplayNameFor(m => m.League.MinTeamsPerGame)</td>
+			<td>@Model.League.MinTeamsPerGame</td>
+		</tr>
+		<tr>
+			<td>@Html.DisplayNameFor(m => m.League.MaxTeamsPerGame)</td>
+			<td>@Model.League.MaxTeamsPerGame</td>
+		</tr>
+		<tr>
+			<td>@Html.DisplayNameFor(m => m.League.FreqStart)</td>
+			<td>@Model.League.FreqStart</td>
+		</tr>
+		<tr>
+			<td>@Html.DisplayNameFor(m => m.League.FreqIncrement)</td>
+			<td>@Model.League.FreqIncrement</td>
 		</tr>
 	</table>
 </div>

@@ -18,26 +18,54 @@
 </div>
 
 <div class="container">
-    <form asp-controller="League" asp-action="Create">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div class="mb-3">
-            <label asp-for="League.Name" class="form-label"></label>
-            <input asp-for="League.Name" class="form-control" />
-            <span asp-validation-for="League.Name" class="text-danger"></span>
+    <div class="row">
+        <div class="col-md-6 order-md-2">
+            @await Html.PartialAsync("_LeagueNotes")
         </div>
-        <div class="mb-3">
-            <label asp-for="League.GameTypeId" class="form-label"></label>
-            <select asp-for="League.GameTypeId" asp-items="@gameTypes" class="form-select">
-                <option disabled selected>-- Select a Game Type --</option>
-            </select>
-            <span asp-validation-for="League.GameTypeId" class="text-danger"></span>
-        </div>
-        <div class="d-flex">
-            <button type="submit" class="btn btn-primary m-2">Create</button>
-            <a asp-action="Index" class="btn btn-secondary m-2">Cancel</a>
-        </div>
+        <div class="col-md-6 order-md-1">
+            <form asp-controller="League" asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <span asp-validation-for="League" class="text-danger"></span>
+                <div class="mb-3">
+                    <label asp-for="League.Name" class="form-label"></label>
+                    <input asp-for="League.Name" class="form-control" />
+                    <span asp-validation-for="League.Name" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.GameTypeId" class="form-label"></label>
+                    <select asp-for="League.GameTypeId" asp-items="@gameTypes" class="form-select">
+                        <option disabled selected>-- Select a Game Type --</option>
+                    </select>
+                    <span asp-validation-for="League.GameTypeId" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.MinTeamsPerGame" class="form-label"></label>
+                    <input asp-for="League.MinTeamsPerGame" class="form-control" />
+                    <span asp-validation-for="League.MinTeamsPerGame" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.MaxTeamsPerGame" class="form-label"></label>
+                    <input asp-for="League.MaxTeamsPerGame" class="form-control" />
+                    <span asp-validation-for="League.MaxTeamsPerGame" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.FreqStart" class="form-label"></label>
+                    <input asp-for="League.FreqStart" class="form-control" />
+                    <span asp-validation-for="League.FreqStart" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.FreqIncrement" class="form-label"></label>
+                    <input asp-for="League.FreqIncrement" class="form-control" />
+                    <span asp-validation-for="League.FreqIncrement" class="text-danger"></span>
+                </div>
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-primary m-2">Create</button>
+                    <a asp-action="Index" class="btn btn-secondary m-2">Cancel</a>
+                </div>
         
-    </form>
+            </form>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

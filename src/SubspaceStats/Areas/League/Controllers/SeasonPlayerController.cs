@@ -112,17 +112,18 @@ namespace SubspaceStats.Areas.League.Controllers
                 nameList.Add(name.ToString());
             }
 
-            List<TeamModel> teams = await _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
-
-            if (model.TeamId is not null
-                && !teams.Any(team => team.TeamId == model.TeamId.Value))
+            if (model.TeamId is not null)
             {
-                ModelState.AddModelError(nameof(model.TeamId), "Invalid team.");
+                TeamModel? team = await _leagueRepository.GetTeamAsync(model.TeamId.Value, cancellationToken);
+                if (team is null)
+                {
+                    ModelState.AddModelError(nameof(model.TeamId), "Invalid team.");
+                }
             }
 
             if (!ModelState.IsValid)
             {
-                model.Teams = teams;
+                model.Teams = await _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
                 return View(model);
             }
 
@@ -159,9 +160,11 @@ namespace SubspaceStats.Areas.League.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(long seasonId, SeasonPlayer model, CancellationToken cancellationToken)
         {
+            SeasonPlayer? player;
+
             if (!ModelState.IsValid)
             {
-                SeasonPlayer? player = await _leagueRepository.GetSeasonPlayerAsync(seasonId, model.PlayerName, cancellationToken);
+                player = await _leagueRepository.GetSeasonPlayerAsync(seasonId, model.PlayerName, cancellationToken);
                 if (player is null)
                 {
                     return NotFound();
@@ -175,6 +178,16 @@ namespace SubspaceStats.Areas.League.Controllers
                         Teams = await _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken),
                     });
             }
+
+            // The controller actions take player name (hiding PlayerId from the user).
+            player = await _leagueRepository.GetSeasonPlayerAsync(seasonId, model.PlayerName, cancellationToken);
+            if (player is null)
+            {
+                return NotFound();
+            }
+
+            // but the database functions are based on PlayerId
+            model.PlayerId = player.PlayerId;
 
             await _leagueRepository.UpdateSeasonPlayerAsync(seasonId, model, cancellationToken);
             return RedirectToAction("Players", "Season", new { seasonId });

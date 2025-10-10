@@ -94,7 +94,7 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task<List<StatPeriod>> GetStatPeriods(long gameTypeId, StatPeriodType statPeriodType, int? limit, int offset, CancellationToken cancellationToken)
+        public async Task<List<StatPeriod>> GetStatPeriods(long gameTypeId, StatPeriodType? statPeriodType, int? limit, int offset, CancellationToken cancellationToken)
         {
             try
             {
@@ -102,7 +102,11 @@ namespace SubspaceStats.Services
                 await using (command.ConfigureAwait(false))
                 {
                     command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)gameTypeId);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)statPeriodType);
+
+                    if (statPeriodType is null)
+                        command.Parameters.AddWithValue(DBNull.Value);
+                    else
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)statPeriodType);
 
                     if (limit is not null)
                         command.Parameters.Add(new NpgsqlParameter<int> { Value = limit.Value });
@@ -116,6 +120,8 @@ namespace SubspaceStats.Services
                     {
                         int column_statPeriodId = dataReader.GetOrdinal("stat_period_id");
                         int column_periodRange = dataReader.GetOrdinal("period_range");
+                        int column_statPeriodTypeId = dataReader.GetOrdinal("stat_period_type_id");
+                        int column_periodExtraName = dataReader.GetOrdinal("period_extra_name");
 
                         List<StatPeriod> periodList = [];
 
@@ -125,8 +131,9 @@ namespace SubspaceStats.Services
                             {
                                 StatPeriodId = dataReader.GetInt64(column_statPeriodId),
                                 GameTypeId = gameTypeId,
-                                StatPeriodType = statPeriodType,
+                                StatPeriodType = (StatPeriodType)dataReader.GetInt64(column_statPeriodTypeId),
                                 PeriodRange = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
+                                ExtraName = dataReader.IsDBNull(column_periodExtraName) ? null : dataReader.GetString(column_periodExtraName),
                             });
                         }
 
@@ -340,6 +347,7 @@ namespace SubspaceStats.Services
                         int column_gameTypeId = dataReader.GetOrdinal("game_type_id");
                         int column_statPeriodTypeId = dataReader.GetOrdinal("stat_period_type_id");
                         int column_periodRange = dataReader.GetOrdinal("period_range");
+                        int column_periodExtraName = dataReader.GetOrdinal("period_extra_name");
 
                         List<StatPeriod> periodList = [];
                         while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
@@ -351,6 +359,7 @@ namespace SubspaceStats.Services
                                     GameTypeId = dataReader.GetInt64(column_gameTypeId),
                                     StatPeriodType = (StatPeriodType)dataReader.GetInt64(column_statPeriodTypeId),
                                     PeriodRange = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
+                                    ExtraName = dataReader.IsDBNull(column_periodExtraName) ? null : dataReader.GetString(column_periodExtraName),
                                 });
                         }
 
@@ -382,6 +391,7 @@ namespace SubspaceStats.Services
                         int column_gameTypeId = dataReader.GetOrdinal("game_type_id");
                         int column_statPeriodTypeId = dataReader.GetOrdinal("stat_period_type_id");
                         int column_periodRange = dataReader.GetOrdinal("period_range");
+                        int column_periodExtraName = dataReader.GetOrdinal("period_extra_name");
                         int column_rating = dataReader.GetOrdinal("rating");
                         // TODO: int column_detailsJson = dataReader.GetOrdinal("details_json");
 
@@ -397,6 +407,7 @@ namespace SubspaceStats.Services
                                         GameTypeId = dataReader.GetInt64(column_gameTypeId),
                                         StatPeriodType = (StatPeriodType)dataReader.GetInt64(column_statPeriodTypeId),
                                         PeriodRange = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
+                                        ExtraName = dataReader.IsDBNull(column_periodExtraName) ? null : dataReader.GetString(column_periodExtraName),
                                     },
                                     Rating = await dataReader.IsDBNullAsync(column_rating, cancellationToken).ConfigureAwait(false) ? null : dataReader.GetInt32(column_rating),
                                     // TODO: json details

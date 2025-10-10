@@ -14,6 +14,12 @@
 
 <h1>Leagues and Seasons</h1>
 
+<ul class="nav">
+    <li class="nav-item">
+        <a asp-controller="League" asp-action="Index" class="nav-link">Manage Leagues</a>
+    </li>
+</ul>
+
 <div class="d-flex">
     <div class="accordion" id="leaguesAccordion">
         @foreach (var league in Model.LeagueWithSeasons)

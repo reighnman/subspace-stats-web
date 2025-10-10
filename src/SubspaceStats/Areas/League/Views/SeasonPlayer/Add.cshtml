@@ -5,7 +5,7 @@
 @{
     ViewData["Title"] = "Add Season Players";
     IEnumerable<SelectListItem> teams =
-        from team in Model.Teams
+        from team in Model.Teams.Values
         select new SelectListItem(team.TeamName, team.TeamId.ToString());
 }
 

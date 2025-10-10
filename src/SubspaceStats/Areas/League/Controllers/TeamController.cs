@@ -22,7 +22,7 @@ namespace SubspaceStats.Areas.League.Controllers
         // GET League/Team/{teamId}
         public async Task<IActionResult> Index(long teamId, CancellationToken cancellationToken)
         {
-            TeamWithSeasonInfo? teamInfo = await _leagueRepository.GetTeamsWithSeasonInfosync(teamId, cancellationToken);
+            TeamWithSeasonInfo? teamInfo = await _leagueRepository.GetTeamsWithSeasonInfoAsync(teamId, cancellationToken);
             if(teamInfo is null)
             {
                 return NotFound();

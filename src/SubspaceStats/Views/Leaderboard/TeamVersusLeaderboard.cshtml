@@ -1,10 +1,23 @@
-﻿@model SubspaceStats.Models.Leaderboard.TeamVersusLeaderboardViewModel
+﻿@using System.Text
+@model SubspaceStats.Models.Leaderboard.TeamVersusLeaderboardViewModel
 
 @{
 	ViewData["Title"] = $"{Model.GameType.Name} {(Model.SelectedPeriod is not null ? Model.SelectedPeriod.Value.GetDisplayDescription() : "")} Leaderboard";
 
 	string? action = ViewContext.RouteData.Values["action"] as string;
 	string? controller = ViewContext.RouteData.Values["controller"] as string;
+}
+
+@functions {
+	public static string GetStatPeriodUnitDisplayName(StatPeriodType statPeriodType)
+	{
+		return statPeriodType switch
+		{
+			StatPeriodType.Monthly => "Month",
+			StatPeriodType.LeagueSeason => "Season",
+			_ => "Period",
+		};
+	}
 }
 
 <div class="d-flex">
@@ -16,13 +29,7 @@
 				@foreach (var period in Model.Periods)
 				{
 					bool selected = Model.SelectedPeriod is not null && Model.SelectedPeriod.Value.StatPeriodId == period.StatPeriodId;
-					string periodDescription = period.StatPeriodType switch
-					{
-						StatPeriodType.Monthly => period.PeriodRange.LowerBound.ToString("yyyy-MM"),
-						_ => period.PeriodRange.ToString(),
-					};
-
-					<option value="@period.StatPeriodId" selected="@selected">@periodDescription</option>
+					<option value="@period.StatPeriodId" selected="@selected">@period.GetDisplayDescription()</option>
 				}
 			</select>
 		</form>
@@ -106,19 +113,19 @@ TODO: TOP 5 lists
 			</div>
 		}
 
-		@if (Model.TopRatingLastMonth is not null && Model.TopRatingLastMonth.Count > 0)
+		@if (Model.TopRatingPriorPeriod is not null && Model.TopRatingPriorPeriod.TopList.Count > 0)
 		{
 			<div class="col-12 col-md-6 col-lg-3">
 				<div class="card h-100">
-					<h5 class="card-header text-center">Top Last Month</h5>
+					<h5 class="card-header text-center">Top Last @GetStatPeriodUnitDisplayName(Model.TopRatingPriorPeriod.Period.StatPeriodType)</h5>
 					<div class="card-body">
 						<table class="table table-sm table-borderless m-0">
 							<tbody>
-								@foreach (var record in Model.TopRatingLastMonth)
+								@foreach (var record in Model.TopRatingPriorPeriod.TopList)
 								{
 									<tr>
 										<td class="fw-bold">@record.Rank</td>
-										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType.Id" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
+										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType.Id" asp-route-period="@Model.TopRatingPriorPeriod.Period.StatPeriodId">@record.PlayerName</a></td>
 										<td class="text-end">@record.Rating</td>
 									</tr>
 								}

@@ -27,7 +27,7 @@
 						<th>Teams</th>
 						<th>Round</th>
 						<th>Status</th>
-						<th>Game ID</th>
+						<th class="text-end">Match ID</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -93,6 +93,17 @@
 			</table>
 		</div>
 		<div class="col">
+			@{
+				bool isOnly2TeamMatches = true;
+				foreach (var game in Model.CompletedGames)
+				{
+					if (game.Teams.Count != 2)
+					{
+						isOnly2TeamMatches = false;
+						break;
+					}
+				}
+			}
 			<table class="table table-striped table-bordered table-hover text-nowrap">
 				<thead>
 					<tr>
@@ -100,7 +111,7 @@
 					</tr>
 					<tr>
 						<th>Date</th>
-						<th>Teams</th>
+						<th class="@(isOnly2TeamMatches ? "text-center" : "")">Teams</th>
 						<th>Score</th>
 						<th>Winner</th>
 					</tr>
@@ -109,8 +120,8 @@
 					@foreach (GameRecord game in Model.CompletedGames)
 					{
 						DateTime? gameTime = game.GameTimestamp is not null
-							? TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, leagueOptions.Value.TimeZone)
-							: null;
+						? TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, leagueOptions.Value.TimeZone)
+						: null;
 
 						<tr>
 							<td>
@@ -120,14 +131,29 @@
 								}
 							</td>
 							<td>
-								@for (int i = 0; i < game.Teams.Count; i++)
+								@if (isOnly2TeamMatches)
 								{
-									TeamRecord team = game.Teams[i];
-									if (i > 0)
+									<div class="d-flex align-items-center">
+										<div class="col text-end">
+											<a asp-controller="Team" asp-action="Index" asp-route-teamId="@game.Teams[0].TeamId" class="text-nowrap">@game.Teams[0].TeamName</a>
+										</div>
+										<div class="col-auto px-2">vs</div>
+										<div class="col text-start">
+											<a asp-controller="Team" asp-action="Index" asp-route-teamId="@game.Teams[1].TeamId" class="text-nowrap">@game.Teams[1].TeamName</a>
+										</div>
+									</div>
+								}
+								else
+								{
+									for (int i = 0; i < game.Teams.Count; i++)
 									{
-										<text> vs </text>
+										TeamRecord team = game.Teams[i];
+										if (i > 0)
+										{
+											<text> vs </text>
+										}
+										<a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.TeamId" class="text-nowrap">@team.TeamName</a>
 									}
-									<a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.TeamId" class="text-nowrap">@team.TeamName</a>
 								}
 							</td>
 							<td>
@@ -170,16 +196,12 @@
 										}
 									}
 								}
-
 							</td>
 						</tr>
 					}
 				</tbody>
 			</table>
 		</div>
-	</div>
-	<div class="row">
-		
 	</div>
 </div>
 

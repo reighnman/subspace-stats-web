@@ -8,6 +8,7 @@ namespace SubspaceStats.Models
         public long GameTypeId { get; set; }
         public StatPeriodType StatPeriodType { get; set; }
         public NpgsqlRange<DateTime> PeriodRange { get; set; }
+        public string? ExtraName { get; set; }
 
         public readonly bool Equals(StatPeriod other)
         {
@@ -43,6 +44,7 @@ namespace SubspaceStats.Models
             {
                 StatPeriodType.Forever => "Lifetime",
                 StatPeriodType.Monthly => statPeriod.PeriodRange.LowerBound.ToString("yyyy-MM"),
+                StatPeriodType.LeagueSeason => statPeriod.ExtraName ?? $"League Season: {statPeriod.PeriodRange}",
                 _ => statPeriod.PeriodRange.ToString(),
             };
         }

@@ -59,7 +59,7 @@ namespace SubspaceStats
             app.UseAuthorization();
 
             app.MapAreaControllerRoute(
-                name: "LeagueSeasonPlayer",
+                name: "LeagueSeasonPlayers",
                 areaName: "League",
                 pattern: "League/Season/{seasonId:long}/Players/{action}",
                 defaults: new { controller = "SeasonPlayer" });
@@ -69,6 +69,12 @@ namespace SubspaceStats
                 areaName: "League",
                 pattern: "League/Season/{seasonId:long}/Teams/Create",
                 defaults: new { controller = "Team", action = "Create" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueSeasonGames",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/Games/{action}",
+                defaults: new { controller = "SeasonGame" });
 
             app.MapAreaControllerRoute(
                 name: "LeagueSeasonRound",

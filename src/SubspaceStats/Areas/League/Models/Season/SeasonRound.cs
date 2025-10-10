@@ -12,12 +12,12 @@ namespace SubspaceStats.Areas.League.Models.Season
         
         [Required]
         [Remote("ValidateSeasonRound", "SeasonRound", "League", AdditionalFields = nameof(SeasonId))]
-        public int? RoundNumber { get; set; }
+        public required int RoundNumber { get; set; }
 
         [Display(Name = "Round Name")]
         [Required]
         [StringLength(128, MinimumLength = 1)]
-        public string? RoundName { get; set; }
+        public required string RoundName { get; set; }
 
         [Display(Name = "Round Description")]
         [StringLength(8192)]

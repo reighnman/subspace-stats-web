@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using SubspaceStats.Areas.League.Models.SeasonGame;
 using SubspaceStats.Areas.League.Models.Team;
 using System.ComponentModel.DataAnnotations;
 
@@ -13,13 +14,13 @@ namespace SubspaceStats.Areas.League.Models.Season
         public required List<PlayerListItem> SourcePlayers { get; set; }
 
         [ValidateNever]
-        public required List<TeamModel> SourceTeams { get; set; }
+        public required OrderedDictionary<long, TeamModel> SourceTeams { get; set; }
 
         [ValidateNever]
-        public required List<GameListItem> SourceGames { get; set; }
+        public required List<GameModel> SourceGames { get; set; }
 
         [ValidateNever]
-        public required List<SeasonRound> SourceRounds { get; set; }
+        public required OrderedDictionary<int, SeasonRound> SourceRounds { get; set; }
 
         [Display(Name = "Season Name")]
         [StringLength(128, MinimumLength = 1)]

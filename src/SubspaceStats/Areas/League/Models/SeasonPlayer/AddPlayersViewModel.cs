@@ -18,6 +18,6 @@ namespace SubspaceStats.Areas.League.Models.SeasonPlayer
         public long? TeamId { get; set; }
 
         [ValidateNever]
-        public required List<TeamModel> Teams { get; set; }
+        public required OrderedDictionary<long, TeamModel> Teams { get; set; }
     }
 }

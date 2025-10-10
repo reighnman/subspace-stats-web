@@ -30,7 +30,7 @@ public class LeaderboardController(
             return BadRequest();
         }
 
-        List<StatPeriod> periods = await _statsRepository.GetStatPeriods(gameType.Id, StatPeriodType.Monthly, 12, 0, cancellationToken);
+        List<StatPeriod> periods = await _statsRepository.GetStatPeriods(gameType.Id, null, 12, 0, cancellationToken);
 
         StatPeriod? selectedPeriod = null;
         StatPeriod? priorPeriod = null;
@@ -62,64 +62,89 @@ public class LeaderboardController(
             }
         }
 
-        List<TopRatingRecord>? topRatingList = null;
-        List<TopAvgRatingRecord>? topAvgRatingList = null;
-        List<TopKillsPerMinuteRecord>? topKillsPerMinuteList = null;
-        List<TopRatingRecord>? topRatingLastMonthList = null;
-        List<TeamVersusLeaderboardStats>? statsList = null;
-
-        if (selectedPeriod is not null)
+        if (gameType.GameMode == GameMode.TeamVersus)
         {
-            var topRatingTask = _statsRepository.GetTopPlayersByRating(selectedPeriod.Value.StatPeriodId, 5, cancellationToken);
-            var topAvgRatingTask = _statsRepository.GetTopTeamVersusPlayersByAvgRating(selectedPeriod.Value.StatPeriodId, 5, _options.Top.AvgRating.MinGamesPlayed, cancellationToken);
-            var topKillsPerMinuteTask = _statsRepository.GetTopTeamVersusPlayersByKillsPerMinute(selectedPeriod.Value.StatPeriodId, 5, _options.Top.KillsPerMinute.MinGamesPlayed, cancellationToken);
+            List<TopRatingRecord>? topRatingList = null;
+            List<TopAvgRatingRecord>? topAvgRatingList = null;
+            List<TopKillsPerMinuteRecord>? topKillsPerMinuteList = null;
+            TopListViewModel<TopRatingRecord>? topRatingPriorPeriod = null;
+            List<TeamVersusLeaderboardStats>? statsList = null;
 
-            Task<List<TopRatingRecord>?> topRatingLastMonthTask;
-            if (priorPeriod is not null)
+            if (selectedPeriod is not null)
             {
-                topRatingLastMonthTask = _statsRepository.GetTopPlayersByRating(priorPeriod.Value.StatPeriodId, 5, cancellationToken)!;
+                var topRatingTask = _statsRepository.GetTopPlayersByRating(selectedPeriod.Value.StatPeriodId, 5, cancellationToken);
+                var topAvgRatingTask = _statsRepository.GetTopTeamVersusPlayersByAvgRating(selectedPeriod.Value.StatPeriodId, 5, _options.Top.AvgRating.MinGamesPlayed, cancellationToken);
+                var topKillsPerMinuteTask = _statsRepository.GetTopTeamVersusPlayersByKillsPerMinute(selectedPeriod.Value.StatPeriodId, 5, _options.Top.KillsPerMinute.MinGamesPlayed, cancellationToken);
+
+                Task<TopListViewModel<TopRatingRecord>>? topRatingPriorPeriodTask;
+                if (priorPeriod is not null)
+                {
+                    topRatingPriorPeriodTask = Task.Run(
+                        async () =>
+                        {
+                            return new TopListViewModel<TopRatingRecord>()
+                            {
+                                Period = priorPeriod.Value,
+                                TopList = await _statsRepository.GetTopPlayersByRating(priorPeriod.Value.StatPeriodId, 5, cancellationToken),
+                            };
+                        });
+                }
+                else
+                {
+                    topRatingPriorPeriodTask = null;
+                }
+
+                var statListTask = _statsRepository.GetTeamVersusLeaderboardAsync(selectedPeriod.Value.StatPeriodId, limit + 1, offset, cancellationToken);
+
+                await Task.WhenAll(topRatingTask, topAvgRatingTask, topKillsPerMinuteTask, statListTask, topRatingPriorPeriodTask ?? Task.CompletedTask);
+
+                topRatingList = topRatingTask.Result;
+                topAvgRatingList = topAvgRatingTask.Result;
+                topKillsPerMinuteList = topKillsPerMinuteTask.Result;
+                statsList = statListTask.Result;
+                topRatingPriorPeriod = topRatingPriorPeriodTask?.Result;
             }
-            else
+
+            bool hasMore = false;
+            if (statsList is not null && statsList.Count == limit + 1)
             {
-                topRatingLastMonthTask = Task.FromResult<List<TopRatingRecord>?>(null);
+                statsList.RemoveAt(statsList.Count - 1);
+                hasMore = true;
             }
 
-            var statListTask = _statsRepository.GetTeamVersusLeaderboardAsync(selectedPeriod.Value.StatPeriodId, limit + 1, offset, cancellationToken);
-
-            await Task.WhenAll(topRatingTask, topAvgRatingTask, topKillsPerMinuteTask, statListTask, topRatingLastMonthTask);
-
-            topRatingList = topRatingTask.Result;
-            topAvgRatingList = topAvgRatingTask.Result;
-            topKillsPerMinuteList = topKillsPerMinuteTask.Result;
-            statsList = statListTask.Result;
-            topRatingLastMonthList = topRatingLastMonthTask.Result;
-        }
-
-        bool hasMore = false;
-        if (statsList is not null && statsList.Count == limit + 1)
-        {
-            statsList.RemoveAt(statsList.Count - 1);
-            hasMore = true;
-        }
-
-        return View("TeamVersusLeaderboard", new TeamVersusLeaderboardViewModel()
-        {
-            GameType = gameType,
-            Periods = periods,
-            SelectedPeriod = selectedPeriod,
-            PriorPeriod = priorPeriod,
-            TopRatingList = topRatingList,
-            TopAvgRatingList = topAvgRatingList,
-            TopKillsPerMinuteList = topKillsPerMinuteList,
-            TopRatingLastMonth = topRatingLastMonthList,
-            Stats = statsList,
-            StatsPaging = new()
+            return View("TeamVersusLeaderboard", new TeamVersusLeaderboardViewModel()
             {
-                Limit = limit,
-                Offset = offset,
-                HasMore = hasMore,
-            },
-        });
+                GameType = gameType,
+                Periods = periods,
+                SelectedPeriod = selectedPeriod,
+                PriorPeriod = priorPeriod,
+                TopRatingList = topRatingList,
+                TopAvgRatingList = topAvgRatingList,
+                TopKillsPerMinuteList = topKillsPerMinuteList,
+                TopRatingPriorPeriod = topRatingPriorPeriod,
+                Stats = statsList,
+                StatsPaging = new()
+                {
+                    Limit = limit,
+                    Offset = offset,
+                    HasMore = hasMore,
+                },
+            });
+        }
+        //else if (gameType.GameMode == GameMode.OneVersusOne)
+        //{
+        //    return View("OneVersusOneLeaderboard");
+        //}
+        //else if (gameType.GameMode == GameMode.Powerball)
+        //{
+        //    return View("PowerballLeaderboard");
+        //}
+        else
+        {
+            // TODO: add other game mdoes, like 1v1, powerball, etc...
+
+            return NotFound();
+        }
     }
 
     // TODO: Add 1v1

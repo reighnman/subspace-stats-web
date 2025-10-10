@@ -4,12 +4,6 @@
 
 @{
 	ViewData["Title"] = "Manage Players";
-
-	Dictionary<long, TeamModel> teamDictionary = new(Model.Teams.Count);
-	foreach(var team in Model.Teams)
-	{
-		teamDictionary[team.TeamId] = team;
-	}
 }
 
 @await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
@@ -38,7 +32,7 @@
 			{
 				TeamModel? team = null;
 				if (player.TeamId is not null)
-					teamDictionary.TryGetValue(player.TeamId.Value, out team);
+					Model.Teams.TryGetValue(player.TeamId.Value, out team);
 
 				<tr>
 					@* TODO: Add game_type_id and period to the player link *@

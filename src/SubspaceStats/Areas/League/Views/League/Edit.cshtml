@@ -19,9 +19,13 @@
 
 <div class="container">
     <div class="row">
+        <div class="col-md-6 order-md-2">
+            @await Html.PartialAsync("_LeagueNotes")
+        </div>
         <div class="col-md-6 order-md-1">
             <form asp-action="Edit">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <span asp-validation-for="League" class="text-danger"></span>
                 <div class="mb-3">
                     <label asp-for="League.Id" class="form-label"></label>
                     <input type="number" class="form-control" value="@Model.League?.Id" disabled />
@@ -39,20 +43,31 @@
                     </select>
                     <span asp-validation-for="League.GameTypeId" class="text-danger"></span>
                 </div>
+                <div class="mb-3">
+                    <label asp-for="League.MinTeamsPerGame" class="form-label"></label>
+                    <input asp-for="League.MinTeamsPerGame" class="form-control" />
+                    <span asp-validation-for="League.MinTeamsPerGame" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.MaxTeamsPerGame" class="form-label"></label>
+                    <input asp-for="League.MaxTeamsPerGame" class="form-control" />
+                    <span asp-validation-for="League.MaxTeamsPerGame" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.FreqStart" class="form-label"></label>
+                    <input asp-for="League.FreqStart" class="form-control" />
+                    <span asp-validation-for="League.FreqStart" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.FreqIncrement" class="form-label"></label>
+                    <input asp-for="League.FreqIncrement" class="form-control" />
+                    <span asp-validation-for="League.FreqIncrement" class="text-danger"></span>
+                </div>
                 <div class="d-flex">
                     <button type="submit" class="btn btn-primary m-2">Save</button>
                     <a asp-action="Index" class="btn btn-secondary m-2">Cancel</a>
                 </div>
             </form>
-        </div>
-        <div class="col-md-6 order-md-2">
-            <div class="alert alert-info">
-                <div id="game-type-note">
-                    <div><strong>Game Type</strong> controls game-mode and associated configuration used by the zone server (league modules) when matches are started.</div>
-                    <br />
-                    <div><strong>Game Type</strong> also affects which <strong>stat period</strong> to save match data to. When a season is <strong><em>started</em></strong>, a stat period is linked to that season. Changing <strong>Game Type</strong> will not modify the stat period for seasons that have already started.</div>
-                </div>
-            </div>
         </div>
     </div>
 </div>

@@ -9,90 +9,108 @@
 @await Html.PartialAsync("_SeasonNav")
 @* <h1>Manage Season</h1> *@
 
-<div class="mb-3 justify-content-end">
-	<a asp-action="Copy" class="mx-2 text-nowrap">Copy Season</a>
-</div>
-
-<div class="container w-50">
-	<dl class="row">
-		<dt class="col-4">Season Name:</dt>
-		<dd class="col-8">@Model.Details.SeasonName</dd>
-
-		<dt class="col-4">Created Time:</dt>
-		<dd class="col-8">@Model.Details.CreatedTimestamp</dd>
-
-		<dt class="col-4">Start Date:</dt>
-		<dd class="col-8">@Model.Details.StartDate</dd>
-
-		<dt class="col-4">End Date:</dt>
-		<dd class="col-8">@Model.Details.EndDate</dd>
-
-		<dt class="col-4">Stat Period:</dt>
-		<dd class="col-8">
-			@if (Model.Details.StatPeriodRange is not null)
-			{
-				<text>@Model.Details.StatPeriodRange.Value.ToString()</text>
-			}
-		</dd>
-
-		<dt class="col-4">Stat Game Type:</dt>
-		<dd class="col-8">
-			@if (Model.Details.StatGameTypeId is not null 
-				&& Model.GameTypes.TryGetValue(Model.Details.StatGameTypeId.Value, out GameType? statGameType))
-			{
-				<text>@statGameType.Name</text>
-			}
-		</dd>
-
-		<dt class="col-4">League Game Type:</dt>
-		<dd class="col-8">
-			@if (Model.Details.LeagueGameTypeId is not null
-						&& Model.GameTypes.TryGetValue(Model.Details.LeagueGameTypeId.Value, out GameType? leagueGameType))
-			{
-				<text>@leagueGameType.Name</text>
-			}
-		</dd>
-	</dl>
-</div>
-<div>
-	@if (Model.Details.StartDate is null)
-	{
-		<div class="card">
-			<div class="card-header">Season is not yet started</div>
-			<div class="card-body">
-				<div class="alert alert-info">When it is time, use this to start the season. It will set the season's <strong>Start Date</strong> and will create a <strong>Stat Period</strong> to store league stats into.</div>
-				<form asp-action="Start">
-					<input type="hidden" name="SeasonId" value="@Model.Season.SeasonId" />
-					<div class="mb-3">
-						<label for="StartDate" class="form-label">Start Date</label>
-						<input type="date" name="StartDate" class="form-control" />
-					</div>
-					<div class="d-flex">
-						<button type="submit" class="btn btn-primary">Start Season</button>
-					</div>
-				</form>
+<div class="container">
+	<div class="row">
+		<table class="table table-borderless table-sm w-auto">
+			<tr>
+				<td class="text-end fw-bold">Season Name:</td>
+				<td class="text-start">@Model.SeasonDetails.SeasonName</td>
+			</tr>
+			<tr>
+				<td class="text-end fw-bold">Created Time:</td>
+				<td class="text-start">@Model.SeasonDetails.CreatedTimestamp</td>
+			</tr>
+			<tr>
+				<td class="text-end fw-bold">Start Date:</td>
+				<td class="text-start">@Model.SeasonDetails.StartDate</td>
+			</tr>
+			<tr>
+				<td class="text-end fw-bold">End Date:</td>
+				<td class="text-start">@Model.SeasonDetails.EndDate</td>
+			</tr>
+			<tr>
+				<td class="text-end fw-bold">Stat Period:</td>
+				<td class="text-start">
+					@if (Model.SeasonDetails.StatPeriodRange is not null)
+					{
+						<text>@Model.SeasonDetails.StatPeriodRange.Value.ToString()</text>
+					}
+				</td>
+			</tr>
+			<tr>
+				<td class="text-end fw-bold">Stat Game Type:</td>
+				<td class="text-start">
+					@if (Model.SeasonDetails.StatGameTypeId is not null && Model.GameTypes.TryGetValue(Model.SeasonDetails.StatGameTypeId.Value, out GameType? statGameType))
+					{
+						<text>@statGameType.Name</text>
+					}
+				</td>
+			</tr>
+			<tr>
+				<td class="text-end fw-bold">League Game Type:</td>
+				<td class="text-start">
+					@if (Model.SeasonDetails.LeagueGameTypeId is not null && Model.GameTypes.TryGetValue(Model.SeasonDetails.LeagueGameTypeId.Value, out GameType? leagueGameType))
+					{
+						<text>@leagueGameType.Name</text>
+					}
+				</td>
+			</tr>
+		</table>
+	</div>
+	<div class="row g-3">
+		
+		<div class="col-12 col-md-6 col-lg-4">
+			<div class="card h-100">
+				<div class="card-header text-center">Copy Season</div>
+				<div class="card-body">
+					<div class="card-text mb-3">A new season can be created using this season as a template. You'll be given a choice of which aspects to copy: players, teams, matches, and/or rounds.</div>
+					<a asp-action="Copy" class="btn btn-primary  text-nowrap">Create a Copy</a>
+				</div>
 			</div>
 		</div>
-	}
-	@if(Model.Details.EndDate is null)
-	{
-		<div class="card">
-			<div class="card-header">End the season</div>
-			<div class="card-body">
-				<div class="alert alert-info">Marks the season as ended, giving it an end date.</div>
-				<form asp-action="End">
-					<input type="hidden" name="SeasonId" value="@Model.Season.SeasonId" />
-					<div class="mb-3">
-						<label for="EndDate" class="form-label">End Date</label>
-						<input type="date" name="EndDate" class="form-control" />
+		@if (Model.SeasonDetails.StartDate is null)
+		{
+			<div class="col-12 col-md-6 col-lg-4">
+				<div class="card h-100">
+					<div class="card-header text-center">Season is not yet started</div>
+					<div class="card-body">
+						<div class="alert alert-info">When it is time, use this to start the season. It will set the season's <strong>Start Date</strong> and will create a <strong>Stat Period</strong> to store league stats into.</div>
+						<form asp-action="Start">
+							<input type="hidden" name="SeasonId" value="@Model.Season.SeasonId" />
+							<div class="mb-3">
+								<label for="StartDate" class="form-label">Start Date</label>
+								<input type="date" name="StartDate" class="form-control" />
+							</div>
+							<div class="d-flex">
+								<button type="submit" class="btn btn-primary">Start Season</button>
+							</div>
+						</form>
 					</div>
-					<div class="d-flex">
-						<button type="submit" class="btn btn-primary">End Season</button>
-					</div>
-				</form>
+				</div>
 			</div>
-		</div>
-	}
+		}
+		@if (Model.SeasonDetails.StartDate is not null && Model.SeasonDetails.EndDate is null)
+		{
+			<div class="col-12 col-md-6 col-lg-4">
+				<div class="card h-100">
+					<div class="card-header text-center">End the season</div>
+					<div class="card-body">
+						<div class="alert alert-info">Marks the season as ended, giving it an end date.</div>
+						<form asp-action="End">
+							<input type="hidden" name="SeasonId" value="@Model.Season.SeasonId" />
+							<div class="mb-3">
+								<label for="EndDate" class="form-label">End Date</label>
+								<input type="date" name="EndDate" class="form-control" />
+							</div>
+							<div class="d-flex">
+								<button type="submit" class="btn btn-primary">End Season</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		}
+	</div>
 </div>
 
 @section Scripts {

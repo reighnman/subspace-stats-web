@@ -9,6 +9,6 @@ namespace SubspaceStats.Areas.League.Models.SeasonPlayer
         
         public required SeasonPlayer Model { get; set; }
 
-        public required List<TeamModel> Teams { get; set; }
+        public required OrderedDictionary<long, TeamModel> Teams { get; set; }
     }
 }

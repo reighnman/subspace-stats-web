@@ -3,6 +3,7 @@ using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Areas.League.Models.Season;
+using SubspaceStats.Areas.League.Models.SeasonGame;
 using SubspaceStats.Areas.League.Models.Team;
 using SubspaceStats.Services;
 
@@ -20,6 +21,12 @@ namespace SubspaceStats.Areas.League.Controllers
         public async Task<ActionResult> IndexAsync(long? seasonId, CancellationToken cancellationToken)
         {
             if (seasonId is null)
+            {
+                return NotFound();
+            }
+
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId.Value, cancellationToken);
+            if (seasonDetails is null)
             {
                 return NotFound();
             }
@@ -42,6 +49,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(
                 new OverviewViewModel()
                 {
+                    SeasonDetails = seasonDetails,
                     League = currentLeague,
                     Season = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
@@ -54,6 +62,12 @@ namespace SubspaceStats.Areas.League.Controllers
         // GET Season/{seasonId}/Rosters
         public async Task<ActionResult> Rosters(long seasonId, CancellationToken cancellationToken)
         {
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
             List<LeagueNavItem> leaguesWithSeasons = await _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
             LeagueSeasonChooserViewModel seasonChooser = new(seasonId, leaguesWithSeasons, Url);
             LeagueNavItem? currentLeague = seasonChooser.SelectedLeague;
@@ -66,6 +80,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(
                 new RostersViewModel()
                 {
+                    SeasonDetails = seasonDetails,
                     League = currentLeague,
                     Season = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
@@ -94,10 +109,10 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(
                 new DetailsViewModel
                 {
+                    SeasonDetails = details,
                     League = currentLeague,
                     Season = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
-                    Details = details,
                     GameTypes = await _statsRepository.GetGameTypesAsync(cancellationToken),
                 });
         }
@@ -121,9 +136,9 @@ namespace SubspaceStats.Areas.League.Controllers
             }
 
             Task<List<PlayerListItem>> playersTask = _leagueRepository.GetSeasonPlayersAsync(seasonId, cancellationToken);
-            Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
-            Task<List<GameListItem>> gamesTask = _leagueRepository.GetSeasonGamesAsync(seasonId, cancellationToken);
-            Task<List<SeasonRound>> roundsTask = _leagueRepository.GetSeasonRoundsAsync(seasonId, cancellationToken);
+            Task<OrderedDictionary<long, TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
+            Task<List<GameModel>> gamesTask = _leagueRepository.GetSeasonGamesAsync(seasonId, cancellationToken);
+            Task<OrderedDictionary<int, SeasonRound>> roundsTask = _leagueRepository.GetSeasonRoundsAsync(seasonId, cancellationToken);
             await Task.WhenAll(playersTask, teamsTask, gamesTask, roundsTask);
 
             return View(
@@ -159,9 +174,9 @@ namespace SubspaceStats.Areas.League.Controllers
                 }
 
                 Task<List<PlayerListItem>> playersTask = _leagueRepository.GetSeasonPlayersAsync(seasonId, cancellationToken);
-                Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
-                Task<List<GameListItem>> gamesTask = _leagueRepository.GetSeasonGamesAsync(seasonId, cancellationToken);
-                Task<List<SeasonRound>> roundsTask = _leagueRepository.GetSeasonRoundsAsync(seasonId, cancellationToken);
+                Task<OrderedDictionary<long, TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
+                Task<List<GameModel>> gamesTask = _leagueRepository.GetSeasonGamesAsync(seasonId, cancellationToken);
+                Task<OrderedDictionary<int, SeasonRound>> roundsTask = _leagueRepository.GetSeasonRoundsAsync(seasonId, cancellationToken);
                 await Task.WhenAll(playersTask, teamsTask, gamesTask, roundsTask);
 
                 copyInfo.SourceSeason = seasonDetails;
@@ -193,6 +208,12 @@ namespace SubspaceStats.Areas.League.Controllers
                 return NotFound();
             }
 
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId.Value, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
             List<LeagueNavItem> leaguesWithSeasons = await _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
             LeagueSeasonChooserViewModel seasonChooser = new(seasonId.Value, leaguesWithSeasons, Url);
             LeagueNavItem? currentLeague = seasonChooser.SelectedLeague;
@@ -203,13 +224,14 @@ namespace SubspaceStats.Areas.League.Controllers
             }
 
             Task<List<PlayerListItem>> playersTask = _leagueRepository.GetSeasonPlayersAsync(seasonId.Value, cancellationToken);
-            Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId.Value, cancellationToken);
+            Task<OrderedDictionary<long, TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId.Value, cancellationToken);
 
             await Task.WhenAll(playersTask, teamsTask);
 
             return View(
                 new PlayersViewModel
                 {
+                    SeasonDetails = seasonDetails,
                     League = currentLeague,
                     Season = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
@@ -226,6 +248,12 @@ namespace SubspaceStats.Areas.League.Controllers
                 return NotFound();
             }
 
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId.Value, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
             List<LeagueNavItem> leaguesWithSeasons = await _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
             LeagueSeasonChooserViewModel seasonChooser = new(seasonId.Value, leaguesWithSeasons, Url);
             LeagueNavItem? currentLeague = seasonChooser.SelectedLeague;
@@ -235,7 +263,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 return NotFound();
             }
 
-            Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId.Value, cancellationToken);
+            Task<OrderedDictionary<long, TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId.Value, cancellationToken);
             Task<OrderedDictionary<long, FranchiseModel>> franchiseTask = _leagueRepository.GetFranchisesAsync(cancellationToken);
 
             await Task.WhenAll(teamsTask, franchiseTask);
@@ -243,6 +271,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(
                 new TeamsViewModel
                 {
+                    SeasonDetails = seasonDetails,
                     League = currentLeague,
                     Season = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
@@ -259,6 +288,24 @@ namespace SubspaceStats.Areas.League.Controllers
                 return NotFound();
             }
 
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId.Value, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            var season = await _leagueRepository.GetSeasonAsync(seasonId.Value, cancellationToken);
+            if (season is null)
+            {
+                return NotFound();
+            }
+
+            var league = await _leagueRepository.GetLeagueAsync(season.LeagueId, cancellationToken);
+            if (league is null)
+            {
+                return NotFound();
+            }
+
             List<LeagueNavItem> leaguesWithSeasons = await _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
             LeagueSeasonChooserViewModel seasonChooser = new(seasonId.Value, leaguesWithSeasons, Url);
             LeagueNavItem? currentLeague = seasonChooser.SelectedLeague;
@@ -268,19 +315,24 @@ namespace SubspaceStats.Areas.League.Controllers
                 return NotFound();
             }
 
-            Task<List<GameListItem>> gamesTask = _leagueRepository.GetSeasonGamesAsync(seasonId.Value, cancellationToken);
-            Task<List<TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId.Value, cancellationToken);
+            Task<List<GameModel>> gamesTask = _leagueRepository.GetSeasonGamesAsync(seasonId.Value, cancellationToken);
+            Task<OrderedDictionary<long, TeamModel>> teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId.Value, cancellationToken);
+            Task<OrderedDictionary<int, SeasonRound>> roundsTask = _leagueRepository.GetSeasonRoundsAsync(seasonId.Value, cancellationToken);
 
-            await Task.WhenAll(gamesTask, teamsTask);
+            await Task.WhenAll(gamesTask, teamsTask, roundsTask);
 
             return View(
                 new GamesViewModel
                 {
-                    League = currentLeague,
-                    Season = currentSeason,
+                    SeasonDetails = seasonDetails,
+                    LeagueNav = currentLeague,
+                    SeasonNav = currentSeason,
+                    League = league,
+                    Season = season,
                     LeagueSeasonChooser = seasonChooser,
                     Games = gamesTask.Result,
                     Teams = teamsTask.Result,
+                    Rounds = roundsTask.Result,
                 });
         }
 
@@ -288,6 +340,12 @@ namespace SubspaceStats.Areas.League.Controllers
         public async Task<ActionResult> Rounds(long? seasonId, CancellationToken cancellationToken)
         {
             if (seasonId is null)
+            {
+                return NotFound();
+            }
+
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId.Value, cancellationToken);
+            if (seasonDetails is null)
             {
                 return NotFound();
             }
@@ -304,6 +362,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(
                 new RoundsViewModel
                 {
+                    SeasonDetails = seasonDetails,
                     League = currentLeague,
                     Season = currentSeason,
                     LeagueSeasonChooser = seasonChooser,

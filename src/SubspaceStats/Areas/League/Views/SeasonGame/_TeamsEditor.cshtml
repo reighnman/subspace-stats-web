@@ -1,0 +1,79 @@
+﻿@using SubspaceStats.Areas.League.Models
+@using SubspaceStats.Areas.League.Models.SeasonGame
+@model GameViewModel
+
+@{
+    IEnumerable<SelectListItem> teams =
+        from team in Model.Teams.Values
+        select new SelectListItem(team.TeamName, team.TeamId.ToString());
+
+    bool canAddTeam = Model.Game.Teams.Count < Model.League.MaxTeamsPerGame;
+    bool canRemoveTeam = Model.Game.Teams.Count > Model.League.MinTeamsPerGame;
+}
+
+<h5>Teams</h5>
+<input asp-for="Game.SeasonGameId" type="hidden" />
+<div class="form-check">
+    <input asp-for="AutoAssignFreqs" class="form-check-input" />
+    <label asp-for="AutoAssignFreqs" class="form-check-label"></label>
+</div>
+<span asp-validation-for="Game.Teams" class="text-danger"></span>
+<table id="teamsTable" class="table table-borderless table-responsive">
+    <thead>
+        <tr>
+            <th>
+                <button id="addTeamButton" type="button" class="btn btn-link" title="Add Team" @(canAddTeam ? "" : "disabled")>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+                    </svg>
+                </button>
+            </th>
+            <th>Team</th>
+            <th>Freq</th>
+            <th class="@(Model.Game.Status == GameStatus.Complete ? "invisible" : null)">Score</th>
+            <th class="@(Model.Game.Status == GameStatus.Complete ? "invisible" : null)">Winner</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (int i = 0; i < Model.Game.Teams.Count; i++)
+        {
+            GameTeamModel? team = Model.Game.Teams[i];
+            if (team is null)
+                continue;
+
+            <tr>
+                <td>
+                    <button type="button" class="remove-team-btn btn btn-link" title="Remove Team" @(canRemoveTeam ? "" : "disabled")>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+                        </svg>
+                    </button>
+                </td>
+                <td id="@($"team{i}-teamId")">
+                    <select asp-for="Game.Teams[i].TeamId" asp-items="@teams" class="form-select">
+                        <option value="" selected disabled>-- None --</option>
+                    </select>
+                    <span asp-validation-for="Game.Teams[i].TeamId" class="text-danger"></span>
+                </td>
+                <td>
+                    <input asp-for="Game.Teams[i].Freq" class="form-control" readonly="@Model.AutoAssignFreqs" />
+                    <span asp-validation-for="Game.Teams[i].Freq" class="text-danger"></span>
+                </td>
+                <td class="@(Model.Game.Status == GameStatus.Complete ? "invisible" : null)">
+                    <input asp-for="Game.Teams[i].Score" class="form-control" />
+                    <span asp-validation-for="Game.Teams[i].Score" class="text-danger"></span>
+                </td>
+                <td class="d-flex justify-content-center @(Model.Game.Status == GameStatus.Complete ? "invisible" : null)">
+                    <div class="form-check">
+                        <input asp-for="Game.Teams[i].IsWinner" class="form-check-input" />
+                    </div>
+                    <div>
+                        <span asp-validation-for="Game.Teams[i].IsWinner" class="text-danger"></span>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

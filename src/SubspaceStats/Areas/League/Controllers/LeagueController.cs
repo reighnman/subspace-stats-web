@@ -60,6 +60,14 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(
                 new LeagueViewModel()
                 {
+                    League = new()
+                    {
+                        Name = "",
+                        MinTeamsPerGame = 2,
+                        MaxTeamsPerGame = 2,
+                        FreqStart = 10,
+                        FreqIncrement = 10,
+                    },
                     GameTypes = await _statsRepository.GetGameTypesAsync(cancellationToken),
                 });
         }
@@ -67,7 +75,9 @@ namespace SubspaceStats.Areas.League.Controllers
         // POST: League/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create([Bind("Name", "GameTypeId", Prefix ="League")]LeagueModel league, CancellationToken cancellationToken)
+        public async Task<ActionResult> Create(
+            [Bind("Name", "GameTypeId", "MinTeamsPerGame", "MaxTeamsPerGame", "FreqStart", "FreqIncrement", Prefix ="League")]LeagueModel league, 
+            CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -80,9 +90,13 @@ namespace SubspaceStats.Areas.League.Controllers
             }
 
             long leagueId = await _leagueRepository.InsertLeagueAsync(
-                    league.Name!,
-                    league.GameTypeId,
-                    cancellationToken);
+                league.Name!,
+                league.GameTypeId,
+                league.MinTeamsPerGame,
+                league.MaxTeamsPerGame,
+                league.FreqStart,
+                league.FreqIncrement,
+                cancellationToken);
 
             return RedirectToAction(nameof(Details), "League", new { leagueId });
         }
@@ -112,7 +126,10 @@ namespace SubspaceStats.Areas.League.Controllers
         // POST: League/5/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(long? leagueId, [Bind("Id", "Name", "GameTypeId", Prefix = "League")] LeagueModel league, CancellationToken cancellationToken)
+        public async Task<ActionResult> Edit(
+            long? leagueId,
+            [Bind("Id", "Name", "GameTypeId", "MinTeamsPerGame", "MaxTeamsPerGame", "FreqStart", "FreqIncrement", Prefix = "League")] LeagueModel league,
+            CancellationToken cancellationToken)
         {
             if (leagueId is null || leagueId != league.Id)
             {

@@ -8,20 +8,20 @@
 		$('#leagueSeasonChooser_submit_noScript').toggleClass('visually-hidden');
 		$('#leagueSeasonChooser_submit').toggleClass('visually-hidden');
 
-		var $leagueSeasonIdChooserForm = $('#leagueSeasonChooser');
+		const $leagueSeasonIdChooserForm = $('#leagueSeasonChooser');
 
-		var $leagueIdSelect = $('#leagueSeasonChooser_leagueIdSelect');
-		var leagueIdSelect = $leagueIdSelect.get(0);
+		const $leagueIdSelect = $('#leagueSeasonChooser_leagueIdSelect');
+		const leagueIdSelect = $leagueIdSelect[0];
 
-		var $seasonIdSelect = $('#leagueSeasonChooser_seasonIdSelect');
-		var seasonIdSelect = $seasonIdSelect.get(0);
+		const $seasonIdSelect = $('#leagueSeasonChooser_seasonIdSelect');
+		const seasonIdSelect = $seasonIdSelect[0];
 
 		if (leagueIdSelect != null && seasonIdSelect != null) {
-			var currentSeasonId = seasonIdSelect.value;
+			const currentSeasonId = seasonIdSelect.value;
 
 			$leagueIdSelect.on('change', function () {
-				var selectedLeagueId = leagueIdSelect.value;
-				var selectedLeagueWithSeason = null;
+				let selectedLeagueId = leagueIdSelect.value;
+				let selectedLeagueWithSeason = null;
 				for (const leagueWithSeason of leaguesWithSeasons) {
 					if (leagueWithSeason.league_id == selectedLeagueId) {
 						selectedLeagueWithSeason = leagueWithSeason;
