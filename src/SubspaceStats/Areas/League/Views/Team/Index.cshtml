@@ -9,10 +9,6 @@
     ViewData["Title"] = "Team";
 }
 
-<div class="d-flex">
-    <h1>Team</h1>
-</div>
-
 <div class="container">
     <h3 class="row">@Model.TeamInfo.TeamName</h3>
     <div class="row">
@@ -71,7 +67,7 @@
                     </tr>
                     <tr>
                         <th>Teams</th>
-                        <th>Time (ET)</th>
+                        <th title="Time @leagueOptions.Value.TimeZone.DisplayName">Time</th>
                         <th>Round</th>
                         <th>Result</th>
                         <th>Scores</th>
@@ -80,8 +76,6 @@
                 <tbody>
                     @foreach (var game in Model.GameRecords)
                     {
-                        DateTime? gameTime = game.GameTimestamp is not null ? TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, leagueOptions.Value.TimeZone) : null;
-
                         <tr>
                             <td>
                                 @if (game.GameId is null)
@@ -94,13 +88,9 @@
                                 }
                             </td>
                             <td>
-                                @if (gameTime is null)
+                                @if (game.GameTimestamp is not null)
                                 {
-                                    <span>-</span>
-                                }
-                                else
-                                {
-                                    <text>@gameTime.Value.ToString("yyyy-MM-dd hh:mm tt")</text>
+                                    @TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, leagueOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
                                 }
                             </td>
                             <td>
