@@ -13,6 +13,14 @@
     <h3 class="row">@Model.TeamInfo.TeamName</h3>
     <div class="row">
         <div class="col-6">
+            @if (!string.IsNullOrWhiteSpace(Model.TeamInfo.BannerLarge))
+            {
+                <div><img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.TeamInfo.BannerLarge}")" asp-append-version="true" /></div>
+            }
+            else if (!string.IsNullOrWhiteSpace(Model.TeamInfo.BannerSmall))
+            {
+                <div><img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.TeamInfo.BannerSmall}")" asp-append-version="true" /></div>
+            }
             <dl class="row">
                 <dt class="col-4">
                     League:
