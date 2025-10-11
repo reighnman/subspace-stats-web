@@ -813,7 +813,7 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task StartSeasonAsync(long seasonId, DateTime? startDate, CancellationToken cancellationToken)
+        public async Task StartSeasonAsync(long seasonId, DateOnly? startDate, CancellationToken cancellationToken)
         {
             try
             {
@@ -826,7 +826,7 @@ namespace SubspaceStats.Services
                         command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
 
                         if (startDate is not null)
-                            command.Parameters.Add(new NpgsqlParameter<DateTime> { TypedValue = startDate.Value });
+                            command.Parameters.Add(new NpgsqlParameter<DateOnly> { TypedValue = startDate.Value });
                         else
                             command.Parameters.AddWithValue(DBNull.Value);
 
@@ -839,6 +839,36 @@ namespace SubspaceStats.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error starting season. (season_id: {season_id})", seasonId);
+                throw;
+            }
+        }
+
+        public async Task UpdateSeasonEndDateAsync(long seasonId, DateOnly? endDate, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.update_season_end_date($1,$2);", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+
+                        if (endDate is not null)
+                            command.Parameters.Add(new NpgsqlParameter<DateOnly> { TypedValue = endDate.Value });
+                        else
+                            command.Parameters.AddWithValue(DBNull.Value);
+
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating season end date. (season_id: {season_id})", seasonId);
                 throw;
             }
         }

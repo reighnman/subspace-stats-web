@@ -6,6 +6,7 @@ using SubspaceStats.Areas.League.Models.Season;
 using SubspaceStats.Areas.League.Models.SeasonGame;
 using SubspaceStats.Areas.League.Models.Team;
 using SubspaceStats.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace SubspaceStats.Areas.League.Controllers
 {
@@ -117,12 +118,67 @@ namespace SubspaceStats.Areas.League.Controllers
                 });
         }
 
-        // GET Season/{seasonId}/Start
+        // POST Season/{seasonId}/Start
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Start(long seasonId, DateTime? startDate, CancellationToken cancellationToken)
+        public async Task<ActionResult> Start(long seasonId, DateOnly? startDate, CancellationToken cancellationToken)
         {
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            if (seasonDetails.StartDate is not null)
+            {
+                return Conflict();
+            }
+
             await _leagueRepository.StartSeasonAsync(seasonId, startDate, cancellationToken);
+            return RedirectToAction("Details");
+        }
+
+        // POST Season/{seasonId}/End
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> End(long seasonId, [Required]DateOnly? endDate, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            if (seasonDetails.StartDate is null || seasonDetails.EndDate is not null)
+            {
+                return Conflict();
+            }
+
+            await _leagueRepository.UpdateSeasonEndDateAsync(seasonId, endDate, cancellationToken);
+            return RedirectToAction("Details");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> UndoEnd(long seasonId, CancellationToken cancellationToken)
+        {
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            if (seasonDetails.StartDate is null || seasonDetails.EndDate is null)
+            {
+                return Conflict();
+            }
+
+            await _leagueRepository.UpdateSeasonEndDateAsync(seasonId, null, cancellationToken);
             return RedirectToAction("Details");
         }
 
@@ -508,7 +564,7 @@ namespace SubspaceStats.Areas.League.Controllers
         }
 
         // POST Season/{seasonId}/Delete
-        [HttpPost]
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirm(long seasonId, CancellationToken cancellationToken)
         {

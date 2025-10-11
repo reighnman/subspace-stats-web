@@ -43,9 +43,10 @@ namespace SubspaceStats.Services
         #region Season
 
         Task<SeasonDetails?> GetSeasonDetailsAsync(long seasonId, CancellationToken cancellationToken);
-        Task StartSeasonAsync(long seasonId, DateTime? startDate, CancellationToken cancellationToken);
+        Task StartSeasonAsync(long seasonId, DateOnly? startDate, CancellationToken cancellationToken);
+        Task UpdateSeasonEndDateAsync(long seasonId, DateOnly? endDate, CancellationToken cancellationToken);
         Task<long> CopySeasonAsync(long seasonId, string seasonName, bool includePlayers, bool includeTeams, bool includeGames, bool includeRounds, CancellationToken cancellationToken);
-        //Task SetSeasonEndDateAsync(long sesaonId, DateTime? endDate, CancellationToken cancellationToken);
+        
         Task<SeasonModel?> GetSeasonAsync(long seasonId, CancellationToken cancellationToken);
         Task<long> InsertSeasonAsync(string seasonName, long leagueId, CancellationToken cancellationToken);
         Task UpdateSeasonAsync(long seasonId, string seasonName, CancellationToken cancellationToken);
