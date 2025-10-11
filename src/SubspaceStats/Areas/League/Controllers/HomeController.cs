@@ -14,7 +14,7 @@ namespace SubspaceStats.Areas.League.Controllers
         private readonly IOptions<LeagueOptions> _options = options;
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
 
-        // GET: League
+        // GET League
         public async Task<ActionResult> Index(CancellationToken cancellationToken)
         {
             // TODO: add scheduled games across all configured LeagueIds
@@ -24,7 +24,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(seasonsStandings);
         }
 
-        // GET: League/Nav
+        // GET League/Nav
         public async Task<ActionResult> Nav(long? leagueId, long? seasonId, CancellationToken cancellationToken)
         {
             // For users that have javascript disabled, the LeagueSeasonChooser (partial view cascasding dropdowns) will not work.

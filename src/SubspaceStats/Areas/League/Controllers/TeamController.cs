@@ -59,6 +59,7 @@ namespace SubspaceStats.Areas.League.Controllers
 
         // POST League/Season/{seasonId}/Teams/Create
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(long seasonId, CreateTeamModel model, CancellationToken cancellationToken)
         {
             //
@@ -179,6 +180,7 @@ namespace SubspaceStats.Areas.League.Controllers
 
         // POST League/Teams/{teamId}/Edit
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(long teamId, EditTeamModel model, CancellationToken cancellationToken)
         {
             //

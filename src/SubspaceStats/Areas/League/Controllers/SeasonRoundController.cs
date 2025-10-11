@@ -9,7 +9,7 @@ namespace SubspaceStats.Areas.League.Controllers
     {
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
 
-        // GET: League/Season/{seasonId}/Round/Create
+        // GET League/Season/{seasonId}/Round/Create
         public async Task<IActionResult> Create(long seasonId, CancellationToken cancellationToken)
         {
             var rounds = await _leagueRepository.GetSeasonRoundsAsync(seasonId, cancellationToken);
@@ -29,7 +29,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 });
         }
 
-        // POST: League/Season/{seasonId}/Round/Create
+        // POST League/Season/{seasonId}/Round/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(long seasonId, [Bind("SeasonId", "RoundNumber", "RoundName", "RoundDescription")]SeasonRound seasonRound, CancellationToken cancellationToken)
@@ -60,7 +60,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return Json(true);
         }
 
-        // GET: League/Season/{seasonId}/Round/{roundNumber}/Edit
+        // GET League/Season/{seasonId}/Round/{roundNumber}/Edit
         public async Task<ActionResult> Edit(long seasonId, int roundNumber, CancellationToken cancellationToken)
         {
             SeasonRound? seasonRound = await _leagueRepository.GetSeasonRoundAsync(seasonId, roundNumber, cancellationToken);
@@ -72,7 +72,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(seasonRound);
         }
 
-        // POST: League/Season/{seasonId}/Round/{roundNumber}/Edit
+        // POST League/Season/{seasonId}/Round/{roundNumber}/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(
@@ -95,7 +95,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return RedirectToAction("Rounds", "Season", new { seasonId });
         }
 
-        // GET: League/Season/{seasonId}/Round/{roundNumber}/Delete
+        // GET League/Season/{seasonId}/Round/{roundNumber}/Delete
         public async Task<ActionResult> Delete(long seasonId, int roundNumber, CancellationToken cancellationToken)
         {
             SeasonRound? seasonRound = await _leagueRepository.GetSeasonRoundAsync(seasonId, roundNumber, cancellationToken);
@@ -107,7 +107,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(seasonRound);
         }
 
-        // POST: League/Season/{seasonId}/Round/{roundNumber}/Delete
+        // POST League/Season/{seasonId}/Round/{roundNumber}/Delete
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirm(long seasonId, int roundNumber, CancellationToken cancellationToken)

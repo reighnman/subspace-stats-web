@@ -13,7 +13,7 @@ namespace SubspaceStats.Areas.League.Controllers
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
         private readonly IStatsRepository _statsRepository = statsRepository;
 
-        // GET: League
+        // GET League/Manage
         public async Task<ActionResult> Index(CancellationToken cancellationToken)
         {
             Task<List<LeagueModel>> leagueListTask = _leagueRepository.GetLeagueListAsync(cancellationToken);
@@ -29,7 +29,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 });
         }
 
-        // GET: League/5/Details
+        // GET: League/{leagueId}
         public async Task<ActionResult> Details(long? leagueId, CancellationToken cancellationToken)
         {
             if (leagueId is null)
@@ -101,7 +101,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return RedirectToAction(nameof(Details), "League", new { leagueId });
         }
 
-        // GET: League/5/Edit
+        // GET: League/{leagueId}/Edit
         public async Task<ActionResult> Edit(long? leagueId, CancellationToken cancellationToken)
         {
             if (leagueId is null)
@@ -123,7 +123,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 });
         }
 
-        // POST: League/5/Edit
+        // POST: League/{leagueId}/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(
@@ -150,7 +150,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return RedirectToAction(nameof(Details));
         }
 
-        // GET: League/5/Delete
+        // GET: League/{leagueId}/Delete
         public async Task<ActionResult> Delete(long? leagueId, CancellationToken cancellationToken)
         {
             if (leagueId is null)
@@ -172,7 +172,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 });
         }
 
-        // POST: League/5/Delete
+        // POST: League/{leagueId}/Delete
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(long? leagueId, CancellationToken cancellationToken)

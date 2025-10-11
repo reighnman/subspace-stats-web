@@ -10,11 +10,13 @@ namespace SubspaceStats.Areas.League.Controllers
     {
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
 
+        // GET League/Franchise
         public async Task<ActionResult> Index(CancellationToken cancellationToken)
         {
             return View(await _leagueRepository.GetFranchiseListAsync(cancellationToken));
         }
 
+        // GET League/Franchise/{franchiseId}
         public async Task<ActionResult> Details(long? franchiseId, CancellationToken cancellationToken)
         {
             if (franchiseId is null)
@@ -36,11 +38,13 @@ namespace SubspaceStats.Areas.League.Controllers
                 });
         }
 
+        // GET League/Franchise/Create
         public ActionResult Create()
         {
             return View();
         }
 
+        // POST League/Franchise/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create([Bind("Name")] FranchiseModel franchise, CancellationToken cancellationToken)
@@ -54,6 +58,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return RedirectToAction(nameof(Details), new { franchiseId });
         }
 
+        // GET League/Franchise/{franchiseId}/Edit
         public async Task<ActionResult> Edit(long? franchiseId, CancellationToken cancellationToken)
         {
             if (franchiseId is null)
@@ -70,6 +75,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(franchise);
         }
 
+        // POST League/Franchise/{franchiseId}/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(long? franchiseId, [Bind("Id", "Name")] FranchiseModel franchise, CancellationToken cancellationToken)
@@ -88,6 +94,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return RedirectToAction(nameof(Details), new { id = franchise.Id });
         }
 
+        // GET League/Franchise/{franchiseId}/Delete
         public async Task<ActionResult> Delete(long? franchiseId, CancellationToken cancellationToken)
         {
             if (franchiseId is null)
@@ -104,6 +111,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(franchise);
         }
 
+        // POST League/Franchise/{franchiseId}/Delete
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(long? franchiseId, CancellationToken cancellationToken)

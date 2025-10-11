@@ -17,6 +17,7 @@ namespace SubspaceStats.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult> ClearGameTypeCache(CancellationToken cancellationToken)
         {
             await _cache.RemoveAsync(CacheKeys.GameTypes, cancellationToken);

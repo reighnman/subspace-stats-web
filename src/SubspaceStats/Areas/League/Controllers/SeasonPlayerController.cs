@@ -155,7 +155,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 });
         }
 
-        // GET League/Season/{seasonId}/Players/Edit
+        // POST League/Season/{seasonId}/Players/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(long seasonId, SeasonPlayer model, CancellationToken cancellationToken)
