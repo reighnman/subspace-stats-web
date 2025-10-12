@@ -24,6 +24,7 @@ namespace SubspaceStats
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+            builder.Services.Configure<GeneralOptions>(builder.Configuration.GetSection(GeneralOptions.GeneralSectionKey));
             builder.Services.Configure<StatOptions>(builder.Configuration.GetSection(StatOptions.StatsSectionKey));
             builder.Services.Configure<LeagueOptions>(builder.Configuration.GetSection(LeagueOptions.LeagueSectionKey));
 
