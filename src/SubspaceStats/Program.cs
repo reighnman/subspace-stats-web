@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
+using SubspaceStats.Areas.Identity.Data;
 using SubspaceStats.Filters;
 using SubspaceStats.Options;
 using SubspaceStats.Services;
@@ -13,6 +16,14 @@ namespace SubspaceStats
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            const string identityConnectionStringName = "AspNetCoreIdentity";
+            var connectionString = builder.Configuration.GetConnectionString(identityConnectionStringName) ?? throw new InvalidOperationException($"Connection string '{identityConnectionStringName}' not found.");
+            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
+
+            builder.Services.AddDefaultIdentity<SubspaceStatsUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddRoles<IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>();
+
             builder.Services.Configure<StatOptions>(builder.Configuration.GetSection(StatOptions.StatsSectionKey));
             builder.Services.Configure<LeagueOptions>(builder.Configuration.GetSection(LeagueOptions.LeagueSectionKey));
 
@@ -160,6 +171,9 @@ namespace SubspaceStats
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
+
+            // For using the ASP.NET Core Identity RCL
+            app.MapRazorPages();
 
             app.Run();
         }
