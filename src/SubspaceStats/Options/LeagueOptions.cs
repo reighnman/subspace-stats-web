@@ -13,29 +13,6 @@ namespace SubspaceStats.Options
         [Required]
         public required long[] LeagueIds { get; set; }
 
-
-        private string? _timeZoneId;
-        [Required]
-        public required string TimeZoneId
-        {
-            get => _timeZoneId ?? TimeZoneInfo.Utc.Id;
-            set
-            {
-                if (value is null)
-                {
-                    _timeZoneId = TimeZoneInfo.Utc.Id;
-                    TimeZone = TimeZoneInfo.Utc;
-                }
-                else
-                {
-                    _timeZoneId = value;
-                    TimeZone = TimeZoneInfo.FindSystemTimeZoneById(_timeZoneId);
-                }
-            }
-        }
-
-        public TimeZoneInfo TimeZone { get; private set; } = TimeZoneInfo.Utc;
-
         /// <summary>
         /// The root file system path of league images.
         /// </summary>

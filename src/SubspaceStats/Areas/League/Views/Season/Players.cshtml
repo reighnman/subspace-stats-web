@@ -3,7 +3,7 @@
 @using SubspaceStats.Areas.League.Models.Team
 @using SubspaceStats.Options
 @model PlayersViewModel
-@inject IOptions<LeagueOptions> leagueOptions
+@inject IOptions<GeneralOptions> generalOptions
 
 @{
 	ViewData["Title"] = "Manage Players";
@@ -22,9 +22,9 @@
 		<thead>
 			<tr>
 				<th>Player</th>
-				<th title="Signup Time @leagueOptions.Value.TimeZone.DisplayName">Signup Time</th>
+				<th title="Signup Time @generalOptions.Value.TimeZone.DisplayName">Signup Time</th>
 				<th>Team</th>
-				<th title="Enroll Time @leagueOptions.Value.TimeZone.DisplayName">Enroll Time</th>
+				<th title="Enroll Time @generalOptions.Value.TimeZone.DisplayName">Enroll Time</th>
 				<th>Is Captain</th>
 				<th>Suspended</th>
 				<th colspan="2">Actions</th>
@@ -43,7 +43,7 @@
 					<td>
 						@if (player.SignupTimestamp is not null)
 						{
-							@TimeZoneInfo.ConvertTimeFromUtc(player.SignupTimestamp.Value, leagueOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
+							@TimeZoneInfo.ConvertTimeFromUtc(player.SignupTimestamp.Value, generalOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
 						}
 					</td>
 					<td>
@@ -59,7 +59,7 @@
 					<td>
 						@if (player.EnrollTimestamp is not null)
 						{
-							@TimeZoneInfo.ConvertTimeFromUtc(player.EnrollTimestamp.Value, leagueOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
+							@TimeZoneInfo.ConvertTimeFromUtc(player.EnrollTimestamp.Value, generalOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
 						}
 					</td>
 					<td>@player.IsCaptain</td>

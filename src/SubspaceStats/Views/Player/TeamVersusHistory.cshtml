@@ -1,7 +1,9 @@
 ﻿@using System.Text;
+@using Microsoft.Extensions.Options
 @using SubspaceStats.Models;
 @using SubspaceStats.Models.GameDetails.TeamVersus;
 @using SubspaceStats.Models.Player;
+@inject IOptions<SubspaceStats.Options.GeneralOptions> generalOptions
 
 @* TODO: Maybe use a layout for all variants of player data? @Layout = "_PlayerLayout" *@
 
@@ -366,7 +368,7 @@
 							</th>
 							<th scope="col" class="text-center">
 								<div>Date</div>
-								<div>Time</div>
+								<div title="Time @generalOptions.Value.TimeZone.DisplayName">Time</div>
 							</th>
 						</tr>
 					</thead>
@@ -496,9 +498,11 @@
 									</div>
 								</td>
 								<td class="text-center">
-									<div>@gameStats.TimePlayed.UpperBound.ToString("yyyy-MM-dd")</div>
-									<div>@gameStats.TimePlayed.UpperBound.ToString("HH:mm:ss")</div>
-									
+									@{
+										DateTime timePlayed = TimeZoneInfo.ConvertTimeFromUtc(gameStats.TimePlayed.LowerBound, generalOptions.Value.TimeZone);
+										<div>@timePlayed.ToString("yyyy-MM-dd")</div>
+										<div>@timePlayed.ToString("HH:mm:ss")</div>
+									}
 								</td>
 							</tr>
 						}

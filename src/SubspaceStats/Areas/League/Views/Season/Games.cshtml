@@ -6,7 +6,7 @@
 @using System.Text
 @using SubspaceStats.Options
 @model GamesViewModel
-@inject IOptions<LeagueOptions> leagueOptions
+@inject IOptions<GeneralOptions> generalOptions
 
 @{
 	ViewData["Title"] = "Manage Games";
@@ -50,8 +50,6 @@
 		<tbody>
 			@foreach (var game in Model.Games)
 			{
-				DateTime? gameTime = game.GameTimestamp is null ? null : TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, leagueOptions.Value.TimeZone);
-
 				<tr>
 					<td class="text-end">@game.SeasonGameId</td>
 					<td>
@@ -161,9 +159,9 @@
 						}
 					</td>
 					<td>
-						@if (gameTime is not null)
+						@if (game.GameTimestamp is not null)
 						{
-							@gameTime.Value.ToString("yyyy-MM-dd hh:mm tt")
+							@TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, generalOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
 						}						
 					</td>
 					<td>

@@ -2,7 +2,7 @@
 @using SubspaceStats.Areas.League.Models.League
 @using SubspaceStats.Options
 @model LeagueDetailsViewModel
-@inject IOptions<LeagueOptions> leagueOptions
+@inject IOptions<GeneralOptions> generalOptions
 
 @{
     ViewData["Title"] = "League Details";
@@ -61,7 +61,7 @@
 			<tr>
 				<th class="text-end">ID</th>
 				<th>Name</th>
-				<th title="Created @leagueOptions.Value.TimeZone.DisplayName">Created</th>
+				<th title="Created @generalOptions.Value.TimeZone.DisplayName">Created</th>
 				<th colspan="3">Actions</th>
 			</tr>
 		</thead>
@@ -71,7 +71,7 @@
 				<tr>
 					<td class="text-end">@season.Id</td>
 					<td><a asp-controller="Season" asp-action="Index" asp-route-seasonId="@season.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@season.Name</a></td>
-					<td>@TimeZoneInfo.ConvertTimeFromUtc(season.CreatedTimestamp, leagueOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")</td>
+					<td>@TimeZoneInfo.ConvertTimeFromUtc(season.CreatedTimestamp, generalOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")</td>
 					<td><a asp-controller="Season" asp-action="Edit" asp-route-seasonId="@season.Id">Edit</a></td>
                     <td><a asp-controller="Season" asp-action="Copy" asp-route-seasonId="@season.Id">Copy</a></td>
 					<td><a asp-controller="Season" asp-action="Delete" asp-route-seasonId="@season.Id">Delete</a></td>

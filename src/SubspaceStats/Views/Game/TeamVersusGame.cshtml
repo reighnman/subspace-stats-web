@@ -1,7 +1,10 @@
-﻿@using SubspaceStats.Models.GameDetails.TeamVersus;
+﻿@using Microsoft.Extensions.Options
+@using SubspaceStats.Models.GameDetails.TeamVersus;
 @using SubspaceStats.Models.GameDetails.TeamVersus.Events;
 @using System.Text;
+@using SubspaceStats.Options
 @model SubspaceStats.Models.GameDetails.GameDetailsViewModel
+@inject IOptions<GeneralOptions> generalOptions
 
 @{
 	ViewData["Title"] = $"Game {Model.Game.Id}";
@@ -45,16 +48,16 @@
 					@Model.GameType.Name
 				</dd>
 				<dt class="col-3">
-					Start Time:
+					<span title="Start Time @generalOptions.Value.TimeZone.DisplayName">Start Time:</span>
 				</dt>
 				<dd class="col-9">
-					@Model.Game.StartTime.ToString("yyyy-MM-dd HH:mm:ss")
+					@TimeZoneInfo.ConvertTimeFromUtc(Model.Game.StartTime, generalOptions.Value.TimeZone).ToString("yyyy-MM-dd HH:mm:ss")
 				</dd>
 				<dt class="col-3">
-					End Time:
+					<span title="End Time @generalOptions.Value.TimeZone.DisplayName">End Time:</span>
 				</dt>
 				<dd class="col-9">
-					@Model.Game.EndTime.ToString("yyyy-MM-dd HH:mm:ss")
+					@TimeZoneInfo.ConvertTimeFromUtc(Model.Game.EndTime, generalOptions.Value.TimeZone).ToString("yyyy-MM-dd HH:mm:ss")
 				</dd>
 			</dl>
 		</div>

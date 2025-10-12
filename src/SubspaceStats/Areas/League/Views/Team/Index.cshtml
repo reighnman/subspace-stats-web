@@ -3,6 +3,7 @@
 @using SubspaceStats.Areas.League.Models.Team
 @using SubspaceStats.Options
 @model TeamDetailsViewModel
+@inject IOptions<GeneralOptions> generalOptions
 @inject IOptions<LeagueOptions> leagueOptions
 
 @{
@@ -75,7 +76,7 @@
                     </tr>
                     <tr>
                         <th>Teams</th>
-                        <th title="Time @leagueOptions.Value.TimeZone.DisplayName">Time</th>
+                        <th title="Time @generalOptions.Value.TimeZone.DisplayName">Time</th>
                         <th>Round</th>
                         <th>Result</th>
                         <th>Scores</th>
@@ -98,7 +99,7 @@
                             <td>
                                 @if (game.GameTimestamp is not null)
                                 {
-                                    @TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, leagueOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
+                                    @TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, generalOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
                                 }
                             </td>
                             <td>

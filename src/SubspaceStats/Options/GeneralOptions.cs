@@ -9,6 +9,27 @@ namespace SubspaceStats.Options
         [Required]
         public required string ApplicationName { get; set; }
 
-        // TODO: move timezone settings from LeagueOptions into here
+        private string? _timeZoneId;
+
+        [Required]
+        public required string TimeZoneId
+        {
+            get => _timeZoneId ?? TimeZoneInfo.Utc.Id;
+            set
+            {
+                if (value is null)
+                {
+                    _timeZoneId = TimeZoneInfo.Utc.Id;
+                    TimeZone = TimeZoneInfo.Utc;
+                }
+                else
+                {
+                    _timeZoneId = value;
+                    TimeZone = TimeZoneInfo.FindSystemTimeZoneById(_timeZoneId);
+                }
+            }
+        }
+
+        public TimeZoneInfo TimeZone { get; private set; } = TimeZoneInfo.Utc;
     }
 }

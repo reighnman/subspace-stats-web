@@ -4,7 +4,7 @@
 @using SubspaceStats.Options
 @using System.Text
 @model OverviewViewModel
-@inject IOptions<LeagueOptions> leagueOptions
+@inject IOptions<GeneralOptions> generalOptions
 
 @{
 	ViewData["Title"] = "Season";
@@ -24,7 +24,7 @@
 							<th colspan="5" class="text-center">Upcoming Matches</th>
 						</tr>
 						<tr>
-							<th title="Time @leagueOptions.Value.TimeZone.DisplayName">Time</th>
+							<th title="Time @generalOptions.Value.TimeZone.DisplayName">Time</th>
 							<th>Teams</th>
 							<th>Round</th>
 							<th>Status</th>
@@ -34,18 +34,15 @@
 					<tbody>
 						@foreach (var scheduledGame in Model.ScheduledGames)
 						{
-							DateTime? gameTime = scheduledGame.GameTimestamp is not null
-							? TimeZoneInfo.ConvertTimeFromUtc(scheduledGame.GameTimestamp.Value, leagueOptions.Value.TimeZone)
-							: null;
-
 							<tr>
 								<td>
-									@if (gameTime is null)
+									@if (scheduledGame.GameTimestamp is null)
 									{
 										<span class="fst-italic">Not scheduled</span>
 									}
 									else
 									{
+										DateTime? gameTime = TimeZoneInfo.ConvertTimeFromUtc(scheduledGame.GameTimestamp.Value, generalOptions.Value.TimeZone);
 										<span class="text-nowrap pe-1">@gameTime.Value.ToString("yyyy-MM-dd")</span>
 										<span class="text-nowrap">@gameTime.Value.ToString("hh:mm tt")</span>
 									}
@@ -116,7 +113,7 @@
 							<th colspan="5" class="text-center">Match Results</th>
 						</tr>
 						<tr>
-							<th title="Time @leagueOptions.Value.TimeZone.DisplayName">Time</th>
+							<th title="Time @generalOptions.Value.TimeZone.DisplayName">Time</th>
 							<th>Round</th>
 							<th class="@(isOnly2TeamMatches ? "text-center" : "")">Teams</th>
 							<th class="@(isOnly2TeamMatches ? "text-center" : "")">Score</th>
@@ -126,12 +123,11 @@
 					<tbody>
 						@foreach (GameRecord game in Model.CompletedGames)
 						{
-							DateTime? gameTime = game.GameTimestamp is null ? null : TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, leagueOptions.Value.TimeZone);
-
 							<tr>
 								<td>
-									@if (gameTime is not null)
+									@if (game.GameTimestamp is not null)
 									{
+										DateTime? gameTime = TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, generalOptions.Value.TimeZone);
 										<span class="text-nowrap pe-1">@gameTime.Value.ToString("yyyy-MM-dd")</span>
 										<span class="text-nowrap">@gameTime.Value.ToString("hh:mm tt")</span>
 									}
