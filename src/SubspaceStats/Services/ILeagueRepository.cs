@@ -2,9 +2,11 @@
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Areas.League.Models.Season;
+using SubspaceStats.Areas.League.Models.Season.Game;
+using SubspaceStats.Areas.League.Models.Season.Player;
+using SubspaceStats.Areas.League.Models.Season.Round;
+using SubspaceStats.Areas.League.Models.Season.Team;
 using SubspaceStats.Areas.League.Models.SeasonGame;
-using SubspaceStats.Areas.League.Models.SeasonPlayer;
-using SubspaceStats.Areas.League.Models.Team;
 
 namespace SubspaceStats.Services
 {
@@ -99,6 +101,13 @@ namespace SubspaceStats.Services
         Task InsertSeasonRoundAsync(SeasonRound seasonRound, CancellationToken cancellationToken);
         Task UpdateSeasonRoundAsync(SeasonRound seasonRound, CancellationToken cancellationToken);
         Task DeleteSeasonRoundAsync(long seasonId, int roundNumber, CancellationToken cancellationToken);
+
+        #endregion
+
+        #region Authorization
+
+        Task<bool> IsLeagueManager(string userId, long leagueId, CancellationToken cancellationToken);
+        Task<bool> IsLeagueOrSeasonManager(string userId, long seasonId, CancellationToken cancellationToken);
 
         #endregion
     }

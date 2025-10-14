@@ -2,7 +2,7 @@
 using SubspaceStats.Areas.League.Models.Season;
 using System.ComponentModel.DataAnnotations;
 
-namespace SubspaceStats.Areas.League.Models.Team
+namespace SubspaceStats.Areas.League.Models.Season.Team
 {
     public class EditTeamModel
     {

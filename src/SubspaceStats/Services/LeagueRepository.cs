@@ -4,12 +4,15 @@ using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Areas.League.Models.Season;
+using SubspaceStats.Areas.League.Models.Season.Game;
+using SubspaceStats.Areas.League.Models.Season.Player;
+using SubspaceStats.Areas.League.Models.Season.Round;
+using SubspaceStats.Areas.League.Models.Season.Team;
 using SubspaceStats.Areas.League.Models.SeasonGame;
-using SubspaceStats.Areas.League.Models.SeasonPlayer;
-using SubspaceStats.Areas.League.Models.Team;
 using SubspaceStats.Models.GameDetails;
 using System.Data;
 using System.Text.Json;
+using System.Threading;
 
 namespace SubspaceStats.Services
 {
@@ -1784,7 +1787,7 @@ namespace SubspaceStats.Services
                             OrderedDictionary<int, SeasonRound> dictionary = [];
                             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                             {
-                                SeasonRound round = new SeasonRound
+                                SeasonRound round = new()
                                 {
                                     SeasonId = seasonId,
                                     RoundNumber = reader.GetInt32(column_roundNumber),
@@ -1949,6 +1952,64 @@ namespace SubspaceStats.Services
                     seasonId,
                     roundNumber);
 
+                throw;
+            }
+        }
+
+        public async Task<bool> IsLeagueManager(string userId, long leagueId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.is_league_manager($1,$2)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.AddWithValue(userId);
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = leagueId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        object? resultObj = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                        if (resultObj is null || resultObj == DBNull.Value)
+                            throw new Exception("Expected an value.");
+
+                        return (bool)resultObj;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting whether a user is a manager of a league. (user_id:{user_id}, league_id:{league_id})", userId, leagueId);
+                throw;
+            }
+        }
+        
+        public async Task<bool> IsLeagueOrSeasonManager(string userId, long seasonId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.is_league_or_season_manager($1,$2)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.AddWithValue(userId);
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        object? resultObj = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                        if (resultObj is null || resultObj == DBNull.Value)
+                            throw new Exception("Expected an value.");
+
+                        return (bool)resultObj;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting whether a user is a manager of a league or season. (user_id:{user_id}, season_id:{season_id})", userId, seasonId);
                 throw;
             }
         }

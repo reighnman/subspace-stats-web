@@ -1,4 +1,5 @@
-﻿@using SubspaceStats.Areas.League.Models
+﻿@using SubspaceStats.Areas.League.Authorization
+@using SubspaceStats.Areas.League.Models
 @model List<SeasonStandings>
 
 @{
@@ -22,9 +23,12 @@
 	<li class="nav-item">
 		<a asp-controller="Home" asp-action="Nav" class="nav-link">Leagues and Seasons</a>
 	</li>
-	<li class="nav-item">
-		<a asp-controller="League" asp-action="Index" class="nav-link">Manage Leagues</a>
-	</li>
+	@if (User.IsInRole(RoleNames.Administrator))
+	{
+		<li class="nav-item">
+			<a asp-controller="League" asp-action="Index" class="nav-link">Manage Leagues</a>
+		</li>
+	}
 	<li class="nav-item">
 		<a asp-controller="Franchise" asp-action="Index" class="nav-link">Franchises</a>
 	</li>

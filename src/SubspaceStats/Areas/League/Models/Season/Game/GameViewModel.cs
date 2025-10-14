@@ -1,6 +1,7 @@
 ﻿using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Areas.League.Models.Season;
-using SubspaceStats.Areas.League.Models.Team;
+using SubspaceStats.Areas.League.Models.Season.Round;
+using SubspaceStats.Areas.League.Models.Season.Team;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
@@ -122,6 +123,8 @@ namespace SubspaceStats.Areas.League.Models.SeasonGame
 
         [Display(Name = "Automatically assign freqs")]
         public required bool AutoAssignFreqs { get; init; }
+
+        public required bool IsReadOnly { get; init; }
 
         public required OrderedDictionary<long, TeamModel> Teams { get; init; }
 

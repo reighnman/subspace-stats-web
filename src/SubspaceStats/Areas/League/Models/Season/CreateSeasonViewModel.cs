@@ -9,17 +9,13 @@ namespace SubspaceStats.Areas.League.Models.Season
         [Display(Name = "Season Name")]
         [StringLength(128, MinimumLength = 1)]
         [Required]
-        public required string SeasonName { get; set; }
-
-        [Display(Name = "League ID")]
-        [Required]
-        public long? LeagueId { get; set; }
+        public string? SeasonName { get; set; }
     }
 
     public class CreateSeasonViewModel
     {
-        public CreateSeasonModel? Model { get; set; }
+        public required CreateSeasonModel Season { get; set; }
 
-        public required List<LeagueModel> Leagues { get; set; }
+        public required LeagueModel League { get; init; }
     }
 }

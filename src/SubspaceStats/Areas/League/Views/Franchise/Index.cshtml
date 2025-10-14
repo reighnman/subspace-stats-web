@@ -1,8 +1,11 @@
-﻿@using SubspaceStats.Areas.League.Models.Franchise
+﻿@using SubspaceStats.Areas.League.Authorization
+@using SubspaceStats.Areas.League.Models.Franchise
 @model List<FranchiseListItem>
 
 @{
 	ViewData["Title"] = "Franchises";
+
+	bool isAdministrator = User.IsInRole(RoleNames.Administrator);
 }
 
 <style>
@@ -16,9 +19,12 @@
 
 <h1>Franchises</h1>
 
-<div class="mb-3">
-	<a asp-action="Create" class="mx-2">New Franchise</a>
-</div>
+@if (isAdministrator)
+{
+	<div class="mb-3">
+		<a asp-action="Create" class="mx-2">New Franchise</a>
+	</div>
+}
 
 <div class="table-responsive">
 	<table class="table table-striped table-bordered table-hover">
@@ -26,7 +32,10 @@
 			<tr>
 				<th>Franchise</th>
 				<th>Teams</th>
-				<th colspan="2">Actions</th>
+				@if (isAdministrator)
+				{
+					<th colspan="2">Actions</th>
+				}
 			</tr>
 		</thead>
 		<tbody>
@@ -45,8 +54,11 @@
 							</ul>
 						}
 					</td>
-					<td><a asp-action="Edit" asp-route-franchiseId="@franchise.Id">Edit</a></td>
-					<td><a asp-action="Delete" asp-route-franchiseId="@franchise.Id">Delete</a></td>
+					@if (isAdministrator)
+					{
+						<td><a asp-action="Edit" asp-route-franchiseId="@franchise.Id">Edit</a></td>
+						<td><a asp-action="Delete" asp-route-franchiseId="@franchise.Id">Delete</a></td>
+					}
 				</tr>
 			}
 		</tbody>

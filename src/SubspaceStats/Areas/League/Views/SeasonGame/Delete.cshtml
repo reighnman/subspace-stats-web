@@ -3,8 +3,10 @@
 @model GameViewModel
 
 @{
-    ViewData["Title"] = "Delete Game";
+    ViewData["Title"] = "Delete Season Game";
 }
+
+<h1>Delete Season Game</h1>
 
 <div class="mb-3">
     <a asp-controller="Season" asp-action="Games" asp-route-seasonId="@Model.Season.SeasonId">Back to Season Rounds</a>
@@ -20,28 +22,28 @@
             </div>
         </div>
         <div class="col-md-8 order-md-1">
-            <form id="gameForm" asp-action="Edit" asp-route-seasonId="@Model.Season.SeasonId" asp-route-seasonGameId="@Model.Game.SeasonGameId">
+            <form id="gameForm" asp-action="Delete" asp-route-seasonId="@Model.Season.SeasonId" asp-route-seasonGameId="@Model.Game.SeasonGameId">
                 <input asp-for="Game.SeasonId" type="hidden" />
                 <input asp-for="Game.SeasonGameId" type="hidden" />
-                <h4>Edit game in</h4>
+                <h4>Delete game from</h4>
                 <div class="ms-3 mb-3">
                     <label class="form-label">Season</label>
                     <input type="text" class="form-control" value="@Model.Season.SeasonName" disabled readonly />
                     <label class="form-label">League</label>
                     <input type="text" class="form-control" value="@Model.League.Name" disabled readonly />
                 </div>
-                <h4>With the following</h4>
+                <h4>Game info</h4>
                 <div class="ms-3">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <div class="mb-3">
                         <div>
                             <label asp-for="Game.RoundNumber" class="form-label"></label>
-                            <input asp-for="Game.RoundNumber" class="form-control" />
+                            <input asp-for="Game.RoundNumber" class="form-control" disabled readonly />
                             <span asp-validation-for="Game.RoundNumber" class="text-danger"></span>
                         </div>
                         <div>
                             <label asp-for="Game.GameTimestamp" class="form-label"></label>
-                            <input asp-for="Game.GameTimestamp" class="form-control" />
+                            <input asp-for="Game.GameTimestamp" class="form-control" disabled readonly />
                             <span asp-validation-for="Game.GameTimestamp" class="text-danger"></span>
                         </div>
                         <div>
@@ -50,11 +52,11 @@
                             </div>
                             <div class="ms-3">
                                 <div>
-                                    <input asp-for="Game.Status" type="radio" value="@GameStatus.Pending" id="gameStatusPending" />
+                                    <input asp-for="Game.Status" type="radio" value="@GameStatus.Pending" id="gameStatusPending" disabled readonly />
                                     <label for="gameStatusPending">Pending -  a new game to be played in the future</label>
                                 </div>
                                 <div>
-                                    <input asp-for="Game.Status" type="radio" value="@GameStatus.Complete" id="gameStatusComplete" />
+                                    <input asp-for="Game.Status" type="radio" value="@GameStatus.Complete" id="gameStatusComplete" disabled readonly />
                                     <label for="gameStatusComplete">Complete - a past game that you're filling in historical data for</label>
                                 </div>
                                 <div>

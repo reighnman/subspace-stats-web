@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SubspaceStats.Areas.League.Authorization;
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Services;
 
 namespace SubspaceStats.Areas.League.Controllers
 {
+    [Authorize(Roles = RoleNames.Administrator)]
     [Area("League")]
     public class FranchiseController(
         ILeagueRepository leagueRepository) : Controller
@@ -11,12 +14,14 @@ namespace SubspaceStats.Areas.League.Controllers
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
 
         // GET League/Franchise
+        [AllowAnonymous]
         public async Task<ActionResult> Index(CancellationToken cancellationToken)
         {
             return View(await _leagueRepository.GetFranchiseListAsync(cancellationToken));
         }
 
         // GET League/Franchise/{franchiseId}
+        [AllowAnonymous]
         public async Task<ActionResult> Details(long? franchiseId, CancellationToken cancellationToken)
         {
             if (franchiseId is null)

@@ -1,5 +1,12 @@
-﻿@using SubspaceStats.Areas.League.Models.Season
+﻿@using Microsoft.AspNetCore.Authorization
+@using SubspaceStats.Areas.League.Authorization
+@using SubspaceStats.Areas.League.Models.Season
 @model ISeasonViewModel
+@inject IAuthorizationService AuthorizationService
+
+@{
+	bool isSeasonManager = (await AuthorizationService.AuthorizeAsync(User, Model.SeasonDetails, PolicyNames.Manager)).Succeeded;
+}
 
 <nav aria-label="breadcrumb">
 	<ol class="breadcrumb">
@@ -19,25 +26,30 @@
 	<li class="nav-item">
 		<a asp-action="Rosters" class="nav-link @(Model.Page == SeasonPage.Rosters ? "active" : "")">Rosters</a>
 	</li>
+
 	@if (Model.SeasonDetails.LeagueGameTypeId is not null)
 	{
 		<li class="nav-item">
 			<a asp-area="" asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@Model.SeasonDetails.LeagueGameTypeId" asp-route-period="@Model.SeasonDetails.StatPeriodId" target="_blank" class="nav-link">Stats</a>
 		</li>
 	}
-	<li class="nav-item">
-		<a asp-action="Details" class="nav-link @(Model.Page == SeasonPage.Details ? "active" : "")">Manage Season</a>
-	</li>
-	<li class="nav-item">
-		<a asp-action="Players" class="nav-link @(Model.Page == SeasonPage.Players ? "active" : "")">Manage Players</a>
-	</li>
-	<li class="nav-item">
-		<a asp-action="Teams" class="nav-link @(Model.Page == SeasonPage.Teams ? "active" : "")">Manage Teams</a>
-	</li>
-	<li class="nav-item">
-		<a asp-action="Games" class="nav-link @(Model.Page == SeasonPage.Games ? "active" : "")">Manage Games</a>
-	</li>
-	<li class="nav-item">
-		<a asp-action="Rounds" class="nav-link @(Model.Page == SeasonPage.Rounds ? "active" : "")">Manage Rounds</a>
-	</li>
+
+	@if (isSeasonManager)
+	{
+		<li class="nav-item">
+			<a asp-action="Details" class="nav-link @(Model.Page == SeasonPage.Details ? "active" : "")">Manage Season</a>
+		</li>
+		<li class="nav-item">
+			<a asp-action="Players" class="nav-link @(Model.Page == SeasonPage.Players ? "active" : "")">Manage Players</a>
+		</li>
+		<li class="nav-item">
+			<a asp-action="Teams" class="nav-link @(Model.Page == SeasonPage.Teams ? "active" : "")">Manage Teams</a>
+		</li>
+		<li class="nav-item">
+			<a asp-action="Games" class="nav-link @(Model.Page == SeasonPage.Games ? "active" : "")">Manage Games</a>
+		</li>
+		<li class="nav-item">
+			<a asp-action="Rounds" class="nav-link @(Model.Page == SeasonPage.Rounds ? "active" : "")">Manage Rounds</a>
+		</li>
+	}
 </ul>

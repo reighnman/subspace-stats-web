@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SubspaceStats.Areas.League.Authorization;
 
 namespace SubspaceStats.Areas.Admin.Controllers
 {
     // TODO: Provide a way to manage the ss.game_type table. Of course, they'll need to configure the game server modules too, but at least no manual database entry.
-    // TODO: [Authorize("AdminPolicy")]
+    [Authorize(Roles = RoleNames.Administrator)]
     [Area("Admin")]
     public class GameTypeController : Controller
     {

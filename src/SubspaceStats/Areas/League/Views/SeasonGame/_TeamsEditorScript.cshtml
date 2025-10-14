@@ -8,6 +8,7 @@
         const MaxTeams = @Model.League.MaxTeamsPerGame;
         const FreqStart = @Model.League.FreqStart;
         const FreqIncrement = @Model.League.FreqIncrement;
+        const IsReadOnly = @(Model.IsReadOnly ? "true" : "false");
 
         const $form = $('#gameForm');
         const $autoAssignFreqs = $('#AutoAssignFreqs');
@@ -22,13 +23,20 @@
         $autoAssignFreqs.on('change', refreshFreqs);
 
         $addTeamButton.on('click', function() {
-            function initializeFormField($cell, inputSelector) {
+            function initializeFormField($cell, inputSelector, newVal) {
                 let $inputElement = $cell.find(inputSelector);
                 $inputElement.attr('id', $inputElement.attr('id').replace('0', index));
                 $inputElement.attr('name', $inputElement.attr('name').replace('0', index));
 
                 let $validationSpan = $cell.find('span[data-valmsg-for]:first');
                 $validationSpan.attr('data-valmsg-for', $inputElement.attr('name'));
+
+                if (typeof newVal === 'boolean') {
+                    $inputElement.prop('checked', newVal);
+                }
+                else {
+                    $inputElement.val(newVal);
+                }
             }
 
             // Clone the first row
@@ -41,10 +49,10 @@
             let $winnerCell = $newRow.find('td:nth-child(5)');
 
             // Update all the form field names, ids, and validation attributes.
-            initializeFormField($teamCell, 'select:first');
-            initializeFormField($freqCell, 'input:first');
-            initializeFormField($scoreCell, 'input:first');
-            initializeFormField($winnerCell, 'input:first');
+            initializeFormField($teamCell, 'select:first', '');
+            initializeFormField($freqCell, 'input:first', '');
+            initializeFormField($scoreCell, 'input:first', '');
+            initializeFormField($winnerCell, 'input:first', false);
 
             if ($autoAssignFreqs.prop('checked') == false) {
                 // Not auto assigning freqs, start the freq as empty.
@@ -83,8 +91,14 @@
         }
 
         function refreshAddRemoveTeamButtons() {
-            $addTeamButton.prop('disabled', $teamsTable.find('tbody > tr').length >= MaxTeams);
-            $teamsTable.find('tbody tr td:first-child button.remove-team-btn').prop('disabled', $teamsTable.find('tbody > tr').length <= MinTeams);
+            if (IsReadOnly) {
+                $addTeamButton.prop('disabled', true);
+                $teamsTable.find('tbody tr td:first-child button.remove-team-btn').prop('disabled', true);
+            }
+            else {
+                $addTeamButton.prop('disabled', $teamsTable.find('tbody > tr').length >= MaxTeams);
+                $teamsTable.find('tbody tr td:first-child button.remove-team-btn').prop('disabled', $teamsTable.find('tbody > tr').length <= MinTeams);
+            }
         }
 
         function refreshFreqs() {

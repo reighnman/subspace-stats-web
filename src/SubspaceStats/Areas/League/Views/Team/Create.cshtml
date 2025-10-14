@@ -1,14 +1,14 @@
-﻿@using SubspaceStats.Areas.League.Models.Team
+﻿@using SubspaceStats.Areas.League.Models.Season.Team
 @model CreateTeamViewModel
 
 @{
-    ViewData["Title"] = "New Team";
+    ViewData["Title"] = "Add Season Team";
     IEnumerable<SelectListItem> franchises =
         from franchise in Model.Franchises.Values
         select new SelectListItem(franchise.Name, franchise.Id.ToString());
 }
 
-<h1>New Team</h1>
+<h1>Add Season Team</h1>
 
 <div class="mb-3">
     <a asp-controller="Season" asp-action="Teams" asp-route-seasonId="@Model.Season.SeasonId">Back to Season Teams</a>
@@ -16,18 +16,18 @@
 
 <div class="container">
     <form asp-action="Create" enctype="multipart/form-data">
-        <h4>Create a new team for</h4>
+        <h4>Add a new team to</h4>
         <div class="ms-3">
             <div class="mb-3">
-                <label class="form-label">League</label>
-                <input type="text" value="@Model.Season.LeagueName" class="form-control" readonly />
+                <label class="form-label">Season</label>
+                <input asp-for="Season.SeasonName" class="form-control" disabled readonly />
             </div>
             <div class="mb-3">
-                <label class="form-label">Season</label>
-                <input type="text" value="@Model.Season.SeasonName" class="form-control" readonly />
+                <label class="form-label">League</label>
+                <input asp-for="Season.LeagueName" class="form-control" disabled readonly />
             </div>
         </div>
-        <h4>With the following values</h4>
+        <h4>Team info</h4>
         <div class="ms-3">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="mb-3">

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SubspaceStats.Areas.League.Models.SeasonPlayer
+namespace SubspaceStats.Areas.League.Models.Season.Player
 {
     public class SeasonPlayer
     {

@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Hybrid;
+using SubspaceStats.Areas.League.Authorization;
 
 namespace SubspaceStats.Areas.Admin.Controllers
 {
-    // TODO: [Authorize("AdminPolicy")]
+    [Authorize(Roles = RoleNames.Administrator)]
     [Area("Admin")]
     public class HomeController(
         HybridCache cache) : Controller

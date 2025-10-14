@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SubspaceStats.Areas.League.Authorization;
 using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Models;
 using SubspaceStats.Services;
@@ -7,13 +9,16 @@ namespace SubspaceStats.Areas.League.Controllers
 {
     [Area("league")]
     public class LeagueController(
+        IAuthorizationService authorizationService, 
         ILeagueRepository leagueRepository,
         IStatsRepository statsRepository) : Controller
     {
+        private readonly IAuthorizationService _authorizationService = authorizationService;
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
         private readonly IStatsRepository _statsRepository = statsRepository;
 
         // GET League/Manage
+        [Authorize(Roles = RoleNames.Administrator)]
         public async Task<ActionResult> Index(CancellationToken cancellationToken)
         {
             Task<List<LeagueModel>> leagueListTask = _leagueRepository.GetLeagueListAsync(cancellationToken);
@@ -55,6 +60,7 @@ namespace SubspaceStats.Areas.League.Controllers
         }
 
         // GET: League/Create
+        [Authorize(Roles = RoleNames.Administrator)]
         public async Task<ActionResult> Create(CancellationToken cancellationToken)
         {
             return View(
@@ -73,6 +79,7 @@ namespace SubspaceStats.Areas.League.Controllers
         }
 
         // POST: League/Create
+        [Authorize(Roles = RoleNames.Administrator)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(
@@ -108,13 +115,26 @@ namespace SubspaceStats.Areas.League.Controllers
             {
                 return NotFound();
             }
-            
-            var league = await _leagueRepository.GetLeagueAsync(leagueId.Value, cancellationToken);
+
+            LeagueModel? league = await _leagueRepository.GetLeagueAsync(leagueId.Value, cancellationToken);
             if (league is null)
             {
                 return NotFound();
             }
 
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, league, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
+            }
+            
             return View(
                 new LeagueViewModel
                 {
@@ -136,6 +156,25 @@ namespace SubspaceStats.Areas.League.Controllers
                 return NotFound();
             }
 
+            LeagueModel? currentLeague = await _leagueRepository.GetLeagueAsync(leagueId.Value, cancellationToken);
+            if (currentLeague is null)
+            {
+                return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, currentLeague, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(
@@ -151,6 +190,7 @@ namespace SubspaceStats.Areas.League.Controllers
         }
 
         // GET: League/{leagueId}/Delete
+        [Authorize(Roles = RoleNames.Administrator)]
         public async Task<ActionResult> Delete(long? leagueId, CancellationToken cancellationToken)
         {
             if (leagueId is null)
@@ -173,6 +213,7 @@ namespace SubspaceStats.Areas.League.Controllers
         }
 
         // POST: League/{leagueId}/Delete
+        [Authorize(Roles = RoleNames.Administrator)]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(long? leagueId, CancellationToken cancellationToken)

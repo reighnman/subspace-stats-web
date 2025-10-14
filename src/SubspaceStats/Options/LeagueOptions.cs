@@ -31,5 +31,16 @@ namespace SubspaceStats.Options
         /// The image format to save uploaded images as.
         /// </summary>
         public SKEncodedImageFormat ImageUploadFormat { get; set; } = SKEncodedImageFormat.Png;
+
+        /// <summary>
+        /// A way to seed the database with an admin login.
+        /// </summary>
+        public LeagueSeedOptions? Seed { get; set; }
+    }
+
+    public class LeagueSeedOptions
+    {
+        public string? AdminUsername { get; set; }
+        public string? AdminPassword {  get; set; }
     }
 }

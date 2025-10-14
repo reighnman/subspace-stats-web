@@ -1,5 +1,5 @@
 ﻿@using SubspaceStats.Areas.League.Models.Season
-@using SubspaceStats.Areas.League.Models.SeasonPlayer
+@using SubspaceStats.Areas.League.Models.Season.Player
 @model AddPlayersViewModel
 
 @{
@@ -28,16 +28,20 @@
             </div>
         </div>
         <div class="col-md-6 order-md-1">
-            <h4>To add players</h4>
-            <div class="ms-3 mb-3">
-                <label class="form-label">Season</label>
-                <label class="form-control">@Model.Season.SeasonName</label>
-                <label class="form-label">League</label>
-                <label class="form-control">@Model.Season.LeagueName</label>
-            </div>
-            <h4>Fill in</h4>
-            <div class="ms-3">
-                <form asp-action="Add">
+            <form asp-action="Add">
+                <h4>Add players to</h4>
+                <div class="ms-3">
+                    <div class="mb-3">
+                        <label class="form-label">Season</label>
+                        <input asp-for="Season.SeasonName" class="form-control" disabled readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">League</label>
+                        <input asp-for="Season.LeagueName" class="form-control" disabled readonly />
+                    </div>
+                </div>
+                <h4>Fill in</h4>
+                <div class="ms-3 mb-3">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <div class="mb-3">
                         <label asp-for="PlayerNames" class="form-label"></label>
@@ -51,12 +55,12 @@
                         </select>
                         <span asp-validation-for="TeamId" class="text-danger"></span>
                     </div>
-                    <div class="d-flex">
-                        <button type="submit" class="btn btn-primary m-2">Add</button>
-                        <a asp-controller="Season" asp-action="Players" asp-route-seasonId="@Model.Season.SeasonId" class="btn btn-secondary m-2">Cancel</a>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-primary m-2">Add</button>
+                    <a asp-controller="Season" asp-action="Players" asp-route-seasonId="@Model.Season.SeasonId" class="btn btn-secondary m-2">Cancel</a>
+                </div>
+            </form>
         </div>
     </div>
     

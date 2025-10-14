@@ -3,7 +3,7 @@ using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Areas.League.Models.Season;
 using System.ComponentModel.DataAnnotations;
 
-namespace SubspaceStats.Areas.League.Models.SeasonGame
+namespace SubspaceStats.Areas.League.Models.Season.Game
 {
     public enum FullRoundOf
     {

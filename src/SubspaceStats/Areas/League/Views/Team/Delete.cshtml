@@ -1,16 +1,16 @@
 ﻿@using Microsoft.Extensions.Options
 @using SubspaceStats.Areas.League.Models.Franchise
-@using SubspaceStats.Areas.League.Models.Team
+@using SubspaceStats.Areas.League.Models.Season.Team
 @using SubspaceStats.Options
 @inject IOptions<LeagueOptions> leagueOptions
 @model DeleteTeamViewModel
 
 @{
-    ViewData["Title"] = "Delete Team";
+    ViewData["Title"] = "Delete Season Team";
     string? franchiseName = Model.Franchise?.Name ?? Model.Model.FranchiseId?.ToString();
 }
 
-<h1>Delete Team</h1>
+<h1>Delete Season Team</h1>
 
 <div class="mb-3">
     <a asp-controller="Season" asp-action="Teams" asp-route-seasonId="@Model.Season.SeasonId">Back to Season Teams</a>
@@ -18,18 +18,18 @@
 
 <div class="container">
     <form asp-action="Delete" enctype="multipart/form-data">
-        <h4>Delete the team in</h4>
+        <h4>Delete team from</h4>
         <div class="ms-3">
             <div class="mb-3">
-                <label class="form-label">League</label>
-                <input type="text" value="@Model.Season.LeagueName" class="form-control" readonly />
+                <label class="form-label">Season</label>
+                <input asp-for="Season.SeasonName" class="form-control" disabled readonly />
             </div>
             <div class="mb-3">
-                <label class="form-label">Season</label>
-                <input type="text" value="@Model.Season.SeasonName" class="form-control" readonly />
+                <label class="form-label">League</label>
+                <input asp-for="Season.LeagueName" class="form-control" disabled readonly />
             </div>
         </div>
-        <h4>With the following values</h4>
+        <h4>Team info</h4>
         <div class="ms-3">
             <div class="mb-3">
                 <label asp-for="Model.TeamName" class="form-label"></label>

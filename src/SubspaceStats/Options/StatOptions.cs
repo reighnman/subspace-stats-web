@@ -39,7 +39,7 @@ namespace SubspaceStats.Options
         /// <summary>
         /// Which ratings to display on the home page.
         /// </summary>
-        public List<RatingSettings> Ratings { get; set; } = new();
+        public List<RatingSettings> Ratings { get; set; } = [];
     }
 
     /// <summary>

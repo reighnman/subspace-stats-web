@@ -1,5 +1,5 @@
 ﻿using SubspaceStats.Areas.League.Models.Franchise;
-using SubspaceStats.Areas.League.Models.Team;
+using SubspaceStats.Areas.League.Models.Season.Team;
 
 namespace SubspaceStats.Areas.League.Models.Season
 {

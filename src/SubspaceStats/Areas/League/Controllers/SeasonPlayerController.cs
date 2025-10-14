@@ -1,14 +1,19 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SubspaceStats.Areas.League.Authorization;
 using SubspaceStats.Areas.League.Models.Season;
-using SubspaceStats.Areas.League.Models.SeasonPlayer;
-using SubspaceStats.Areas.League.Models.Team;
+using SubspaceStats.Areas.League.Models.Season.Player;
+using SubspaceStats.Areas.League.Models.Season.Team;
 using SubspaceStats.Services;
 
 namespace SubspaceStats.Areas.League.Controllers
 {
     [Area("League")]
-    public partial class SeasonPlayerController(ILeagueRepository leagueRepository) : Controller
+    public partial class SeasonPlayerController(
+        IAuthorizationService authorizationService,
+        ILeagueRepository leagueRepository) : Controller
     {
+        private readonly IAuthorizationService _authorizationService = authorizationService;
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
 
         /// <summary>
@@ -30,15 +35,23 @@ namespace SubspaceStats.Areas.League.Controllers
         // GET League/Season/{seasonId}/Players/Add
         public async Task<IActionResult> Add(long seasonId, CancellationToken cancellationToken)
         {
-            var seasonTask = _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
-            var teamsTask = _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
-
-            await Task.WhenAll(seasonTask, teamsTask);
-
-            SeasonDetails? seasonDetails = seasonTask.Result;
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
             if (seasonDetails is null)
             {
                 return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
             }
 
             return View(
@@ -46,15 +59,34 @@ namespace SubspaceStats.Areas.League.Controllers
                 {
                     Season = seasonDetails,
                     PlayerNames = "",
-                    Teams = teamsTask.Result,
+                    Teams = await _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken),
                 });
         }
 
         // POST League/Season/{seasonId}/Players/Add
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Add(long seasonId, AddPlayersViewModel model, CancellationToken cancellationToken)
+        public async Task<IActionResult> Add(long seasonId, [Bind("PlayerNames", "TeamId")]AddPlayersViewModel model, CancellationToken cancellationToken)
         {
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
+            }
+
             int nameCount = MemoryExtensions.Count(model.PlayerNames, '\n');
             List<string> nameList = new(nameCount);
             int lineNumber = 0;
@@ -123,6 +155,7 @@ namespace SubspaceStats.Areas.League.Controllers
 
             if (!ModelState.IsValid)
             {
+                model.Season = seasonDetails;
                 model.Teams = await _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken);
                 return View(model);
             }
@@ -132,13 +165,27 @@ namespace SubspaceStats.Areas.League.Controllers
             return RedirectToAction("Players", "Season", new { seasonId });
         }
 
-
         // GET League/Season/{seasonId}/Players/Edit?playerName={playerName}
         public async Task<IActionResult> Edit(long seasonId, string playerName, CancellationToken cancellationToken)
         {
-            // Set is_captain
-            // Set is_suspended
-            // maybe set team too? or from the team page? might be an easy way to perform a trade
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
+            }
 
             SeasonPlayer? player = await _leagueRepository.GetSeasonPlayerAsync(seasonId, playerName, cancellationToken);
             if (player is null)
@@ -149,7 +196,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(
                 new SeasonPlayerViewModel
                 {
-                    SeasonId = seasonId,
+                    Season = seasonDetails,
                     Model = player,
                     Teams = await _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken),
                 });
@@ -160,6 +207,25 @@ namespace SubspaceStats.Areas.League.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(long seasonId, SeasonPlayer model, CancellationToken cancellationToken)
         {
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
+            }
+
             SeasonPlayer? player;
 
             if (!ModelState.IsValid)
@@ -173,7 +239,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 return View(
                     new SeasonPlayerViewModel
                     {
-                        SeasonId = seasonId,
+                        Season = seasonDetails,
                         Model = model,
                         Teams = await _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken),
                     });
@@ -196,6 +262,25 @@ namespace SubspaceStats.Areas.League.Controllers
         // GET League/Season/{seasonId}/Players/Delete?playerName={playerName}
         public async Task<IActionResult> Delete(long seasonId, string playerName, CancellationToken cancellationToken)
         {
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
+            }
+
             SeasonPlayer? player = await _leagueRepository.GetSeasonPlayerAsync(seasonId, playerName, cancellationToken);
             if (player is null)
             {
@@ -205,7 +290,7 @@ namespace SubspaceStats.Areas.League.Controllers
             return View(
                 new SeasonPlayerViewModel
                 {
-                    SeasonId = seasonId,
+                    Season = seasonDetails,
                     Model = player,
                     Teams = await _leagueRepository.GetSeasonTeamsAsync(seasonId, cancellationToken),
                 });
@@ -216,6 +301,25 @@ namespace SubspaceStats.Areas.League.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(long seasonId, long playerId, CancellationToken cancellationToken)
         {
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
+            }
+
             await _leagueRepository.DeleteSeasonPlayerAsync(seasonId, playerId, cancellationToken);
 
             return RedirectToAction("Players", "Season", new { seasonId });

@@ -1,4 +1,4 @@
-﻿namespace SubspaceStats.Areas.League.Models.Team
+﻿namespace SubspaceStats.Areas.League.Models.Season.Team
 {
     public class TeamDetailsViewModel
     {

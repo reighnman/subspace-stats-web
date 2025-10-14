@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using SubspaceStats.Areas.League.Models.Season.Round;
+using SubspaceStats.Areas.League.Models.Season.Team;
 using SubspaceStats.Areas.League.Models.SeasonGame;
-using SubspaceStats.Areas.League.Models.Team;
 using System.ComponentModel.DataAnnotations;
 
 namespace SubspaceStats.Areas.League.Models.Season

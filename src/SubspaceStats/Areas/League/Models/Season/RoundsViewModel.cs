@@ -1,4 +1,6 @@
-﻿namespace SubspaceStats.Areas.League.Models.Season
+﻿using SubspaceStats.Areas.League.Models.Season.Round;
+
+namespace SubspaceStats.Areas.League.Models.Season
 {
     public class RoundsViewModel : ISeasonViewModel
     {

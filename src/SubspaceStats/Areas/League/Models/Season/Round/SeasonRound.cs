@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
-namespace SubspaceStats.Areas.League.Models.Season
+namespace SubspaceStats.Areas.League.Models.Season.Round
 {
     public class SeasonRound
     {

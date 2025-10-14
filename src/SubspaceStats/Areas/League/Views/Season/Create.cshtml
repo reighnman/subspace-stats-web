@@ -3,9 +3,6 @@
 
 @{
     ViewData["Title"] = "New Season";
-    IEnumerable<SelectListItem> leagues =
-        from league in Model.Leagues
-        select new SelectListItem(league.Name, league.Id.ToString());
 }
 
 <h1>New Season</h1>
@@ -16,16 +13,19 @@
 
 <div class="container">
     <form asp-action="Create">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div class="mb-3">
-            <label class="form-label">League</label>
-            <select asp-for="Model.LeagueId" asp-items="@leagues" class="form-select"></select>
-            <span asp-validation-for="Model.LeagueId" class="text-danger"></span>
+        <h4>Create season in</h4>
+        <div class="ms-3">
+            <label asp-for="League.Name" class="form-label"></label>
+            <input asp-for="League.Name" class="form-control" disabled readonly />
         </div>
-        <div class="mb-3">
-            <label asp-for="Model.SeasonName" class="form-label"></label>
-            <input asp-for="Model.SeasonName" class="form-control" />
-            <span asp-validation-for="Model.SeasonName" class="text-danger"></span>
+        <h4>Season info</h4>
+        <div class="ms-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="Season.SeasonName" class="form-label"></label>
+                <input asp-for="Season.SeasonName" class="form-control" />
+                <span asp-validation-for="Season.SeasonName" class="text-danger"></span>
+            </div>
         </div>
         <div class="d-flex">
             <button type="submit" class="btn btn-primary m-2">Create</button>

@@ -1,11 +1,12 @@
-﻿@using SubspaceStats.Areas.League.Models.SeasonGame
+﻿@using SubspaceStats.Areas.League.Models.Season.Game
+@using SubspaceStats.Areas.League.Models.SeasonGame
 @model AddFullRoundViewModel
 
 @{
-    ViewData["Title"] = "Add Games";
+    ViewData["Title"] = "Add Season Games";
 }
 
-<h1>Add Games</h1>
+<h1>Add Season Games</h1>
 <h3>Full round with 2 teams per match</h3>
 
 <div class="mb-3">
@@ -44,14 +45,14 @@
         </div>
         <div class="col-md-6 order-md-1">
             <form asp-action="AddFullRound">
-                <h4>Add to</h4>
+                <h4>Add games to</h4>
                 <div class="ms-3 mb-3">
                     <label class="form-label">Season</label>
                     <input type="text" class="form-control" value="@Model.Season.SeasonName" disabled readonly />
                     <label class="form-label">League</label>
                     <input type="text" class="form-control" value="@Model.League.Name" disabled readonly />
                 </div>
-                <h4>Games with the following</h4>
+                <h4>Choose options</h4>
                 <div class="ms-3">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <div class="mb-3">

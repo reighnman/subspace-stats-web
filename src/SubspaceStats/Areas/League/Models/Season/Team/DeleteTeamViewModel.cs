@@ -1,7 +1,7 @@
 ﻿using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.Season;
 
-namespace SubspaceStats.Areas.League.Models.Team
+namespace SubspaceStats.Areas.League.Models.Season.Team
 {
     public class DeleteTeamViewModel
     {

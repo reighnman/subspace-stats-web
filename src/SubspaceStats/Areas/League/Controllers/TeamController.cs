@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SkiaSharp;
+using SubspaceStats.Areas.League.Authorization;
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.Season;
-using SubspaceStats.Areas.League.Models.Team;
+using SubspaceStats.Areas.League.Models.Season.Team;
 using SubspaceStats.Options;
 using SubspaceStats.Services;
 
@@ -12,10 +14,12 @@ namespace SubspaceStats.Areas.League.Controllers
     [Area("League")]
     public class TeamController(
         ILogger<TeamController> logger,
+        IAuthorizationService authorizationService,
         IOptions<LeagueOptions> options,
         ILeagueRepository leagueRepository) : Controller
     {
         private readonly ILogger<TeamController> _logger = logger;
+        private readonly IAuthorizationService _authorizationService = authorizationService;
         private readonly IOptions<LeagueOptions> _options = options;
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
 
@@ -48,6 +52,19 @@ namespace SubspaceStats.Areas.League.Controllers
                 return NotFound();
             }
 
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
+            }
+
             return View(
                 new CreateTeamViewModel
                 {
@@ -70,6 +87,19 @@ namespace SubspaceStats.Areas.League.Controllers
             if (seasonDetails is null)
             {
                 return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
             }
 
             bool imageUploadEnabled = !string.IsNullOrWhiteSpace(_options.Value.ImagePhysicalPath);
@@ -144,8 +174,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 model.FranchiseId,
                 cancellationToken);
 
-            return RedirectToAction("Index");
-            //return RedirectToAction("Index", "Team", new { teamId });
+            return RedirectToAction("Index", new { teamId });
         }
 
         // GET League/Teams/{teamId}/Edit
@@ -161,6 +190,19 @@ namespace SubspaceStats.Areas.League.Controllers
             if (seasonDetails is null)
             {
                 return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
             }
 
             return View(
@@ -197,6 +239,19 @@ namespace SubspaceStats.Areas.League.Controllers
             if (seasonDetails is null)
             {
                 return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
             }
 
             if (model.FranchiseId is not null
@@ -285,6 +340,19 @@ namespace SubspaceStats.Areas.League.Controllers
                 return NotFound();
             }
 
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
+            }
+
             FranchiseModel? franchise = (team.FranchiseId is null) ? null : await _leagueRepository.GetFranchiseAsync(team.FranchiseId.Value, cancellationToken);
 
             return View(
@@ -305,6 +373,25 @@ namespace SubspaceStats.Areas.League.Controllers
             if (team is null)
             {
                 return NotFound();
+            }
+
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(team.SeasonId, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
             }
 
             await _leagueRepository.DeleteTeamAsync(teamId, cancellationToken);

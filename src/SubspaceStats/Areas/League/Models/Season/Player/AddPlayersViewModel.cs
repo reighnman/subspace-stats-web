@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using SubspaceStats.Areas.League.Models.Season;
-using SubspaceStats.Areas.League.Models.Team;
+using SubspaceStats.Areas.League.Models.Season.Team;
 using System.ComponentModel.DataAnnotations;
 
-namespace SubspaceStats.Areas.League.Models.SeasonPlayer
+namespace SubspaceStats.Areas.League.Models.Season.Player
 {
     public class AddPlayersViewModel
     {

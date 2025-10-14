@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using SubspaceStats.Areas.Identity.Data;
+using SubspaceStats.Areas.League.Authorization;
 using SubspaceStats.Filters;
 using SubspaceStats.Options;
 using SubspaceStats.Services;
@@ -11,7 +13,7 @@ namespace SubspaceStats
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -37,12 +39,29 @@ namespace SubspaceStats
             builder.Services.AddSingleton<ILeagueRepository, LeagueRepository>();
             builder.Services.AddSingleton<IStatsRepository, StatsRepository>();
 
+            // Note: Scoped because it uses ASP.NET Identity
+            builder.Services.AddScoped<IAuthorizationHandler, ManageLeagueAuthorizationHandler>();
+            builder.Services.AddScoped<IAuthorizationHandler, ManageSeasonAuthorizationHandler>();
+            builder.Services.AddScoped<IAuthorizationHandler, ManageSeasonDetailsAuthorizationHandler>();
+
+            builder.Services.AddAuthorizationBuilder()
+                .AddPolicy(PolicyNames.Manager, policy => policy.AddRequirements(new ManagerRequirement()));
+
             builder.Services.AddControllersWithViews(options =>
             {
                 options.Filters.Add<OperationCanceledExceptionFilter>();
             });
 
             var app = builder.Build();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var serviceProvider = scope.ServiceProvider;
+                var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
+                context.Database.Migrate();
+
+                await SeedAuth.Initialize(serviceProvider);
+            }
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
@@ -107,9 +126,9 @@ namespace SubspaceStats
                 defaults: new { controller = "Season" });
 
             app.MapAreaControllerRoute(
-                name: "LeagueSeasonCreate",
+                name: "LeagueCreateSeason",
                 areaName: "League",
-                pattern: "League/Season/Create",
+                pattern: "League/{leagueId:long}/CreateSeason",
                 defaults: new { controller = "Season", action = "Create" });
 
             app.MapAreaControllerRoute(
