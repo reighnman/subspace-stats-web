@@ -16,21 +16,9 @@
     string gameTypeName = Model.GameTypes.TryGetValue(Model.League.GameTypeId, out GameType? gameType) ? gameType.Name : Model.League.GameTypeId.ToString();
 }
 
-@await Html.PartialAsync("_LeagueNav")
-@* <h1>League Details</h1> *@
-
-<h3>@Model.League.Name</h3>
-
-<div class="mb-3">
-	@if (isAdministrator)
-	{
-		<a asp-action="Index" class="mx-2">Manage Leagues</a>
-	}
-	@if (isManager)
-	{
-		<a asp-action="Edit" asp-route-id="@Model.League.Id" class="mx-2">Edit</a>
-	}
-</div>
+<partial name="_LeagueNav" />
+<h2>@Model.League.Name</h2>
+<partial name="_LeagueSectionNav" />
 
 <div class="container">
 	<table class="table table-borderless table-sm w-auto">
@@ -45,19 +33,19 @@
 		@if (isManager)
 		{
 			<tr>
-				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.MinTeamsPerGame)</td>
+				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.MinTeamsPerGame):</td>
 				<td>@Model.League.MinTeamsPerGame</td>
 			</tr>
 			<tr>
-				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.MaxTeamsPerGame)</td>
+				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.MaxTeamsPerGame):</td>
 				<td>@Model.League.MaxTeamsPerGame</td>
 			</tr>
 			<tr>
-				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.FreqStart)</td>
+				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.FreqStart):</td>
 				<td>@Model.League.FreqStart</td>
 			</tr>
 			<tr>
-				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.FreqIncrement)</td>
+				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.FreqIncrement):</td>
 				<td>@Model.League.FreqIncrement</td>
 			</tr>
 		}

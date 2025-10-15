@@ -1,18 +1,19 @@
 ﻿using Npgsql;
 using NpgsqlTypes;
+using SubspaceStats.Areas.League.Authorization;
 using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.League;
+using SubspaceStats.Areas.League.Models.League.Roles;
 using SubspaceStats.Areas.League.Models.Season;
 using SubspaceStats.Areas.League.Models.Season.Game;
 using SubspaceStats.Areas.League.Models.Season.Player;
+using SubspaceStats.Areas.League.Models.Season.Roles;
 using SubspaceStats.Areas.League.Models.Season.Round;
 using SubspaceStats.Areas.League.Models.Season.Team;
 using SubspaceStats.Areas.League.Models.SeasonGame;
-using SubspaceStats.Models.GameDetails;
 using System.Data;
 using System.Text.Json;
-using System.Threading;
 
 namespace SubspaceStats.Services
 {
@@ -2010,6 +2011,188 @@ namespace SubspaceStats.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting whether a user is a manager of a league or season. (user_id:{user_id}, season_id:{season_id})", userId, seasonId);
+                throw;
+            }
+        }
+
+        public async Task<List<LeagueUserRole>> GetLeagueUserRoles(long leagueId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select * from league.get_league_user_roles($1)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = leagueId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_userId = reader.GetOrdinal("user_id");
+                            int column_leagueRoleId = reader.GetOrdinal("league_role_id");
+
+                            List<LeagueUserRole> list = [];
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                list.Add(
+                                    new LeagueUserRole(
+                                        reader.GetString(column_userId),
+                                        (LeagueRole)reader.GetInt64(column_leagueRoleId)));
+                            }
+                            return list;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting league user roles. (league_id: {league_id})", leagueId);
+                throw;
+            }
+        }
+
+        public async Task InsertLeagueUserRole(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.insert_league_user_role($1,$2,$3)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = leagueId });
+                        command.Parameters.AddWithValue(userId);
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = (long)role });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inserting league user role. (league_id: {league_id}, user_id:{user_id}, league_role_id:{league_role_id})", leagueId, userId, (long)role);
+                throw;
+            }
+        }
+
+        public async Task DeleteLeagueUserRole(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.delete_league_user_role($1,$2,$3)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = leagueId });
+                        command.Parameters.AddWithValue(userId);
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = (long)role });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting league user role. (league_id: {league_id}, user_id:{user_id}, league_role_id:{league_role_id})", leagueId, userId, (long)role);
+                throw;
+            }
+        }
+
+        public async Task<List<SeasonUserRole>> GetSeasonUserRoles(long seasonId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select * from league.get_season_user_roles($1)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_userId = reader.GetOrdinal("user_id");
+                            int column_seasonRoleId = reader.GetOrdinal("season_role_id");
+
+                            List<SeasonUserRole> list = [];
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                list.Add(
+                                    new SeasonUserRole(
+                                        reader.GetString(column_userId),
+                                        (SeasonRole)reader.GetInt64(column_seasonRoleId)));
+                            }
+                            return list;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting season user roles. (league_id: {league_id})", seasonId);
+                throw;
+            }
+        }
+
+        public async Task InsertSeasonUserRole(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.insert_season_user_role($1,$2,$3)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        command.Parameters.AddWithValue(userId);
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = (long)role });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inserting season user role. (season_id: {season_id}, user_id:{user_id}, league_role_id:{league_role_id})", seasonId, userId, (long)role);
+                throw;
+            }
+        }
+
+        public async Task DeleteSeasonUserRole(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.delete_season_user_role($1,$2,$3)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        command.Parameters.AddWithValue(userId);
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = (long)role });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting season user role. (season_id: {season_id}, user_id:{user_id}, league_role_id:{league_role_id})", seasonId, userId, (long)role);
                 throw;
             }
         }

@@ -9,13 +9,9 @@
         select new SelectListItem(kvp.Value.Name, kvp.Key.ToString());
 }
 
-@await Html.PartialAsync("_LeagueNav")
-
-<h1>Edit League</h1>
-
-<div class="mb-3">
-    <a asp-action="Index">Back to League List</a>
-</div>
+<partial name="_LeagueNav" />
+<h2>@Model.League!.Name</h2>
+<partial name="_LeagueSectionNav" />
 
 <div class="container">
     <div class="row">

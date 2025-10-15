@@ -1,9 +1,12 @@
-﻿using SubspaceStats.Areas.League.Models;
+﻿using SubspaceStats.Areas.League.Authorization;
+using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.League;
+using SubspaceStats.Areas.League.Models.League.Roles;
 using SubspaceStats.Areas.League.Models.Season;
 using SubspaceStats.Areas.League.Models.Season.Game;
 using SubspaceStats.Areas.League.Models.Season.Player;
+using SubspaceStats.Areas.League.Models.Season.Roles;
 using SubspaceStats.Areas.League.Models.Season.Round;
 using SubspaceStats.Areas.League.Models.Season.Team;
 using SubspaceStats.Areas.League.Models.SeasonGame;
@@ -108,6 +111,14 @@ namespace SubspaceStats.Services
 
         Task<bool> IsLeagueManager(string userId, long leagueId, CancellationToken cancellationToken);
         Task<bool> IsLeagueOrSeasonManager(string userId, long seasonId, CancellationToken cancellationToken);
+
+        Task<List<LeagueUserRole>> GetLeagueUserRoles(long leagueId, CancellationToken cancellationToken);
+        Task InsertLeagueUserRole(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken);
+        Task DeleteLeagueUserRole(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken);
+
+        Task<List<SeasonUserRole>> GetSeasonUserRoles(long seasonId, CancellationToken cancellationToken);
+        Task InsertSeasonUserRole(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken);
+        Task DeleteSeasonUserRole(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken);
 
         #endregion
     }

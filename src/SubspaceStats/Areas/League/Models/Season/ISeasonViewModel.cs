@@ -17,5 +17,6 @@
         Teams,
         Games,
         Rounds,
+        Roles,
     }
 }

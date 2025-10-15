@@ -19,7 +19,16 @@
 
 <div class="container">
     <div class="row">
-        <div class="col">
+        <div class="col-md-6 order-md-2">
+            <div class="alert alert-info">
+                Deleting a league is not a normal operation.
+                Though it can be done, rather than make it easy to wipe everything by accident,
+                you must first manually delete everything it contains.
+                This includes every season in the league, which means you also will need to manually delete each season's content too.
+
+            </div>
+        </div>
+        <div class="col-md-6 order-md-1">
             <form asp-action="Delete">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="mb-3">
@@ -42,12 +51,6 @@
                     <a asp-action="Index" class="btn btn-secondary m-2">Cancel</a>
                 </div>
             </form>
-        </div>
-        <div class="col">
-            <h4>Notes:</h4>
-            <div>
-                To delete a league you must first delete everything it contains.
-            </div>
         </div>
     </div>
 </div>

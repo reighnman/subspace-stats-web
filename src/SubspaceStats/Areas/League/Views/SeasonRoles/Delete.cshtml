@@ -1,0 +1,36 @@
+﻿@using SubspaceStats.Areas.League.Models.Season.Roles
+@model DeleteUserRoleViewModel
+
+@{
+	ViewData["Title"] = "Delete Season User Role";
+}
+
+<partial name="_LeagueSeasonChooser" model="@Model.LeagueSeasonChooser" />
+<partial name="_SeasonNav" />
+
+<h3>Delete Season User Role</h3>
+
+<div class="container">
+	<form asp-action="Delete">
+		<h5>Are you sure you want to delete the following user role?</h5>
+		<div class="mb-3">
+			<label asp-for="UserId" class="form-label"></label>
+			<input asp-for="UserId" class="form-control" readonly />
+		</div>
+		@if (!string.IsNullOrWhiteSpace(Model.UserName))
+		{
+			<div class="mb-3">
+				<label asp-for="UserName" class="form-label"></label>
+				<input asp-for="UserName" class="form-control" disabled readonly />
+			</div>
+		}
+		<div class="mb-3">
+			<label asp-for="Role" class="form-label"></label>
+			<input asp-for="Role" class="form-control" readonly />
+		</div>
+		<div class="d-flex">
+			<button type="submit" class="btn btn-primary m-2">Delete</button>
+			<a asp-action="Index" class="btn btn-secondary m-2">Cancel</a>
+		</div>
+	</form>
+</div>

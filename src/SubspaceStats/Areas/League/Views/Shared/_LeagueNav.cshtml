@@ -5,7 +5,7 @@
 	<ol class="breadcrumb">
 		<li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
 		<li class="breadcrumb-item"><a asp-controller="Home" asp-action="Nav">Leagues</a></li>
-		@if(Model.League is not null)
+		@if (Model.League is not null && !string.IsNullOrWhiteSpace(Model.League.Name))
 		{
 			<li class="breadcrumb-item active">@Model.League.Name</li>
 		}
