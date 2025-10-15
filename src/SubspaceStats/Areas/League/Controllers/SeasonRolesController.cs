@@ -196,8 +196,8 @@ namespace SubspaceStats.Areas.League.Controllers
             }
 
             model.SeasonDetails = seasonDetails;
-            model.Season = currentSeason;
-            model.League = currentLeague;
+            model.SeasonNav = currentSeason;
+            model.LeagueNav = currentLeague;
             model.LeagueSeasonChooser = seasonChooser;
             return View(model);
         }

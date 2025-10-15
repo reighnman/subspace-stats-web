@@ -57,8 +57,8 @@ namespace SubspaceStats.Areas.League.Controllers
                 new OverviewViewModel()
                 {
                     SeasonDetails = seasonDetails,
-                    League = currentLeague,
-                    Season = currentSeason,
+                    LeagueNav = currentLeague,
+                    SeasonNav = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
                     ScheduledGames = scheduledGamesTask.Result,
                     Standings = standingsTask.Result,
@@ -88,8 +88,8 @@ namespace SubspaceStats.Areas.League.Controllers
                 new RostersViewModel()
                 {
                     SeasonDetails = seasonDetails,
-                    League = currentLeague,
-                    Season = currentSeason,
+                    LeagueNav = currentLeague,
+                    SeasonNav = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
                     Rosters = await _leagueRepository.GetSeasonRostersAsync(seasonId, cancellationToken),
                 });
@@ -130,8 +130,8 @@ namespace SubspaceStats.Areas.League.Controllers
                 new DetailsViewModel
                 {
                     SeasonDetails = seasonDetails,
-                    League = currentLeague,
-                    Season = currentSeason,
+                    LeagueNav = currentLeague,
+                    SeasonNav = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
                     GameTypes = await _statsRepository.GetGameTypesAsync(cancellationToken),
                 });
@@ -385,8 +385,8 @@ namespace SubspaceStats.Areas.League.Controllers
                 new PlayersViewModel
                 {
                     SeasonDetails = seasonDetails,
-                    League = currentLeague,
-                    Season = currentSeason,
+                    LeagueNav = currentLeague,
+                    SeasonNav = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
                     Players = playersTask.Result,
                     Teams = teamsTask.Result,
@@ -438,8 +438,8 @@ namespace SubspaceStats.Areas.League.Controllers
                 new TeamsViewModel
                 {
                     SeasonDetails = seasonDetails,
-                    League = currentLeague,
-                    Season = currentSeason,
+                    LeagueNav = currentLeague,
+                    SeasonNav = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
                     Teams = teamsTask.Result,
                     Franchises = franchiseTask.Result,
@@ -555,8 +555,8 @@ namespace SubspaceStats.Areas.League.Controllers
                 new RoundsViewModel
                 {
                     SeasonDetails = seasonDetails,
-                    League = currentLeague,
-                    Season = currentSeason,
+                    LeagueNav = currentLeague,
+                    SeasonNav = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
                     Rounds = await _leagueRepository.GetSeasonRoundsAsync(seasonId.Value, cancellationToken),
                 });

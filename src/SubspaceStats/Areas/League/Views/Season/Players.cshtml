@@ -14,7 +14,7 @@
 @* <h1>Manage Players</h1> *@
 
 <div class="mb-3">
-	<a asp-controller="SeasonPlayer" asp-action="Add" asp-route-seasonId="@Model.Season.SeasonId" class="mx-2 text-nowrap">Add Players</a>
+	<a asp-controller="SeasonPlayer" asp-action="Add" asp-route-seasonId="@Model.SeasonDetails.SeasonId" class="mx-2 text-nowrap">Add Players</a>
 </div>
 
 <div class="table-responsive">
@@ -64,8 +64,8 @@
 					</td>
 					<td>@player.IsCaptain</td>
 					<td>@player.IsSuspended</td>
-					<td><a asp-controller="SeasonPlayer" asp-action="Edit" asp-route-seasonId="@Model.Season.SeasonId" asp-route-playerName="@player.Name">Edit</a></td>
-					<td><a asp-controller="SeasonPlayer" asp-action="Delete" asp-route-seasonId="@Model.Season.SeasonId" asp-route-playerName="@player.Name">Delete</a></td>
+					<td><a asp-controller="SeasonPlayer" asp-action="Edit" asp-route-seasonId="@Model.SeasonDetails.SeasonId" asp-route-playerName="@player.Name">Edit</a></td>
+					<td><a asp-controller="SeasonPlayer" asp-action="Delete" asp-route-seasonId="@Model.SeasonDetails.SeasonId" asp-route-playerName="@player.Name">Delete</a></td>
 				</tr>
 			}
 		</tbody>

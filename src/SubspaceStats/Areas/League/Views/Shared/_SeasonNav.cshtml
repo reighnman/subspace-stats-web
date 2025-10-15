@@ -12,19 +12,19 @@
 	<ol class="breadcrumb">
 		<li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
 		<li class="breadcrumb-item"><a asp-controller="Home" asp-action="Nav">Leagues</a></li>
-		<li class="breadcrumb-item"><a asp-controller="League" asp-action="Details" asp-route-leagueId="@Model.League.LeagueId">@Model.League.LeagueName</a></li>
-		<li class="breadcrumb-item active" aria-current="Page">@Model.Season.SeasonName</li>
+		<li class="breadcrumb-item"><a asp-controller="League" asp-action="Details" asp-route-leagueId="@Model.LeagueNav.LeagueId">@Model.LeagueNav.LeagueName</a></li>
+		<li class="breadcrumb-item active" aria-current="Page">@Model.SeasonNav.SeasonName</li>
 	</ol>
 </nav>
 
-<h1>@Model.Season.SeasonName</h1>
+<h1>@Model.SeasonNav.SeasonName</h1>
 
 <ul class="nav nav-underline">
 	<li class="nav-item">
-		<a asp-controller="Season" asp-action="Index" asp-route-seasonId="@Model.Season.SeasonId" class="nav-link @(Model.Page == SeasonPage.Overview ? "active" : "")">Overview</a>
+		<a asp-controller="Season" asp-action="Index" asp-route-seasonId="@Model.SeasonNav.SeasonId" class="nav-link @(Model.Page == SeasonPage.Overview ? "active" : "")">Overview</a>
 	</li>
 	<li class="nav-item">
-		<a asp-controller="Season" asp-action="Rosters" asp-route-seasonId="@Model.Season.SeasonId" class="nav-link @(Model.Page == SeasonPage.Rosters ? "active" : "")">Rosters</a>
+		<a asp-controller="Season" asp-action="Rosters" asp-route-seasonId="@Model.SeasonNav.SeasonId" class="nav-link @(Model.Page == SeasonPage.Rosters ? "active" : "")">Rosters</a>
 	</li>
 
 	@if (Model.SeasonDetails.LeagueGameTypeId is not null)
@@ -37,22 +37,22 @@
 	@if (isSeasonManager)
 	{
 		<li class="nav-item">
-			<a asp-controller="Season" asp-action="Details" asp-route-seasonId="@Model.Season.SeasonId" class="nav-link @(Model.Page == SeasonPage.Details ? "active" : "")">Manage Season</a>
+			<a asp-controller="Season" asp-action="Details" asp-route-seasonId="@Model.SeasonNav.SeasonId" class="nav-link @(Model.Page == SeasonPage.Details ? "active" : "")">Manage Season</a>
 		</li>
 		<li class="nav-item">
-			<a asp-controller="Season" asp-action="Players" asp-route-seasonId="@Model.Season.SeasonId" class="nav-link @(Model.Page == SeasonPage.Players ? "active" : "")">Manage Players</a>
+			<a asp-controller="Season" asp-action="Players" asp-route-seasonId="@Model.SeasonNav.SeasonId" class="nav-link @(Model.Page == SeasonPage.Players ? "active" : "")">Manage Players</a>
 		</li>
 		<li class="nav-item">
-			<a asp-controller="Season" asp-action="Teams" asp-route-seasonId="@Model.Season.SeasonId" class="nav-link @(Model.Page == SeasonPage.Teams ? "active" : "")">Manage Teams</a>
+			<a asp-controller="Season" asp-action="Teams" asp-route-seasonId="@Model.SeasonNav.SeasonId" class="nav-link @(Model.Page == SeasonPage.Teams ? "active" : "")">Manage Teams</a>
 		</li>
 		<li class="nav-item">
-			<a asp-controller="Season" asp-action="Games" asp-route-seasonId="@Model.Season.SeasonId" class="nav-link @(Model.Page == SeasonPage.Games ? "active" : "")">Manage Games</a>
+			<a asp-controller="Season" asp-action="Games" asp-route-seasonId="@Model.SeasonNav.SeasonId" class="nav-link @(Model.Page == SeasonPage.Games ? "active" : "")">Manage Games</a>
 		</li>
 		<li class="nav-item">
-			<a asp-controller="Season" asp-action="Rounds" asp-route-seasonId="@Model.Season.SeasonId" class="nav-link @(Model.Page == SeasonPage.Rounds ? "active" : "")">Manage Rounds</a>
+			<a asp-controller="Season" asp-action="Rounds" asp-route-seasonId="@Model.SeasonNav.SeasonId" class="nav-link @(Model.Page == SeasonPage.Rounds ? "active" : "")">Manage Rounds</a>
 		</li>
 		<li class="nav-item">
-			<a asp-controller="SeasonRoles" asp-action="Index" asp-route-seasonId="@Model.Season.SeasonId" class="nav-link @(Model.Page == SeasonPage.Roles ? "active" : "")">Manage Roles</a>
+			<a asp-controller="SeasonRoles" asp-action="Index" asp-route-seasonId="@Model.SeasonNav.SeasonId" class="nav-link @(Model.Page == SeasonPage.Roles ? "active" : "")">Manage Roles</a>
 		</li>
 	}
 </ul>

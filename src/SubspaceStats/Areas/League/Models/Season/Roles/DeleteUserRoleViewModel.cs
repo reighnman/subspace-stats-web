@@ -15,11 +15,11 @@ namespace SubspaceStats.Areas.League.Models.Season.Roles
 
         [BindNever]
         [ValidateNever]
-        public required LeagueNavItem League { get; set; }
+        public required LeagueNavItem LeagueNav { get; set; }
 
         [BindNever]
         [ValidateNever]
-        public required SeasonNavItem Season { get; set; }
+        public required SeasonNavItem SeasonNav { get; set; }
 
         [BindNever]
         [ValidateNever]

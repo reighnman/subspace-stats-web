@@ -12,7 +12,7 @@
 @* <h1>Manage Rounds</h1> *@
 
 <div class="mb-3">
-	<a asp-controller="SeasonRound" asp-action="Create" asp-route-seasonId="@Model.Season.SeasonId" class="mx-2 text-nowrap">New Round</a>
+	<a asp-controller="SeasonRound" asp-action="Create" asp-route-seasonId="@Model.SeasonDetails.SeasonId" class="mx-2 text-nowrap">New Round</a>
 </div>
 
 <div class="table-responsive">
@@ -32,8 +32,8 @@
 					<td class="text-end" style="table-layout: auto !important">@round.RoundNumber</td>
 					<td>@round.RoundName</td>
 					<td>@round.RoundDescription</td>
-					<td><a asp-controller="SeasonRound" asp-action="Edit" asp-route-seasonId="@Model.Season.SeasonId" asp-route-roundNumber="@round.RoundNumber">Edit</a></td>
-					<td><a asp-controller="SeasonRound" asp-action="Delete" asp-route-seasonId="@Model.Season.SeasonId" asp-route-roundNumber="@round.RoundNumber">Delete</a></td>
+					<td><a asp-controller="SeasonRound" asp-action="Edit" asp-route-seasonId="@Model.SeasonDetails.SeasonId" asp-route-roundNumber="@round.RoundNumber">Edit</a></td>
+					<td><a asp-controller="SeasonRound" asp-action="Delete" asp-route-seasonId="@Model.SeasonDetails.SeasonId" asp-route-roundNumber="@round.RoundNumber">Delete</a></td>
 				</tr>
 			}
 		</tbody>

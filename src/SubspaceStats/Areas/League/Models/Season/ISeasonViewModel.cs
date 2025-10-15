@@ -4,8 +4,8 @@
     {
         public SeasonDetails SeasonDetails { get; }
         public SeasonPage Page { get; }
-        public LeagueNavItem League { get; }
-        public SeasonNavItem Season { get; }
+        public LeagueNavItem LeagueNav { get; }
+        public SeasonNavItem SeasonNav { get; }
     }
 
     public enum SeasonPage
