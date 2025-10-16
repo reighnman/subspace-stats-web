@@ -911,5 +911,28 @@ namespace SubspaceStats.Services
                 throw;
             }
         }
+
+        public async Task RefreshTeamVersusPlayerStats(long statPeriodId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select ss.refresh_player_versus_stats($1)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = statPeriodId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refreshing player versus stats. (stat_period_id: {stat_period_id})", statPeriodId);
+                throw;
+            }
+        }
     }
 }

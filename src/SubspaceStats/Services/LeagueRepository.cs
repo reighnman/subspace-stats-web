@@ -12,6 +12,7 @@ using SubspaceStats.Areas.League.Models.Season.Roles;
 using SubspaceStats.Areas.League.Models.Season.Round;
 using SubspaceStats.Areas.League.Models.Season.Team;
 using SubspaceStats.Areas.League.Models.SeasonGame;
+using SubspaceStats.Models;
 using System.Data;
 using System.Text.Json;
 
@@ -785,9 +786,12 @@ namespace SubspaceStats.Services
                             int column_endDate = reader.GetOrdinal("end_date");
                             int column_statPeriodId = reader.GetOrdinal("stat_period_id");
                             int column_statPeriodRange = reader.GetOrdinal("stat_period_range");
-                            int column_statGameTypeId = reader.GetOrdinal("stat_game_type_id");
                             int column_leagueGameTypeId = reader.GetOrdinal("league_game_type_id");
-
+                            int column_leagueGameTypeName = reader.GetOrdinal("league_game_type_name");
+                            int column_leagueGameModeId = reader.GetOrdinal("league_game_mode_id");
+                            int column_statsGameTypeId = reader.GetOrdinal("stats_game_type_id");
+                            int column_statsGameTypeName = reader.GetOrdinal("stats_game_type_name");
+                            int column_statsGameModeId = reader.GetOrdinal("stats_game_mode_id");
                             
                             if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                                 return null;
@@ -803,8 +807,18 @@ namespace SubspaceStats.Services
                                 EndDate = reader.IsDBNull(column_endDate) ? null : reader.GetFieldValue<DateOnly>(column_endDate),
                                 StatPeriodId = reader.IsDBNull(column_statPeriodId) ? null : reader.GetInt64(column_statPeriodId),
                                 StatPeriodRange = reader.IsDBNull(column_statPeriodRange) ? null : reader.GetFieldValue<NpgsqlRange<DateTime>>(column_statPeriodRange),
-                                StatGameTypeId = reader.IsDBNull(column_statGameTypeId) ? null : reader.GetInt64(column_statGameTypeId),
-                                LeagueGameTypeId = reader.IsDBNull(column_leagueGameTypeId) ? null : reader.GetInt64(column_leagueGameTypeId),
+                                LeagueGameType = new GameType()
+                                {
+                                    Id = reader.GetInt64(column_leagueGameTypeId),
+                                    Name = reader.GetString(column_leagueGameTypeName),
+                                    GameMode = (GameMode)reader.GetInt64(column_leagueGameModeId),
+                                },
+                                StatsGameType = reader.IsDBNull(column_statsGameTypeId) ? null : new GameType()
+                                {
+                                    Id = reader.GetInt64(column_statsGameTypeId),
+                                    Name = reader.GetString(column_statsGameTypeName),
+                                    GameMode = (GameMode)reader.GetInt64(column_statsGameModeId),
+                                },
                             };
                         }
                     }

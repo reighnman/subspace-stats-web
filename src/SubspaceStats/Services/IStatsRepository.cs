@@ -151,5 +151,13 @@ namespace SubspaceStats.Services
         /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
         /// <returns>The player's kill stats records.</returns>
         Task<List<KillStats>> GetTeamVersusKillStats(string playerName, long statPeriodId, int limit, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Refreshes the player stats for a team versus stat period.
+        /// </summary>
+        /// <param name="statPeriodId">The stat period to refresh stats for.</param>
+        /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        Task RefreshTeamVersusPlayerStats(long statPeriodId, CancellationToken cancellationToken);
     }
 }

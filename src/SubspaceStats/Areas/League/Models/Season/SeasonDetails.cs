@@ -1,4 +1,5 @@
 ﻿using NpgsqlTypes;
+using SubspaceStats.Models;
 
 namespace SubspaceStats.Areas.League.Models.Season
 {
@@ -13,7 +14,7 @@ namespace SubspaceStats.Areas.League.Models.Season
         public DateOnly? EndDate { get; set; }
         public long? StatPeriodId { get; set; }
         public NpgsqlRange<DateTime>? StatPeriodRange { get; set; }
-        public long? StatGameTypeId { get; set; }
-        public long? LeagueGameTypeId { get; set; }
+        public required GameType LeagueGameType { get; set; }
+        public GameType? StatsGameType { get; set; }
     }
 }

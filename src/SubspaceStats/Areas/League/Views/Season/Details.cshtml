@@ -34,29 +34,24 @@
 			<tr>
 				<td class="text-end fw-bold">Stat Period:</td>
 				<td class="text-start">
-					@if (Model.SeasonDetails.StatPeriodRange is not null)
+					@if (Model.SeasonDetails.StatsGameType is not null && Model.SeasonDetails.StatPeriodRange is not null)
 					{
-						<text>@Model.SeasonDetails.StatPeriodRange.Value.ToString()</text>
+						<a asp-area="" asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@Model.SeasonDetails.StatsGameType.Id" asp-route-period="@Model.SeasonDetails.StatPeriodId" target="_blank">@Model.SeasonDetails.StatPeriodRange.Value.ToString()</a>
 					}
 				</td>
 			</tr>
 			<tr>
-				<td class="text-end fw-bold">Stat Game Type:</td>
+				<td class="text-end fw-bold">Game Type (stats):</td>
 				<td class="text-start">
-					@if (Model.SeasonDetails.StatGameTypeId is not null && Model.GameTypes.TryGetValue(Model.SeasonDetails.StatGameTypeId.Value, out GameType? statGameType))
+					@if (Model.SeasonDetails.StatsGameType is not null)
 					{
-						<text>@statGameType.Name</text>
+						@Model.SeasonDetails.StatsGameType.Name
 					}
 				</td>
 			</tr>
 			<tr>
-				<td class="text-end fw-bold">League Game Type:</td>
-				<td class="text-start">
-					@if (Model.SeasonDetails.LeagueGameTypeId is not null && Model.GameTypes.TryGetValue(Model.SeasonDetails.LeagueGameTypeId.Value, out GameType? leagueGameType))
-					{
-						<text>@leagueGameType.Name</text>
-					}
-				</td>
+				<td class="text-end fw-bold">Game Type (league):</td>
+				<td class="text-start">@Model.SeasonDetails.LeagueGameType.Name</td>
 			</tr>
 		</table>
 	</div>
@@ -98,7 +93,7 @@
 					<div class="card-header text-center">End the season</div>
 					<div class="card-body">
 						<div class="alert alert-info">
-							Marks the season as ended. This updates the season's <strong>end date</strong> and the <strong>stat period</strong> range upper bound with the oldest game timestamp.
+							Marks the season as ended. This updates the season's <strong>End Date</strong> and the <strong>Stat Period</strong> range upper bound with the oldest game timestamp.
 							This will prevent games in the season from getting started or restarted (?startleaguematch -f) in case someone typos a Match Id.
 						</div>
 						<form asp-action="End">
@@ -117,13 +112,36 @@
 					<div class="card-header text-center">Undo End Season</div>
 					<div class="card-body">
 						<div class="alert alert-info">
-							Reopens a season after having ended it. This removes the season <strong>end date</strong> and <strong>stat period</strong> range upper bound.
+							Reopens a season after having ended it. This removes the season <strong>End Date</strong> and <strong>Stat Period</strong> range upper bound.
 						</div>
 						<form asp-action="UndoEnd">
 							<div class="d-flex">
 								<button type="submit" class="btn btn-primary">Undo End Season</button>
 							</div>
 						</form>
+					</div>
+				</div>
+			</div>
+		}
+		@if (Model.SeasonDetails.StartDate is not null && Model.SeasonDetails.StatsGameType?.GameMode == GameMode.TeamVersus)
+		{
+			<div class="col-12 col-md-6 col-lg-4">
+				<div class="card h-100">
+					<div class="card-header text-center">Refresh player stats (Team Versus)</div>
+					<div class="card-body">
+						<div class="alert alert-info">
+							Refreshes player stats for the season's <strong>Stat Period</strong>.
+							This can be useful if a match was re-played (do over) and the old match's stats are still in the mix.
+						</div>
+						<form asp-action="RefreshPlayerStats">
+							<div class="d-flex mb-3">
+								<button type="submit" class="btn btn-primary">Refresh player stats</button>
+							</div>
+						</form>
+						@if (!string.IsNullOrWhiteSpace(Model.RefreshPlayerVersusStatsMessage))
+						{
+							<div class="alert alert-warning">@Model.RefreshPlayerVersusStatsMessage</div>
+						}
 					</div>
 				</div>
 			</div>
