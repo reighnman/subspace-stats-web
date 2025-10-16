@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 using SubspaceStats.Areas.League.Authorization;
 using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.Franchise;
@@ -10,7 +9,6 @@ using SubspaceStats.Areas.League.Models.Season.Round;
 using SubspaceStats.Areas.League.Models.Season.Team;
 using SubspaceStats.Areas.League.Models.SeasonGame;
 using SubspaceStats.Services;
-using System.ComponentModel.DataAnnotations;
 
 namespace SubspaceStats.Areas.League.Controllers
 {
@@ -173,7 +171,7 @@ namespace SubspaceStats.Areas.League.Controllers
         // POST Season/{seasonId}/End
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> End(long seasonId, [Required]DateOnly? endDate, CancellationToken cancellationToken)
+        public async Task<ActionResult> End(long seasonId, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
             {
@@ -204,7 +202,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 return Conflict();
             }
 
-            await _leagueRepository.UpdateSeasonEndDateAsync(seasonId, endDate, cancellationToken);
+            await _leagueRepository.EndSeasonAsync(seasonId, cancellationToken);
             return RedirectToAction("Details");
         }
 
@@ -236,7 +234,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 return Conflict();
             }
 
-            await _leagueRepository.UpdateSeasonEndDateAsync(seasonId, null, cancellationToken);
+            await _leagueRepository.UndoEndSeasonAsync(seasonId, cancellationToken);
             return RedirectToAction("Details");
         }
 

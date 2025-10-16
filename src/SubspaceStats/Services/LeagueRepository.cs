@@ -847,32 +847,48 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task UpdateSeasonEndDateAsync(long seasonId, DateOnly? endDate, CancellationToken cancellationToken)
+        public async Task EndSeasonAsync(long seasonId, CancellationToken cancellationToken)
         {
             try
             {
                 NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
                 await using (connection.ConfigureAwait(false))
                 {
-                    NpgsqlCommand command = new("select league.update_season_end_date($1,$2);", connection);
+                    NpgsqlCommand command = new("select league.end_season($1);", connection);
                     await using (command.ConfigureAwait(false))
                     {
                         command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
-
-                        if (endDate is not null)
-                            command.Parameters.Add(new NpgsqlParameter<DateOnly> { TypedValue = endDate.Value });
-                        else
-                            command.Parameters.AddWithValue(DBNull.Value);
-
                         await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
-
                         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating season end date. (season_id: {season_id})", seasonId);
+                _logger.LogError(ex, "Error ending season. (season_id: {season_id})", seasonId);
+                throw;
+            }
+        }
+
+        public async Task UndoEndSeasonAsync(long seasonId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.undo_end_season($1);", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error undoing end season. (season_id: {season_id})", seasonId);
                 throw;
             }
         }

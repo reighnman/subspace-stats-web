@@ -98,15 +98,10 @@
 					<div class="card-header text-center">End the season</div>
 					<div class="card-body">
 						<div class="alert alert-info">
-							Marks the season as ended, giving it an end date.
+							Marks the season as ended. This updates the season's <strong>end date</strong> and the <strong>stat period</strong> range upper bound with the oldest game timestamp.
 							This will prevent games in the season from getting started or restarted (?startleaguematch -f) in case someone typos a Match Id.
 						</div>
 						<form asp-action="End">
-							<div class="mb-3">
-								<label for="EndDate" class="form-label">End Date</label>
-								<input id="EndDate" name="EndDate" type="date" class="form-control" data-val="true" data-val-required="The End Date field is required." />
-								<span class="text-danger field-validation-valid" data-valmsg-for="EndDate" data-valmsg-replace="true"></span>
-							</div>
 							<div class="d-flex">
 								<button type="submit" class="btn btn-primary">End Season</button>
 							</div>
@@ -121,7 +116,9 @@
 				<div class="card h-100">
 					<div class="card-header text-center">Undo End Season</div>
 					<div class="card-body">
-						<div class="alert alert-info">Clears the season End Date.</div>
+						<div class="alert alert-info">
+							Reopens a season after having ended it. This removes the season <strong>end date</strong> and <strong>stat period</strong> range upper bound.
+						</div>
 						<form asp-action="UndoEnd">
 							<div class="d-flex">
 								<button type="submit" class="btn btn-primary">Undo End Season</button>
