@@ -94,6 +94,85 @@ namespace SubspaceStats.Services
             }
         }
 
+        public async Task<long> InsertGameTypeAsync(string name, GameMode mode, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select ss.insert_game_type($1,$2)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.AddWithValue(name);
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = (long)mode });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        object? gameTypeIdObj = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                        if (gameTypeIdObj is null || gameTypeIdObj == DBNull.Value)
+                        {
+                            throw new Exception("Expected a result.");
+                        }
+
+                        return (long)gameTypeIdObj;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inserting game type. (game_type_name: {game_type_name})", name);
+                throw;
+            }
+        }
+
+        public async Task UpdateGameTypeAsync(long gameTypeId, string name, GameMode mode, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select ss.update_game_type($1,$2,$3)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = gameTypeId });
+                        command.Parameters.AddWithValue(name);
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = (long)mode });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating game type. (game_type_id: {game_type_id}, game_type_name:{game_type_name})", gameTypeId, name);
+                throw;
+            }
+        }
+
+        public async Task DeleteGameTypeAsync(long gameTypeId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select ss.delete_game_type($1)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = gameTypeId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting game type. (game_type_id: {game_type_id})", gameTypeId);
+                throw;
+            }
+        }
+
         public async Task<List<StatPeriod>> GetStatPeriods(long gameTypeId, StatPeriodType? statPeriodType, int? limit, int offset, CancellationToken cancellationToken)
         {
             try

@@ -1,0 +1,48 @@
+﻿@using SubspaceStats.Areas.Admin.Models
+@using SubspaceStats.Areas.Admin.Models.GameTypes
+@model GameTypesListViewModel
+
+@{
+    ViewData["Title"] = "Game Types";
+}
+
+<nav class="nav mb-3">
+    <a asp-action="Create" class="nav-link">New Game Type</a>
+</nav>
+<div class="container">
+    <div class="row">
+        <div class="col-12 col-md-4 order-md-2">
+            <div class="alert alert-info">
+                <p>Use this to manage your game types. They provide logical categories to separate out stats.</p>
+                <p>The zone server module configs should reference the GameTypeIDs you create here. For example, the Match Types in <code>/conf/TeamVersus.conf</code> should each be configured with a GameTypeId that matches one in here.</p>
+                <p>Each league should be assigned its own unique game type, unless you want multiple leagues to share the same stats.</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-8 order-md-1">
+            <div class="container table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Game Type ID</th>
+                            <th>Game Type Name</th>
+                            <th>Game Mode</th>
+                            <th colspan="2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var gameType in Model.GameTypes.Values)
+                        {
+                            <tr>
+                                <td>@gameType.Id</td>
+                                <td>@gameType.Name</td>
+                                <td>@gameType.GameMode</td>
+                                <td><a asp-action="Edit" asp-route-id="@gameType.Id" class="mx-2">Edit</a></td>
+                                <td><a asp-action="Delete" asp-route-id="@gameType.Id" class="mx-2">Delete</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

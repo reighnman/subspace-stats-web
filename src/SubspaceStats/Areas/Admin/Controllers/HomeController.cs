@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Hybrid;
+using SubspaceStats.Areas.Admin.Models;
 using SubspaceStats.Areas.League.Authorization;
 
 namespace SubspaceStats.Areas.Admin.Controllers
@@ -14,7 +15,11 @@ namespace SubspaceStats.Areas.Admin.Controllers
 
         public IActionResult Index()
         {
-            return View(TempData["Message"]);
+            return View(
+                new HomeViewModel
+                {
+                    Message = TempData["Message"] as string,
+                });
         }
 
         [HttpPost]

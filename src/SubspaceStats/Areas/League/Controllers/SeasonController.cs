@@ -239,6 +239,7 @@ namespace SubspaceStats.Areas.League.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RefreshPlayerStats(long? seasonId, CancellationToken cancellationToken)
         {
             if (seasonId is null)

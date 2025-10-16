@@ -1,0 +1,41 @@
+﻿@using SubspaceStats.Areas.Admin.Models.GameTypes
+@model GameTypeViewModel
+
+@{
+    ViewData["Title"] = "New - Game Types";
+    IEnumerable<SelectListItem> gameModes =
+        from gameMode in Enum.GetValues<GameMode>()
+        where gameMode != GameMode.Undefined
+        select new SelectListItem(gameMode.ToString(), ((int)gameMode).ToString());
+}
+
+<h2>New Game Type</h2>
+<div class="container">
+    <div class="row">
+        <div class="col-12 col-md-4 order-md-2">
+            <div class="alert alert-info">
+                Use this form to add a new game type.
+            </div>
+        </div>
+        <div class="col-12 col-md-8 order-md-1">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="mb-3">
+                    <label asp-for="GameTypeName" class="form-label"></label>
+                    <input asp-for="GameTypeName" class="form-control" />
+                    <span asp-validation-for="GameTypeName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="GameMode" class="form-label"></label>
+                    <select asp-for="GameMode" asp-items="@gameModes" class="form-select">
+                    </select>
+                    <span asp-validation-for="GameMode" class="text-danger"></span>
+                </div>
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-primary m-2">Create</button>
+                    <a asp-action="Index" class="btn btn-secondary m-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

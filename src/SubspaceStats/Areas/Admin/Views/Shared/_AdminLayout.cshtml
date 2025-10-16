@@ -1,0 +1,20 @@
+﻿@using SubspaceStats.Areas.Admin.Models
+@model IAdminViewModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = $"{ViewData["Title"]} - Administrator Dashboard";
+}
+
+<h1>Administrator Dashboard</h1>
+
+<nav class="nav nav-underline mb-3">
+    <a asp-controller="Home" asp-action="Index" class="nav-link @(Model.Section == AdminSection.General ? "active": "")">General</a>
+    <a asp-controller="GameTypes" asp-action="Index" class="nav-link @(Model.Section == AdminSection.GameTypes ? "active" : "")">Game Types</a>
+</nav>
+
+@RenderBody()
+
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}

@@ -1,5 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using SubspaceStats.Areas.Identity.Data
+@using SubspaceStats.Areas.League.Authorization
 
 @inject SignInManager<SubspaceStatsUser> SignInManager
 @inject UserManager<SubspaceStatsUser> UserManager
@@ -7,6 +8,12 @@
 <ul class="navbar-nav">
     @if (SignInManager.IsSignedIn(User))
     {
+        @if (User.IsInRole(RoleNames.Administrator))
+        {
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Home" asp-action="Index">Admin</a>
+            </li>
+        }
         <li class="nav-item">
             <a id="manage" class="nav-link" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@UserManager.GetUserName(User)</a>
         </li>

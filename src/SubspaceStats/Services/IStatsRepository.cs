@@ -10,9 +10,15 @@ namespace SubspaceStats.Services
     /// </summary>
     public interface IStatsRepository
     {
-        Task<OrderedDictionary<long, GameType>> GetGameTypesAsync(CancellationToken cancellationToken);
+        #region Game Type
 
+        Task<OrderedDictionary<long, GameType>> GetGameTypesAsync(CancellationToken cancellationToken);
         Task<GameType?> GetGameTypeAsync(long gameTypeId, CancellationToken cancellationToken);
+        Task<long> InsertGameTypeAsync(string name, GameMode mode, CancellationToken cancellationToken);
+        Task UpdateGameTypeAsync(long gameTypeId, string name, GameMode mode, CancellationToken cancellationToken);
+        Task DeleteGameTypeAsync(long gameTypeId, CancellationToken cancellationToken);
+
+        #endregion
 
         /// <summary>
         /// Gets the available stats periods for a specified game type and period type.
