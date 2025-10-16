@@ -27,7 +27,10 @@
 		<a asp-controller="Season" asp-action="Rosters" asp-route-seasonId="@Model.SeasonNav.SeasonId" class="nav-link @(Model.Page == SeasonPage.Rosters ? "active" : "")">Rosters</a>
 	</li>
 	<li class="nav-item">
-		<a asp-area="" asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@Model.SeasonDetails.StatsGameType?.Id" asp-route-period="@Model.SeasonDetails.StatPeriodId" target="_blank" class="nav-link @(Model.SeasonDetails.StatsGameType is null ? "disabled" : "")">Stats</a>
+		<a asp-area="" asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@Model.SeasonDetails.StatsGameType?.Id" asp-route-period="@Model.SeasonDetails.StatPeriodId" target="_blank" class="nav-link @(Model.SeasonDetails.StatsGameType is null ? "disabled" : "")">
+			Stats
+			<i class="bi bi-box-arrow-up-right"></i>
+		</a>
 	</li>
 	@if (isSeasonManager)
 	{
