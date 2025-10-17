@@ -84,6 +84,7 @@ namespace SubspaceStats.Services
         Task<long> InsertTeamAsync(long seasonId, string teamName, string? bannerSmall, string? bannerLarge, long? franchiseId, CancellationToken cancellationToken);
         Task UpdateTeamAsync(long teamId, string teamName, string? bannerSmallPath, string? bannerLargePath, long? franchiseId, CancellationToken cancellationToken);        
         Task DeleteTeamAsync(long teamId, CancellationToken cancellationToken);
+        Task RefreshSeasonTeamStatsAsync(long seasonId, CancellationToken cancellationToken);
 
         #endregion        
 

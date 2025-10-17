@@ -9,6 +9,7 @@ namespace SubspaceStats.Areas.League.Models.Season
         public required LeagueNavItem LeagueNav { get; init; }
         public required SeasonNavItem SeasonNav { get; init; }
         public required LeagueSeasonChooserViewModel LeagueSeasonChooser { get; init; }
-        public string? RefreshPlayerVersusStatsMessage { get; set; }
+        public string? RefreshPlayerStatsMessage { get; set; }
+        public string? RefreshTeamStatsMessage { get; set; }
     }
 }

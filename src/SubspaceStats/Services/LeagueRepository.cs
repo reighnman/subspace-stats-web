@@ -1602,6 +1602,30 @@ namespace SubspaceStats.Services
             }
         }
 
+        public async Task RefreshSeasonTeamStatsAsync(long seasonId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.refresh_season_team_stats($1)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refreshing season team stats. (season_id: {season_id})", seasonId);
+
+                throw;
+            }
+        }
+
         public async Task<List<GameModel>> GetSeasonGamesAsync(long seasonId, CancellationToken cancellationToken)
         {
             try

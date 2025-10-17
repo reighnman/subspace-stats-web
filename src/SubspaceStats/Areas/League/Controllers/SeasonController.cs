@@ -22,6 +22,9 @@ namespace SubspaceStats.Areas.League.Controllers
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
         private readonly IStatsRepository _statsRepository = statsRepository;
 
+        private const string TempDataKey_RefreshPlayerStats = "RefreshPlayerStats";
+        private const string TempDataKey_RefreshTeamStats = "RefreshTeamStats";
+
         // GET Season/{seasonId}
         public async Task<ActionResult> IndexAsync(long? seasonId, CancellationToken cancellationToken)
         {
@@ -131,7 +134,8 @@ namespace SubspaceStats.Areas.League.Controllers
                     LeagueNav = currentLeague,
                     SeasonNav = currentSeason,
                     LeagueSeasonChooser = seasonChooser,
-                    RefreshPlayerVersusStatsMessage = TempData["RefreshPlayerVersusStatsMessage"] as string,
+                    RefreshPlayerStatsMessage = TempData[TempDataKey_RefreshPlayerStats] as string,
+                    RefreshTeamStatsMessage = TempData[TempDataKey_RefreshTeamStats] as string,
                 });
         }
 
@@ -165,7 +169,7 @@ namespace SubspaceStats.Areas.League.Controllers
             }
 
             await _leagueRepository.StartSeasonAsync(seasonId, startDate, cancellationToken);
-            return RedirectToAction("Details");
+            return RedirectToAction(nameof(Details));
         }
 
         // POST Season/{seasonId}/End
@@ -203,7 +207,7 @@ namespace SubspaceStats.Areas.League.Controllers
             }
 
             await _leagueRepository.EndSeasonAsync(seasonId, cancellationToken);
-            return RedirectToAction("Details");
+            return RedirectToAction(nameof(Details));
         }
 
         [HttpPost]
@@ -235,7 +239,7 @@ namespace SubspaceStats.Areas.League.Controllers
             }
 
             await _leagueRepository.UndoEndSeasonAsync(seasonId, cancellationToken);
-            return RedirectToAction("Details");
+            return RedirectToAction(nameof(Details));
         }
 
         [HttpPost]
@@ -272,8 +276,41 @@ namespace SubspaceStats.Areas.League.Controllers
             }
 
             await _statsRepository.RefreshTeamVersusPlayerStats(seasonDetails.StatPeriodId.Value, cancellationToken);
-            TempData["RefreshPlayerVersusStatsMessage"] = "Successfully refreshed player stats.";
-            return RedirectToAction("Details");
+            TempData[TempDataKey_RefreshPlayerStats] = "Successfully refreshed player stats.";
+            return RedirectToAction(nameof(Details));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RefreshTeamStats(long? seasonId, CancellationToken cancellationToken)
+        {
+            if (seasonId is null)
+            {
+                return NotFound();
+            }
+
+            SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(seasonId.Value, cancellationToken);
+            if (seasonDetails is null)
+            {
+                return NotFound();
+            }
+
+            AuthorizationResult result = await _authorizationService.AuthorizeAsync(User, seasonDetails, PolicyNames.Manager);
+            if (!result.Succeeded)
+            {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return Forbid();
+                }
+                else
+                {
+                    return Challenge();
+                }
+            }
+
+            await _leagueRepository.RefreshSeasonTeamStatsAsync(seasonId.Value, cancellationToken);
+            TempData[TempDataKey_RefreshTeamStats] = "Successfully refreshed team stats.";
+            return RedirectToAction(nameof(Details));
         }
 
         // GET Season/{seasonId}/Copy

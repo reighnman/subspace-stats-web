@@ -62,7 +62,7 @@
 				<div class="card-header text-center">Copy Season</div>
 				<div class="card-body">
 					<div class="card-text mb-3">A new season can be created using this season as a template. You'll be given a choice of which aspects to copy: players, teams, matches, and/or rounds.</div>
-					<a asp-action="Copy" class="btn btn-primary  text-nowrap">Create a Copy</a>
+					<a asp-action="Copy" class="btn btn-primary  text-nowrap"><i class="bi bi-copy me-1"></i>Create a Copy</a>
 				</div>
 			</div>
 		</div>
@@ -79,7 +79,7 @@
 								<input id="StartDate" name="StartDate" type="date" class="form-control" />
 							</div>
 							<div class="d-flex">
-								<button type="submit" class="btn btn-primary">Start Season</button>
+								<button type="submit" class="btn btn-primary"><i class="bi bi-play-btn me-1"></i>Start Season</button>
 							</div>
 						</form>
 					</div>
@@ -98,7 +98,7 @@
 						</div>
 						<form asp-action="End">
 							<div class="d-flex">
-								<button type="submit" class="btn btn-primary">End Season</button>
+								<button type="submit" class="btn btn-primary"><i class="bi bi-stop-btn me-1"></i>End Season</button>
 							</div>
 						</form>
 					</div>
@@ -116,7 +116,7 @@
 						</div>
 						<form asp-action="UndoEnd">
 							<div class="d-flex">
-								<button type="submit" class="btn btn-primary">Undo End Season</button>
+								<button type="submit" class="btn btn-primary"><i class="bi bi-arrow-counterclockwise me-1"></i>Undo End Season</button>
 							</div>
 						</form>
 					</div>
@@ -135,12 +135,35 @@
 						</div>
 						<form asp-action="RefreshPlayerStats">
 							<div class="d-flex mb-3">
-								<button type="submit" class="btn btn-primary">Refresh player stats</button>
+								<button type="submit" class="btn btn-primary"><i class="bi bi-arrow-repeat me-1"></i>Refresh player stats</button>
 							</div>
 						</form>
-						@if (!string.IsNullOrWhiteSpace(Model.RefreshPlayerVersusStatsMessage))
+						@if (!string.IsNullOrWhiteSpace(Model.RefreshPlayerStatsMessage))
 						{
-							<div class="alert alert-warning">@Model.RefreshPlayerVersusStatsMessage</div>
+							<div class="alert alert-warning">@Model.RefreshPlayerStatsMessage</div>
+						}
+					</div>
+				</div>
+			</div>
+		}
+		@if (Model.SeasonDetails.StartDate is not null && Model.SeasonDetails.EndDate is null)
+		{
+			<div class="col-12 col-md-6 col-lg-4">
+				<div class="card h-100">
+					<div class="card-header text-center">Refresh team stats</div>
+					<div class="card-body">
+						<div class="alert alert-info">
+							Refreshes team stats (wins, losses, and draws) for all teams in the season.
+							This may be useful if team stats gets out of sync.
+						</div>
+						<form asp-action="RefreshTeamStats">
+							<div class="d-flex mb-3">
+								<button type="submit" class="btn btn-primary"><i class="bi bi-arrow-repeat me-1"></i>Refresh team stats</button>
+							</div>
+						</form>
+						@if (!string.IsNullOrWhiteSpace(Model.RefreshTeamStatsMessage))
+						{
+							<div class="alert alert-warning">@Model.RefreshTeamStatsMessage</div>
 						}
 					</div>
 				</div>
