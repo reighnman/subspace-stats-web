@@ -268,7 +268,7 @@ namespace SubspaceStats.Services
                     {
                         await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                        var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess,cancellationToken).ConfigureAwait(false);
+                        var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).ConfigureAwait(false);
                         await using (reader.ConfigureAwait(false))
                         {
                             if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
