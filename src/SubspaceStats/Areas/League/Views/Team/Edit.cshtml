@@ -46,7 +46,11 @@
                     {
                         <img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.Model.TeamId}/{Model.Model.BannerSmallPath}")" asp-append-version="true" />
                     }
-                    <input asp-for="Model.BannerSmall" class="form-control" />
+                    <div class="form-check">
+                        <input asp-for="Model.SetBannerSmall" id="bannerSmallCheckInput" class="form-check-input" />
+                        <label asp-for="Model.SetBannerSmall" class="form-check-label"></label>
+                    </div>
+                    <input asp-for="Model.BannerSmall" id="bannerSmallFileInput" class="form-control" />
                     <span asp-validation-for="Model.BannerSmall" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
@@ -55,7 +59,11 @@
                     {
                         <img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.Model.TeamId}/{Model.Model.BannerLargePath}")" asp-append-version="true" />
                     }
-                    <input asp-for="Model.BannerLarge" class="form-control" />
+                    <div class="form-check">
+                        <input asp-for="Model.SetBannerLarge" id="bannerLargeCheckInput" class="form-check-input" />
+                        <label asp-for="Model.SetBannerLarge" class="form-check-label"></label>
+                    </div>
+                    <input asp-for="Model.BannerLarge" id="bannerLargeFileInput" class="form-control" />
                     <span asp-validation-for="Model.BannerLarge" class="text-danger"></span>
                 </div>
             }
@@ -77,5 +85,38 @@
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                const $bannerSmallCheckInput = $('#bannerSmallCheckInput');
+                const $bannerSmallFileInput = $('#bannerSmallFileInput');
+
+                const $bannerLargeCheckInput = $('#bannerLargeCheckInput');
+                const $bannerLargeFileInput = $('#bannerLargeFileInput');
+
+                refreshBannerInput($bannerSmallFileInput, $bannerSmallCheckInput);
+                refreshBannerInput($bannerLargeFileInput, $bannerLargeCheckInput);
+
+                $bannerSmallCheckInput.on('change', function() {
+                    refreshBannerInput($bannerSmallFileInput, $bannerSmallCheckInput);
+                });
+
+                $bannerLargeCheckInput.on('change', function() {
+                    refreshBannerInput($bannerLargeFileInput, $bannerLargeCheckInput);
+                });
+
+                function refreshBannerInput($fileInput, $checkInput) {
+                    var isChecked = $checkInput.prop('checked');
+                    $fileInput.prop('disabled', !isChecked);
+
+                    if (isChecked) {
+                        $fileInput.removeClass('d-none');
+                    }
+                    else {
+                        $fileInput.addClass('d-none');
+                    }
+                }
+            });
+        </script>
     }
 }

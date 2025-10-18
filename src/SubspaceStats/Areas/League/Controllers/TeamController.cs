@@ -151,20 +151,16 @@ namespace SubspaceStats.Areas.League.Controllers
 
                 if (imageUploadEnabled)
                 {
-                    bool stop = false;
                     if (model.BannerSmall is not null)
                     {
                         await using Stream inputStream = model.BannerSmall.OpenReadStream();
                         bannerSmallPath = await SaveImageAsync(teamId, inputStream, $"Model.{nameof(model.BannerSmall)}");
-
-                        if (bannerSmallPath is null)
-                            stop = true; // already failed at saving an image, don't try any more
                     }
 
-                    if (!stop && model.BannerLarge is not null)
+                    if (model.BannerLarge is not null)
                     {
                         await using Stream inputStream = model.BannerLarge.OpenReadStream();
-                        bannerLargePath = await SaveImageAsync(teamId, inputStream, $"Model.{nameof(model.BannerSmall)}");
+                        bannerLargePath = await SaveImageAsync(teamId, inputStream, $"Model.{nameof(model.BannerLarge)}");
                     }
                 }
 
@@ -249,6 +245,8 @@ namespace SubspaceStats.Areas.League.Controllers
             }
 
             model.TeamId = teamId;
+            model.BannerSmallPath = team.BannerSmall;
+            model.BannerLargePath = team.BannerLarge;
 
             SeasonDetails? seasonDetails = await _leagueRepository.GetSeasonDetailsAsync(team.SeasonId, cancellationToken);
             if (seasonDetails is null)
@@ -301,25 +299,38 @@ namespace SubspaceStats.Areas.League.Controllers
             // Save image files (if any)
             //
 
-            string? bannerSmallPath = null;
-            string? bannerLargePath = null;
-
             if (imageUploadEnabled)
             {
-                bool stop = false;
-                if (model.BannerSmall is not null)
+                if (model.SetBannerSmall)
                 {
-                    await using Stream inputStream = model.BannerSmall.OpenReadStream();
-                    bannerSmallPath = await SaveImageAsync(teamId, inputStream, $"Model.{nameof(model.BannerSmall)}");
-
-                    if (bannerSmallPath is null)
-                        stop = true; // already failed at saving an image, don't try any more
+                    if (model.BannerSmall is not null)
+                    {
+                        await using Stream inputStream = model.BannerSmall.OpenReadStream();
+                        string? bannerSmall = await SaveImageAsync(teamId, inputStream, $"Model.{nameof(model.BannerSmall)}");
+                        if (bannerSmall is not null)
+                            model.BannerSmallPath = bannerSmall;
+                    }
+                    else
+                    {
+                        // The user wants to remove the banner.
+                        model.BannerSmallPath = null;
+                    }
                 }
 
-                if (!stop && model.BannerLarge is not null)
+                if (model.SetBannerLarge)
                 {
-                    await using Stream inputStream = model.BannerLarge.OpenReadStream();
-                    bannerLargePath = await SaveImageAsync(teamId, inputStream, $"Model.{nameof(model.BannerSmall)}");
+                    if (model.BannerLarge is not null)
+                    {
+                        await using Stream inputStream = model.BannerLarge.OpenReadStream();
+                        string? bannerLarge = await SaveImageAsync(teamId, inputStream, $"Model.{nameof(model.BannerLarge)}");
+                        if (bannerLarge is not null)
+                            model.BannerLargePath = bannerLarge;
+                    }
+                    else
+                    {
+                        // The user wants to remove the banner.
+                        model.BannerLargePath = null;
+                    }
                 }
             }
 
@@ -335,7 +346,7 @@ namespace SubspaceStats.Areas.League.Controllers
                     });
             }
 
-            await _leagueRepository.UpdateTeamAsync(teamId, model.TeamName, bannerSmallPath, bannerLargePath, model.FranchiseId, cancellationToken);
+            await _leagueRepository.UpdateTeamAsync(teamId, model.TeamName, model.BannerSmallPath, model.BannerLargePath, model.FranchiseId, cancellationToken);
 
             return RedirectToAction(nameof(Index));
         }

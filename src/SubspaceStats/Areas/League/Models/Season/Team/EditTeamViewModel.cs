@@ -19,12 +19,22 @@ namespace SubspaceStats.Areas.League.Models.Season.Team
         public required string TeamName { get; set; }
 
         [Display(Name = "Banner (Small)")]
+        [BindNever]
+        [ValidateNever]
         public string? BannerSmallPath { get; set; }
+
+        [Display(Name = "Set Banner")]
+        public bool SetBannerSmall {  get; set; }
 
         [Display(Name = "Banner (Small)")]
         public IFormFile? BannerSmall { get; set; }
 
+        [Display(Name = "Set Banner")]
+        public bool SetBannerLarge { get; set; }
+
         [Display(Name = "Banner (Large)")]
+        [BindNever]
+        [ValidateNever]
         public string? BannerLargePath { get; set; }
 
         [Display(Name = "Banner (Large)")]
