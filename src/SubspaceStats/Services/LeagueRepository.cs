@@ -950,7 +950,7 @@ namespace SubspaceStats.Services
                 NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
                 await using (connection.ConfigureAwait(false))
                 {
-                    NpgsqlCommand command = new("select * from league.get_season_details($1)", connection);
+                    NpgsqlCommand command = new("select * from league.get_season($1)", connection);
                     await using (command.ConfigureAwait(false))
                     {
                         command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
