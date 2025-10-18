@@ -1,4 +1,6 @@
-﻿using SubspaceStats.Areas.League.Models.Franchise;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.Season;
 using System.ComponentModel.DataAnnotations;
 
@@ -6,6 +8,11 @@ namespace SubspaceStats.Areas.League.Models.Season.Team
 {
     public class EditTeamModel
     {
+        [Display(Name = "Team ID")]
+        [BindNever]
+        [ValidateNever]
+        public required long TeamId { get; set; }
+
         [Display(Name = "Team Name")]
         [StringLength(20, MinimumLength = 1)]
         [Required]

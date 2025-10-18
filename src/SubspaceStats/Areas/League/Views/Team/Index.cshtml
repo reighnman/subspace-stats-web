@@ -16,11 +16,11 @@
         <div class="col-12 col-md-6">
             @if (!string.IsNullOrWhiteSpace(Model.TeamInfo.BannerLarge))
             {
-                <div><img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.TeamInfo.BannerLarge}")" asp-append-version="true" /></div>
+                <div><img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.TeamInfo.TeamId}/{Model.TeamInfo.BannerLarge}")" asp-append-version="true" /></div>
             }
             else if (!string.IsNullOrWhiteSpace(Model.TeamInfo.BannerSmall))
             {
-                <div><img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.TeamInfo.BannerSmall}")" asp-append-version="true" /></div>
+                <div><img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.TeamInfo.TeamId}/{Model.TeamInfo.BannerSmall}")" asp-append-version="true" /></div>
             }
             <dl class="row">
                 <dt class="col-4">

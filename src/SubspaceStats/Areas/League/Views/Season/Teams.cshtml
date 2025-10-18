@@ -37,13 +37,13 @@
 					<td>
 						@if (!string.IsNullOrWhiteSpace(team.BannerSmall))
 						{
-							<img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{team.BannerSmall}")" asp-append-version="true" />
+							<img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{team.TeamId}/{team.BannerSmall}")" asp-append-version="true" />
 						}
 					</td>
 					<td>
 						@if (!string.IsNullOrWhiteSpace(team.BannerLarge))
 						{
-							<img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{team.BannerLarge}")" asp-append-version="true" />
+							<img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{team.TeamId}/{team.BannerLarge}")" asp-append-version="true" />
 						}
 					</td>
 					<td>@team.IsEnabled</td>

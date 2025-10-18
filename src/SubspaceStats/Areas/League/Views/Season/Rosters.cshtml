@@ -23,7 +23,7 @@
 					<h5 class="card-header text-center">
 						@if(!string.IsNullOrWhiteSpace(seasonRoster.BannerSmall))
 						{
-							<img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{seasonRoster.BannerSmall}")" />
+							<img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{seasonRoster.TeamId}/{seasonRoster.BannerSmall}")" />
 						}
 						<a asp-controller="Team" asp-action="Index" asp-route-teamId="@seasonRoster.TeamId">@seasonRoster.TeamName</a>
 					</h5>

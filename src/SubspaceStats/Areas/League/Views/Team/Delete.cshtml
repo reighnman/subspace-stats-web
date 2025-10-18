@@ -39,14 +39,14 @@
                 <label asp-for="Model.BannerSmall" class="form-label"></label>
                 @if (!string.IsNullOrWhiteSpace(Model.Model.BannerSmall))
                 {
-                    <img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.Model.BannerSmall}")" asp-append-version="true" />
+                    <img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.Model.TeamId}/{Model.Model.BannerSmall}")" asp-append-version="true" />
                 }
             </div>
             <div class="mb-3">
                 <label asp-for="Model.BannerLarge" class="form-label"></label>
                 @if (!string.IsNullOrWhiteSpace(Model.Model.BannerLarge))
                 {
-                    <img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.Model.BannerLarge}")" asp-append-version="true" />
+                    <img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.Model.TeamId}/{Model.Model.BannerLarge}")" asp-append-version="true" />
                 }
             </div>
             <div class="mb-3">
