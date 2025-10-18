@@ -27,19 +27,23 @@ namespace SubspaceStats.Areas.League.Controllers
         public async Task<IActionResult> Index(long teamId, CancellationToken cancellationToken)
         {
             TeamWithSeasonInfo? teamInfo = await _leagueRepository.GetTeamsWithSeasonInfoAsync(teamId, cancellationToken);
-            if(teamInfo is null)
+            if (teamInfo is null)
             {
                 return NotFound();
             }
 
-            // TODO: Current Standing (Wins, Losses, Draws,...)
-            // TODO: Roster + Stats of each player
+            var gamesTask = _leagueRepository.GetTeamGames(teamId, cancellationToken);
+            var rosterTask = _leagueRepository.GetTeamRoster(teamId, cancellationToken);
+            // TODO: Stats of each player
+
+            await Task.WhenAll(gamesTask, rosterTask);
 
             return View(
                 new TeamDetailsViewModel()
                 {
                     TeamInfo = teamInfo,
-                    GameRecords = await _leagueRepository.GetTeamGames(teamId, cancellationToken),
+                    GameRecords = gamesTask.Result,
+                    Roster = rosterTask.Result,
                 });
         }
 

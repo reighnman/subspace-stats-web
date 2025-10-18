@@ -79,6 +79,7 @@ namespace SubspaceStats.Services
 
         Task<OrderedDictionary<long, TeamModel>> GetSeasonTeamsAsync(long seasonId, CancellationToken cancellationToken);
         Task<List<TeamGameRecord>> GetTeamGames(long teamId, CancellationToken cancellationToken);
+        Task<List<RosterItem>> GetTeamRoster(long teamId, CancellationToken cancellationToken);
         Task<TeamWithSeasonInfo?> GetTeamsWithSeasonInfoAsync(long teamId, CancellationToken cancellationToken);
         Task<TeamModel?> GetTeamAsync(long teamId, CancellationToken cancellationToken);
         Task<long> InsertTeamAsync(long seasonId, string teamName, string? bannerSmall, string? bannerLarge, long? franchiseId, CancellationToken cancellationToken);

@@ -1381,6 +1381,54 @@ namespace SubspaceStats.Services
             }
         }
 
+        public async Task<List<RosterItem>> GetTeamRoster(long teamId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select * from league.get_team_roster($1)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = teamId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_playerId = reader.GetOrdinal("player_id");
+                            int column_playerName = reader.GetOrdinal("player_name");
+                            int column_isCaptain = reader.GetOrdinal("is_captain");
+                            int column_isSuspended = reader.GetOrdinal("is_suspended");
+                            int column_enrollTimestamp = reader.GetOrdinal("enroll_timestamp");
+
+                            List<RosterItem> roster = new(32);
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                roster.Add(
+                                    new RosterItem()
+                                    {
+                                        PlayerId = reader.GetInt64(column_playerId),
+                                        PlayerName = reader.GetString(column_playerName),
+                                        IsCaptain = reader.GetBoolean(column_isCaptain),
+                                        IsSuspended = reader.GetBoolean(column_isSuspended),
+                                        EnrollTimestamp = reader.IsDBNull(column_enrollTimestamp) ? null : reader.GetDateTime(column_enrollTimestamp),
+                                    });
+                            }
+
+                            return roster;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting roster for team. (team_id: {team_id})", teamId);
+                throw;
+            }
+        }
+
         public async Task<TeamWithSeasonInfo?> GetTeamsWithSeasonInfoAsync(long teamId, CancellationToken cancellationToken)
         {
             try
