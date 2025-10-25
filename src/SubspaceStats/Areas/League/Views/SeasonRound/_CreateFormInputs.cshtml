@@ -1,0 +1,26 @@
+﻿@using SubspaceStats.Areas.League.Models.Season.Round
+@model SeasonRound
+
+@* 
+    This partial view used so that the [Remote] attribute on the RoundNumber will work. 
+    Otherwise, when the SeasonRound is nested in a view model, it would have incorrect <input> names.
+    The SeasonId is included as a hidden <input> since it's an additional field sent to the remote endpoint.
+*@
+
+<input asp-for="SeasonId" type="hidden" />
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="mb-3">
+    <label asp-for="RoundNumber" class="form-label"></label>
+    <input asp-for="RoundNumber" class="form-control" />
+    <span asp-validation-for="RoundNumber" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="RoundName" class="form-label"></label>
+    <input asp-for="RoundName" class="form-control" />
+    <span asp-validation-for="RoundName" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="RoundDescription" class="form-label"></label>
+    <textarea asp-for="RoundDescription" class="form-control"></textarea>
+    <span asp-validation-for="RoundDescription" class="text-danger"></span>
+</div>

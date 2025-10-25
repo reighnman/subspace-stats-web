@@ -1,0 +1,119 @@
+﻿@using SubspaceStats.Areas.League.Models
+@using SubspaceStats.Areas.League.Models.SeasonGame
+@model GameViewModel
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        const MinTeams = @Model.League.MinTeamsPerGame;
+        const MaxTeams = @Model.League.MaxTeamsPerGame;
+        const FreqStart = @Model.League.FreqStart;
+        const FreqIncrement = @Model.League.FreqIncrement;
+        const IsReadOnly = @(Model.IsReadOnly ? "true" : "false");
+
+        const $form = $('#gameForm');
+        const $autoAssignFreqs = $('#AutoAssignFreqs');
+        const $teamsTable = $('#teamsTable');
+        const $addTeamButton = $('#addTeamButton');
+
+        refreshForStatusChange();
+        refreshAddRemoveTeamButtons();
+
+        $form.find('input[name="Game.Status"]').change(refreshForStatusChange);
+
+        $autoAssignFreqs.on('change', refreshFreqs);
+
+        $addTeamButton.on('click', function() {
+            function initializeFormField($cell, inputSelector, newVal) {
+                let $inputElement = $cell.find(inputSelector);
+                $inputElement.attr('id', $inputElement.attr('id').replace('0', index));
+                $inputElement.attr('name', $inputElement.attr('name').replace('0', index));
+
+                let $validationSpan = $cell.find('span[data-valmsg-for]:first');
+                $validationSpan.attr('data-valmsg-for', $inputElement.attr('name'));
+
+                if (typeof newVal === 'boolean') {
+                    $inputElement.prop('checked', newVal);
+                }
+                else {
+                    $inputElement.val(newVal);
+                }
+            }
+
+            // Clone the first row
+            let index = $teamsTable.find('tbody > tr').length;
+            let $newRow = $teamsTable.find('tbody tr:first').clone();
+
+            let $teamCell = $newRow.find('td:nth-child(2)');
+            let $freqCell = $newRow.find('td:nth-child(3)');
+            let $scoreCell = $newRow.find('td:nth-child(4)');
+            let $winnerCell = $newRow.find('td:nth-child(5)');
+
+            // Update all the form field names, ids, and validation attributes.
+            initializeFormField($teamCell, 'select:first', '');
+            initializeFormField($freqCell, 'input:first', '');
+            initializeFormField($scoreCell, 'input:first', '');
+            initializeFormField($winnerCell, 'input:first', false);
+
+            if ($autoAssignFreqs.prop('checked') == false) {
+                // Not auto assigning freqs, start the freq as empty.
+                $freqCell.find('input:first').val("");
+            }
+
+            // Add the row
+            $teamsTable.find('tbody').append($newRow);
+            reparseFormValidation();
+
+            // Refresh
+            refreshFreqs();
+            refreshAddRemoveTeamButtons();
+        });
+
+        $form.on('click', 'button.remove-team-btn', function() {
+            $(this).closest('tr').remove();
+            reparseFormValidation();
+            refreshFreqs();
+            refreshAddRemoveTeamButtons();
+        });
+
+        function reparseFormValidation() {
+            $form.removeData('validator').removeData('unobtrusiveValidation');
+            $.validator.unobtrusive.parse($form);
+        }
+
+        function refreshForStatusChange() {
+            let hide = $('input[name="Game.Status"]:checked').val() == "Pending";
+            if (hide) {
+                $teamsTable.find('thead tr th:nth-child(4), thead tr th:nth-child(5), tbody tr td:nth-child(4), tbody tr td:nth-child(5)').addClass('invisible');
+            }
+            else {
+                $teamsTable.find('thead tr th:nth-child(4), thead tr th:nth-child(5), tbody tr td:nth-child(4), tbody tr td:nth-child(5)').removeClass('invisible');
+            }
+        }
+
+        function refreshAddRemoveTeamButtons() {
+            if (IsReadOnly) {
+                $addTeamButton.prop('disabled', true);
+                $teamsTable.find('tbody tr td:first-child button.remove-team-btn').prop('disabled', true);
+            }
+            else {
+                $addTeamButton.prop('disabled', $teamsTable.find('tbody > tr').length >= MaxTeams);
+                $teamsTable.find('tbody tr td:first-child button.remove-team-btn').prop('disabled', $teamsTable.find('tbody > tr').length <= MinTeams);
+            }
+        }
+
+        function refreshFreqs() {
+            let autoAssignFreqs = $autoAssignFreqs.prop('checked');
+                
+            $teamsTable.find('tbody > tr > td:nth-child(3) input').each(function(index, freqElement) {
+                let $freqInput = $(freqElement);
+
+                $freqInput.prop('readonly', autoAssignFreqs);
+
+                if (autoAssignFreqs) {
+                    let teamIdx = $freqInput.closest('tr').index();
+                    $freqInput.val(FreqStart + (teamIdx * FreqIncrement));
+                }
+            });
+        }
+    });
+</script>

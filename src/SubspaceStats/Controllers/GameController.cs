@@ -16,31 +16,38 @@ public class GameController(
     {
         Game? game = await _statsRepository.GetGameAsync(id, cancellationToken);
         if (game is null)
-            return NotFound();
-
-        GameCategory? gameCategory = game.GameType.GetGameCategory();
-        if (gameCategory is null)
         {
-            _logger.LogError("Unknown GameCategory for GameType ({gameType}).", game.GameType);
             return NotFound();
         }
 
-        switch (gameCategory.Value)
+        GameType? gameType = await _statsRepository.GetGameTypeAsync(game.GameTypeId, cancellationToken);
+        if (gameType is null)
         {
-            case GameCategory.TeamVersus:
-                return View("TeamVersusGame", game);
+            return UnprocessableEntity();
+        }
 
-            case GameCategory.Solo:
+        switch (gameType.GameMode)
+        {
+            case GameMode.TeamVersus:
+                return View(
+                    "TeamVersusGame", 
+                    new GameDetailsViewModel
+                    {
+                        Game = game,
+                        GameType = gameType
+                    });
+
+            case GameMode.OneVersusOne:
                 //TODO: return View("SoloGame", game);
                 //For now just use the TeamVersus view
                 return View("TeamVersusGame", game);
 
-            case GameCategory.Powerball:
+            case GameMode.Powerball:
                 //TODO: return View("PowerballGame", game);
                 goto default;
 
             default:
-                _logger.LogError("Unsupported GameCategory ({gameCategory}).", gameCategory.Value);
+                _logger.LogError("Unsupported GameMode ({GameMode}).", gameType.GameMode);
                 return NoContent();
         }
     }

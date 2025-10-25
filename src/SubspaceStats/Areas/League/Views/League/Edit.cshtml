@@ -1,0 +1,75 @@
+﻿@using SubspaceStats.Areas.League.Models.League
+@model LeagueViewModel
+
+@{
+    ViewData["Title"] = "Edit League";
+
+    IEnumerable<SelectListItem> gameTypes =
+        from kvp in Model.GameTypes
+        select new SelectListItem(kvp.Value.Name, kvp.Key.ToString());
+}
+
+<partial name="_LeagueNav" />
+<h2>@Model.League!.Name</h2>
+<partial name="_LeagueSectionNav" />
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 order-md-2">
+            @await Html.PartialAsync("_LeagueNotes")
+        </div>
+        <div class="col-md-6 order-md-1">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <span asp-validation-for="League" class="text-danger"></span>
+                <div class="mb-3">
+                    <label asp-for="League.Id" class="form-label"></label>
+                    <input type="number" class="form-control" value="@Model.League?.Id" disabled />
+                    <input type="hidden" asp-for="League.Id" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.Name" class="form-label"></label>
+                    <input asp-for="League.Name" class="form-control" />
+                    <span asp-validation-for="League.Name" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.GameTypeId" class="form-label"></label>
+                    <select asp-for="League.GameTypeId" asp-items="@gameTypes" class="form-select" aria-describedby="game-type-note">
+                        <option disabled selected>-- Select a Game Type --</option>
+                    </select>
+                    <span asp-validation-for="League.GameTypeId" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.MinTeamsPerGame" class="form-label"></label>
+                    <input asp-for="League.MinTeamsPerGame" class="form-control" />
+                    <span asp-validation-for="League.MinTeamsPerGame" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.MaxTeamsPerGame" class="form-label"></label>
+                    <input asp-for="League.MaxTeamsPerGame" class="form-control" />
+                    <span asp-validation-for="League.MaxTeamsPerGame" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.FreqStart" class="form-label"></label>
+                    <input asp-for="League.FreqStart" class="form-control" />
+                    <span asp-validation-for="League.FreqStart" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="League.FreqIncrement" class="form-label"></label>
+                    <input asp-for="League.FreqIncrement" class="form-control" />
+                    <span asp-validation-for="League.FreqIncrement" class="text-danger"></span>
+                </div>
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-primary m-2">Save</button>
+                    <a asp-action="Index" class="btn btn-secondary m-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Caching.Hybrid;
 using Npgsql;
 using NpgsqlTypes;
 using SubspaceStats.Models;
@@ -6,95 +6,275 @@ using SubspaceStats.Models.GameDetails;
 using SubspaceStats.Models.GameDetails.TeamVersus;
 using SubspaceStats.Models.Leaderboard;
 using SubspaceStats.Models.Player;
-using SubspaceStats.Options;
 using System.Data;
 using System.Text.Json;
 
 namespace SubspaceStats.Services
 {
-    public class StatsRepository(IOptions<StatRepositoryOptions> options, ILogger<StatsRepository> logger) : IStatsRepository
+    public class StatsRepository : IStatsRepository
     {
-        private readonly ILogger<StatsRepository> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        private readonly NpgsqlDataSource _dataSource = NpgsqlDataSource.Create(options.Value.ConnectionString);
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<StatsRepository> _logger;
+        private readonly HybridCache _cache;
+        private readonly NpgsqlDataSource _dataSource;
 
-        public async Task<List<StatPeriod>> GetStatPeriods(GameType gameType, StatPeriodType statPeriodType, int limit, int offset, CancellationToken cancellationToken)
+        public StatsRepository(
+            IConfiguration configuration,
+            ILogger<StatsRepository> logger,
+            HybridCache cache)
+        {
+            _configuration = configuration;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _cache = cache;
+            _dataSource = NpgsqlDataSource.Create(
+                _configuration.GetConnectionString("SubspaceStats") ?? throw new Exception("Missing 'SubspaceStats' connection string."));
+        }
+
+        public async Task<OrderedDictionary<long, GameType>> GetGameTypesAsync(CancellationToken cancellationToken)
+        {
+            return await _cache.GetOrCreateAsync(
+                CacheKeys.GameTypes,
+                async cancel =>
+                {
+                    return await GetAndCacheGameTypesAsync(cancellationToken).ConfigureAwait(false);
+                },
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<GameType?> GetGameTypeAsync(long gameTypeId, CancellationToken cancellationToken)
+        {
+            (await GetGameTypesAsync(cancellationToken).ConfigureAwait(false)).TryGetValue(gameTypeId, out GameType? gameType);
+            return gameType;
+        }
+
+        private async Task<OrderedDictionary<long, GameType>> GetAndCacheGameTypesAsync(CancellationToken cancellationToken)
         {
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_stat_periods($1,$2,$3,$4);");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)gameType);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)statPeriodType);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, limit);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, offset);
-
-                    var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select * from ss.get_game_types()", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        int column_statPeriodId = dataReader.GetOrdinal("stat_period_id");
-                        int column_periodRange = dataReader.GetOrdinal("period_range");
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                        List<StatPeriod> periodList = [];
-
-                        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            periodList.Add(new StatPeriod()
-                            {
-                                StatPeriodId = dataReader.GetInt64(column_statPeriodId),
-                                GameType = gameType,
-                                StatPeriodType = statPeriodType,
-                                PeriodRange = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
-                            });
-                        }
+                            int column_gameTypeId = reader.GetOrdinal("game_type_id");
+                            int column_gameTypeName = reader.GetOrdinal("game_type_name");
+                            int column_gameModeId = reader.GetOrdinal("game_mode_id");
 
-                        return periodList;
+                            OrderedDictionary<long, GameType> dictionary = new(32);
+
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                long gameTypeId = reader.GetInt64(column_gameTypeId);
+                                string gameTypeName = reader.GetString(column_gameTypeName);
+                                long gameModeId = reader.GetInt64(column_gameModeId);
+
+                                dictionary[gameTypeId] = new GameType
+                                {
+                                    Id = gameTypeId,
+                                    Name = gameTypeName,
+                                    GameMode = (GameMode)gameModeId,
+                                };
+                            }
+
+                            return dictionary;
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting stat periods (gameType:{gameType}, statPeriodType:{statPeriodType}).", gameType, statPeriodType);
+                _logger.LogError(ex, "Error getting game types.");
                 throw;
             }
         }
 
-        public async Task<StatPeriod?> GetForeverStatPeriod(GameType gameType, CancellationToken cancellationToken)
+        public async Task<long> InsertGameTypeAsync(string name, GameMode mode, CancellationToken cancellationToken)
         {
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_stat_periods($1,$2,$3,$4);");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)gameType);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)StatPeriodType.Forever);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, 1);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, 0);
-
-                    var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select ss.insert_game_type($1,$2)", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        int column_statPeriodId = dataReader.GetOrdinal("stat_period_id");
-                        int column_periodRange = dataReader.GetOrdinal("period_range");
+                        command.Parameters.AddWithValue(name);
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = (long)mode });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                        if (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                        object? gameTypeIdObj = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                        if (gameTypeIdObj is null || gameTypeIdObj == DBNull.Value)
                         {
-                            return new StatPeriod()
-                            {
-                                StatPeriodId = dataReader.GetInt64(column_statPeriodId),
-                                GameType = gameType,
-                                StatPeriodType = StatPeriodType.Forever,
-                                PeriodRange = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
-                            };
+                            throw new Exception("Expected a result.");
                         }
 
-                        return null;
+                        return (long)gameTypeIdObj;
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting forever stat period (gameType:{gameType}).", gameType);
+                _logger.LogError(ex, "Error inserting game type. (game_type_name: {game_type_name})", name);
+                throw;
+            }
+        }
+
+        public async Task UpdateGameTypeAsync(long gameTypeId, string name, GameMode mode, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select ss.update_game_type($1,$2,$3)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = gameTypeId });
+                        command.Parameters.AddWithValue(name);
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = (long)mode });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating game type. (game_type_id: {game_type_id}, game_type_name:{game_type_name})", gameTypeId, name);
+                throw;
+            }
+        }
+
+        public async Task DeleteGameTypeAsync(long gameTypeId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select ss.delete_game_type($1)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = gameTypeId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting game type. (game_type_id: {game_type_id})", gameTypeId);
+                throw;
+            }
+        }
+
+        public async Task<List<StatPeriod>> GetStatPeriods(long gameTypeId, StatPeriodType? statPeriodType, int? limit, int offset, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select * from ss.get_stat_periods($1,$2,$3,$4);", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)gameTypeId);
+
+                        if (statPeriodType is null)
+                            command.Parameters.AddWithValue(DBNull.Value);
+                        else
+                            command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)statPeriodType);
+
+                        if (limit is not null)
+                            command.Parameters.Add(new NpgsqlParameter<int> { Value = limit.Value });
+                        else
+                            command.Parameters.AddWithValue(DBNull.Value); // no limit (treated as LIMIT ALL)
+
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, offset);
+
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_statPeriodId = reader.GetOrdinal("stat_period_id");
+                            int column_periodRange = reader.GetOrdinal("period_range");
+                            int column_statPeriodTypeId = reader.GetOrdinal("stat_period_type_id");
+                            int column_periodExtraName = reader.GetOrdinal("period_extra_name");
+
+                            List<StatPeriod> periodList = [];
+
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                periodList.Add(new StatPeriod()
+                                {
+                                    StatPeriodId = reader.GetInt64(column_statPeriodId),
+                                    GameTypeId = gameTypeId,
+                                    StatPeriodType = (StatPeriodType)reader.GetInt64(column_statPeriodTypeId),
+                                    PeriodRange = await reader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
+                                    ExtraName = reader.IsDBNull(column_periodExtraName) ? null : reader.GetString(column_periodExtraName),
+                                });
+                            }
+
+                            return periodList;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting stat periods (gameType:{gameType}, statPeriodType:{statPeriodType}).", gameTypeId, statPeriodType);
+                throw;
+            }
+        }
+
+        public async Task<StatPeriod?> GetForeverStatPeriod(long gameTypeId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select * from ss.get_stat_periods($1,$2,$3,$4);", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)gameTypeId);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, (long)StatPeriodType.Forever);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, 1);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, 0);
+
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_statPeriodId = reader.GetOrdinal("stat_period_id");
+                            int column_periodRange = reader.GetOrdinal("period_range");
+
+                            if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                return new StatPeriod()
+                                {
+                                    StatPeriodId = reader.GetInt64(column_statPeriodId),
+                                    GameTypeId = gameTypeId,
+                                    StatPeriodType = StatPeriodType.Forever,
+                                    PeriodRange = await reader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
+                                };
+                            }
+
+                            return null;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting forever stat period (gameType:{gameType}).", gameTypeId);
                 throw;
             }
         }
@@ -103,63 +283,69 @@ namespace SubspaceStats.Services
         {
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_team_versus_leaderboard($1,$2,$3);");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, limit);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, offset);
-
-                    var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select * from ss.get_team_versus_leaderboard($1,$2,$3);", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        int column_ratingRank = dataReader.GetOrdinal("rating_rank");
-                        int column_playerName = dataReader.GetOrdinal("player_name");
-                        int column_squadName = dataReader.GetOrdinal("squad_name");
-                        int column_rating = dataReader.GetOrdinal("rating");
-                        int column_gamesPlayed = dataReader.GetOrdinal("games_played");
-                        int column_playDuration = dataReader.GetOrdinal("play_duration");
-                        int column_wins = dataReader.GetOrdinal("wins");
-                        int column_losses = dataReader.GetOrdinal("losses");
-                        int column_kills = dataReader.GetOrdinal("kills");
-                        int column_deaths = dataReader.GetOrdinal("deaths");
-                        int column_damageDealt = dataReader.GetOrdinal("damage_dealt");
-                        int column_damageTaken = dataReader.GetOrdinal("damage_taken");
-                        int column_killDamage = dataReader.GetOrdinal("kill_damage");
-                        int column_forcedReps = dataReader.GetOrdinal("forced_reps");
-                        int column_forcedRepDamage = dataReader.GetOrdinal("forced_rep_damage");
-                        int column_assists = dataReader.GetOrdinal("assists");
-                        int column_wastedEnergy = dataReader.GetOrdinal("wasted_energy");
-                        int column_firstOut = dataReader.GetOrdinal("first_out");
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, limit);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, offset);
 
-                        List<TeamVersusLeaderboardStats> statsList = [];
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            statsList.Add(new TeamVersusLeaderboardStats()
-                            {
-                                RatingRank = dataReader.GetInt64(column_ratingRank),
-                                PlayerName = dataReader.GetString(column_playerName),
-                                SquadName = await dataReader.IsDBNullAsync(column_squadName, cancellationToken).ConfigureAwait(false) ? null : dataReader.GetString(column_squadName),
-                                Rating = dataReader.GetInt32(column_rating),
-                                GamesPlayed = dataReader.GetInt64(column_gamesPlayed),
-                                PlayDuration = dataReader.GetTimeSpan(column_playDuration),
-                                Wins = dataReader.GetInt64(column_wins),
-                                Losses = dataReader.GetInt64(column_losses),
-                                Kills = dataReader.GetInt64(column_kills),
-                                Deaths = dataReader.GetInt64(column_deaths),
-                                DamageDealt = dataReader.GetInt64(column_damageDealt),
-                                DamageTaken = dataReader.GetInt64(column_damageTaken),
-                                KillDamage = dataReader.GetInt64(column_killDamage),
-                                ForcedReps = dataReader.GetInt64(column_forcedReps),
-                                ForcedRepDamage = dataReader.GetInt64(column_forcedRepDamage),
-                                Assists = dataReader.GetInt64(column_assists),
-                                WastedEnergy = dataReader.GetInt64(column_wastedEnergy),
-                                FirstOut = dataReader.GetInt64(column_firstOut),
-                            });
-                        }
+                            int column_ratingRank = reader.GetOrdinal("rating_rank");
+                            int column_playerName = reader.GetOrdinal("player_name");
+                            int column_squadName = reader.GetOrdinal("squad_name");
+                            int column_rating = reader.GetOrdinal("rating");
+                            int column_gamesPlayed = reader.GetOrdinal("games_played");
+                            int column_playDuration = reader.GetOrdinal("play_duration");
+                            int column_wins = reader.GetOrdinal("wins");
+                            int column_losses = reader.GetOrdinal("losses");
+                            int column_kills = reader.GetOrdinal("kills");
+                            int column_deaths = reader.GetOrdinal("deaths");
+                            int column_damageDealt = reader.GetOrdinal("damage_dealt");
+                            int column_damageTaken = reader.GetOrdinal("damage_taken");
+                            int column_killDamage = reader.GetOrdinal("kill_damage");
+                            int column_forcedReps = reader.GetOrdinal("forced_reps");
+                            int column_forcedRepDamage = reader.GetOrdinal("forced_rep_damage");
+                            int column_assists = reader.GetOrdinal("assists");
+                            int column_wastedEnergy = reader.GetOrdinal("wasted_energy");
+                            int column_firstOut = reader.GetOrdinal("first_out");
 
-                        return statsList;
+                            List<TeamVersusLeaderboardStats> statsList = [];
+
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                statsList.Add(new TeamVersusLeaderboardStats()
+                                {
+                                    RatingRank = reader.GetInt64(column_ratingRank),
+                                    PlayerName = reader.GetString(column_playerName),
+                                    SquadName = reader.IsDBNull(column_squadName) ? null : reader.GetString(column_squadName),
+                                    Rating = reader.GetInt32(column_rating),
+                                    GamesPlayed = reader.GetInt64(column_gamesPlayed),
+                                    PlayDuration = reader.GetTimeSpan(column_playDuration),
+                                    Wins = reader.GetInt64(column_wins),
+                                    Losses = reader.GetInt64(column_losses),
+                                    Kills = reader.GetInt64(column_kills),
+                                    Deaths = reader.GetInt64(column_deaths),
+                                    DamageDealt = reader.GetInt64(column_damageDealt),
+                                    DamageTaken = reader.GetInt64(column_damageTaken),
+                                    KillDamage = reader.GetInt64(column_killDamage),
+                                    ForcedReps = reader.GetInt64(column_forcedReps),
+                                    ForcedRepDamage = reader.GetInt64(column_forcedRepDamage),
+                                    Assists = reader.GetInt64(column_assists),
+                                    WastedEnergy = reader.GetInt64(column_wastedEnergy),
+                                    FirstOut = reader.GetInt64(column_firstOut),
+                                });
+                            }
+
+                            return statsList;
+                        }
                     }
                 }
             }
@@ -174,24 +360,30 @@ namespace SubspaceStats.Services
         {
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select ss.get_game($1)");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, gameId);
-
-                    var dataReader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select ss.get_game($1)", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        if (!await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                            throw new Exception("Expected a row.");
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, gameId);
 
-                        if (await dataReader.IsDBNullAsync(0, cancellationToken).ConfigureAwait(false))
-                            return null;
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                        Stream stream = await dataReader.GetStreamAsync(0, cancellationToken).ConfigureAwait(false);
-                        await using (stream.ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            return await JsonSerializer.DeserializeAsync(stream, SourceGenerationContext.Default.Game, cancellationToken).ConfigureAwait(false);
+                            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                                throw new Exception("Expected a row.");
+
+                            if (await reader.IsDBNullAsync(0, cancellationToken).ConfigureAwait(false))
+                                return null;
+
+                            Stream stream = await reader.GetStreamAsync(0, cancellationToken).ConfigureAwait(false);
+                            await using (stream.ConfigureAwait(false))
+                            {
+                                return await JsonSerializer.DeserializeAsync(stream, SourceGenerationContext.Default.Game, cancellationToken).ConfigureAwait(false);
+                            }
                         }
                     }
                 }
@@ -207,72 +399,80 @@ namespace SubspaceStats.Services
         {
             try
             {
-                NpgsqlBatch batch = _dataSource.CreateBatch();
-                await using (batch.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    batch.BatchCommands.Add(
-                        new NpgsqlBatchCommand("select * from ss.get_player_info($1);")
-                        {
-                            Parameters =
-                            {
-                                new NpgsqlParameter() { Value = playerName }
-                            }
-                        });
-
-                    batch.BatchCommands.Add(
-                        new NpgsqlBatchCommand("select * from ss.get_player_stat_periods($1, $2);")
-                        {
-                            Parameters =
-                            {
-                                new NpgsqlParameter() { Value = playerName },
-                                new NpgsqlParameter<TimeSpan> { TypedValue = periodCutoff },
-                            }
-                        });
-
-                    var dataReader = await batch.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlBatch batch = new(connection);
+                    await using (batch.ConfigureAwait(false))
                     {
-                        int column_squadName = dataReader.GetOrdinal("squad_name");
-                        int column_xRes = dataReader.GetOrdinal("x_res");
-                        int column_yRes = dataReader.GetOrdinal("y_res");
-
-                        if (!await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                        {
-                            // Player not found.
-                            return null;
-                        }
-
-                        PlayerInfo playerInfo = new()
-                        {
-                            SquadName = await dataReader.IsDBNullAsync(column_squadName, cancellationToken).ConfigureAwait(false) ? null : dataReader.GetString(column_squadName),
-                            XRes = await dataReader.IsDBNullAsync(column_xRes, cancellationToken).ConfigureAwait(false) ? null : dataReader.GetInt16(column_xRes),
-                            YRes = await dataReader.IsDBNullAsync(column_yRes, cancellationToken).ConfigureAwait(false) ? null : dataReader.GetInt16(column_yRes),
-                        };
-
-                        if (!await dataReader.NextResultAsync(cancellationToken).ConfigureAwait(false))
-                        {
-                            throw new Exception("Missing get_player_game_types result.");
-                        }
-
-                        int column_statPeriodId = dataReader.GetOrdinal("stat_period_id");
-                        int column_gameTypeId = dataReader.GetOrdinal("game_type_id");
-                        int column_statPeriodTypeId = dataReader.GetOrdinal("stat_period_type_id");
-                        int column_periodRange = dataReader.GetOrdinal("period_range");
-
-                        List<StatPeriod> periodList = [];
-                        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                        {
-                            periodList.Add(
-                                new StatPeriod()
+                        batch.BatchCommands.Add(
+                            new NpgsqlBatchCommand("select * from ss.get_player_info($1);")
+                            {
+                                Parameters =
                                 {
-                                    StatPeriodId = dataReader.GetInt64(column_statPeriodId),
-                                    GameType = (GameType)dataReader.GetInt64(column_gameTypeId),
-                                    StatPeriodType = (StatPeriodType)dataReader.GetInt64(column_statPeriodTypeId),
-                                    PeriodRange = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
-                                });
-                        }
+                                    new NpgsqlParameter() { Value = playerName }
+                                }
+                            });
 
-                        return (playerInfo, periodList);
+                        batch.BatchCommands.Add(
+                            new NpgsqlBatchCommand("select * from ss.get_player_stat_periods($1, $2);")
+                            {
+                                Parameters =
+                                {
+                                    new NpgsqlParameter() { Value = playerName },
+                                    new NpgsqlParameter<TimeSpan> { TypedValue = periodCutoff },
+                                }
+                            });
+
+                        await batch.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await batch.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_squadName = reader.GetOrdinal("squad_name");
+                            int column_xRes = reader.GetOrdinal("x_res");
+                            int column_yRes = reader.GetOrdinal("y_res");
+
+                            if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                // Player not found.
+                                return null;
+                            }
+
+                            PlayerInfo playerInfo = new()
+                            {
+                                SquadName = reader.IsDBNull(column_squadName) ? null : reader.GetString(column_squadName),
+                                XRes = reader.IsDBNull(column_xRes) ? null : reader.GetInt16(column_xRes),
+                                YRes = reader.IsDBNull(column_yRes) ? null : reader.GetInt16(column_yRes),
+                            };
+
+                            if (!await reader.NextResultAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                throw new Exception("Missing get_player_game_types result.");
+                            }
+
+                            int column_statPeriodId = reader.GetOrdinal("stat_period_id");
+                            int column_gameTypeId = reader.GetOrdinal("game_type_id");
+                            int column_statPeriodTypeId = reader.GetOrdinal("stat_period_type_id");
+                            int column_periodRange = reader.GetOrdinal("period_range");
+                            int column_periodExtraName = reader.GetOrdinal("period_extra_name");
+
+                            List<StatPeriod> periodList = [];
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                periodList.Add(
+                                    new StatPeriod()
+                                    {
+                                        StatPeriodId = reader.GetInt64(column_statPeriodId),
+                                        GameTypeId = reader.GetInt64(column_gameTypeId),
+                                        StatPeriodType = (StatPeriodType)reader.GetInt64(column_statPeriodTypeId),
+                                        PeriodRange = reader.GetFieldValue<NpgsqlRange<DateTime>>(column_periodRange),
+                                        ExtraName = reader.IsDBNull(column_periodExtraName) ? null : reader.GetString(column_periodExtraName),
+                                    });
+                            }
+
+                            return (playerInfo, periodList);
+                        }
                     }
                 }
             }
@@ -287,40 +487,48 @@ namespace SubspaceStats.Services
         {
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_participation_overview($1,$2);");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Interval, periodCutoff);
-
-                    var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select * from ss.get_player_participation_overview($1,$2);", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        int column_statPeriodId = dataReader.GetOrdinal("stat_period_id");
-                        int column_gameTypeId = dataReader.GetOrdinal("game_type_id");
-                        int column_statPeriodTypeId = dataReader.GetOrdinal("stat_period_type_id");
-                        int column_periodRange = dataReader.GetOrdinal("period_range");
-                        int column_rating = dataReader.GetOrdinal("rating");
-                        // TODO: int column_detailsJson = dataReader.GetOrdinal("details_json");
+                        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Interval, periodCutoff);
 
-                        List<ParticipationRecord> participationRecordList = [];
-                        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            participationRecordList.Add(
-                                new ParticipationRecord()
-                                {
-                                    LastStatPeriod = new StatPeriod()
+                            int column_statPeriodId = reader.GetOrdinal("stat_period_id");
+                            int column_gameTypeId = reader.GetOrdinal("game_type_id");
+                            int column_statPeriodTypeId = reader.GetOrdinal("stat_period_type_id");
+                            int column_periodRange = reader.GetOrdinal("period_range");
+                            int column_periodExtraName = reader.GetOrdinal("period_extra_name");
+                            int column_rating = reader.GetOrdinal("rating");
+                            // TODO: int column_detailsJson = reader.GetOrdinal("details_json");
+
+                            List<ParticipationRecord> participationRecordList = [];
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                participationRecordList.Add(
+                                    new ParticipationRecord()
                                     {
-                                        StatPeriodId = dataReader.GetInt64(column_statPeriodId),
-                                        GameType = (GameType)dataReader.GetInt64(column_gameTypeId),
-                                        StatPeriodType = (StatPeriodType)dataReader.GetInt64(column_statPeriodTypeId),
-                                        PeriodRange = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_periodRange, cancellationToken).ConfigureAwait(false),
-                                    },
-                                    Rating = await dataReader.IsDBNullAsync(column_rating, cancellationToken).ConfigureAwait(false) ? null : dataReader.GetInt32(column_rating),
-                                    // TODO: json details
-                                });
+                                        LastStatPeriod = new StatPeriod()
+                                        {
+                                            StatPeriodId = reader.GetInt64(column_statPeriodId),
+                                            GameTypeId = reader.GetInt64(column_gameTypeId),
+                                            StatPeriodType = (StatPeriodType)reader.GetInt64(column_statPeriodTypeId),
+                                            PeriodRange = reader.GetFieldValue<NpgsqlRange<DateTime>>(column_periodRange),
+                                            ExtraName = reader.IsDBNull(column_periodExtraName) ? null : reader.GetString(column_periodExtraName),
+                                        },
+                                        Rating = reader.IsDBNull(column_rating) ? null : reader.GetInt32(column_rating),
+                                        // TODO: json details
+                                    });
+                            }
+                            return participationRecordList;
                         }
-                        return participationRecordList;
                     }
                 }
             }
@@ -331,9 +539,9 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task<(StatPeriod, List<TopRatingRecord>)?> GetTopPlayersByRating(GameType gameType, StatPeriodType statPeriodType, int top, CancellationToken cancellationToken)
+        public async Task<(StatPeriod, List<TopRatingRecord>)?> GetTopPlayersByRating(long gameTypeId, StatPeriodType statPeriodType, int top, CancellationToken cancellationToken)
         {
-            List<StatPeriod> statPeriodList = await GetStatPeriods(gameType, statPeriodType, 1, 0, cancellationToken).ConfigureAwait(false);
+            List<StatPeriod> statPeriodList = await GetStatPeriods(gameTypeId, statPeriodType, 1, 0, cancellationToken).ConfigureAwait(false);
             if (statPeriodList.Count == 0)
                 return null;
 
@@ -344,31 +552,37 @@ namespace SubspaceStats.Services
         {
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_top_players_by_rating($1,$2);");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, top);
-
-                    var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select * from ss.get_top_players_by_rating($1,$2);", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        int column_topRank = dataReader.GetOrdinal("top_rank");
-                        int column_playerName = dataReader.GetOrdinal("player_name");
-                        int column_rating = dataReader.GetOrdinal("rating");
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, top);
 
-                        List<TopRatingRecord> topList = new(top);
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            topList.Add(
-                                new TopRatingRecord(
-                                    dataReader.GetInt32(column_topRank),
-                                    dataReader.GetString(column_playerName),
-                                    dataReader.GetInt32(column_rating)));
-                        }
+                            int column_topRank = reader.GetOrdinal("top_rank");
+                            int column_playerName = reader.GetOrdinal("player_name");
+                            int column_rating = reader.GetOrdinal("rating");
 
-                        return topList;
+                            List<TopRatingRecord> topList = new(top);
+
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                topList.Add(
+                                    new TopRatingRecord(
+                                        reader.GetInt32(column_topRank),
+                                        reader.GetString(column_playerName),
+                                        reader.GetInt32(column_rating)));
+                            }
+
+                            return topList;
+                        }
                     }
                 }
             }
@@ -383,32 +597,38 @@ namespace SubspaceStats.Services
         {
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_top_versus_players_by_avg_rating($1,$2,$3);");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, top);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, minGamesPlayed);
-
-                    var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select * from ss.get_top_versus_players_by_avg_rating($1,$2,$3);", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        int column_topRank = dataReader.GetOrdinal("top_rank");
-                        int column_playerName = dataReader.GetOrdinal("player_name");
-                        int column_avgRating = dataReader.GetOrdinal("avg_rating");
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, top);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, minGamesPlayed);
 
-                        List<TopAvgRatingRecord> topList = new(top);
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            topList.Add(
-                                new TopAvgRatingRecord(
-                                    dataReader.GetInt32(column_topRank),
-                                    dataReader.GetString(column_playerName),
-                                    dataReader.GetFloat(column_avgRating)));
-                        }
+                            int column_topRank = reader.GetOrdinal("top_rank");
+                            int column_playerName = reader.GetOrdinal("player_name");
+                            int column_avgRating = reader.GetOrdinal("avg_rating");
 
-                        return topList;
+                            List<TopAvgRatingRecord> topList = new(top);
+
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                topList.Add(
+                                    new TopAvgRatingRecord(
+                                        reader.GetInt32(column_topRank),
+                                        reader.GetString(column_playerName),
+                                        reader.GetFloat(column_avgRating)));
+                            }
+
+                            return topList;
+                        }
                     }
                 }
             }
@@ -423,32 +643,38 @@ namespace SubspaceStats.Services
         {
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_top_versus_players_by_kills_per_minute($1,$2);");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, top);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, minGamesPlayed);
-
-                    var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select * from ss.get_top_versus_players_by_kills_per_minute($1,$2);", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        int column_topRank = dataReader.GetOrdinal("top_rank");
-                        int column_playerName = dataReader.GetOrdinal("player_name");
-                        int column_killsPerMinute = dataReader.GetOrdinal("kills_per_minute");
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, top);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, minGamesPlayed);
 
-                        List<TopKillsPerMinuteRecord> topList = new(top);
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            topList.Add(
-                                new TopKillsPerMinuteRecord(
-                                    dataReader.GetInt32(column_topRank),
-                                    dataReader.GetString(column_playerName),
-                                    dataReader.GetFloat(column_killsPerMinute)));
-                        }
+                            int column_topRank = reader.GetOrdinal("top_rank");
+                            int column_playerName = reader.GetOrdinal("player_name");
+                            int column_killsPerMinute = reader.GetOrdinal("kills_per_minute");
 
-                        return topList;
+                            List<TopKillsPerMinuteRecord> topList = new(top);
+
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                topList.Add(
+                                    new TopKillsPerMinuteRecord(
+                                        reader.GetInt32(column_topRank),
+                                        reader.GetString(column_playerName),
+                                        reader.GetFloat(column_killsPerMinute)));
+                            }
+
+                            return topList;
+                        }
                     }
                 }
             }
@@ -473,131 +699,137 @@ namespace SubspaceStats.Services
 
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_period_stats($1,$2);");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Array | NpgsqlDbType.Bigint, statPeriodIdList);
-
-                    var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select * from ss.get_player_versus_period_stats($1,$2);", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        int column_statPeriodId = dataReader.GetOrdinal("stat_period_id");
-                        int column_periodRank = dataReader.GetOrdinal("period_rank");
-                        int column_rating = dataReader.GetOrdinal("rating");
-                        int column_gamesPlayed = dataReader.GetOrdinal("games_played");
-                        int column_playDuration = dataReader.GetOrdinal("play_duration");
-                        int column_wins = dataReader.GetOrdinal("wins");
-                        int column_losses = dataReader.GetOrdinal("losses");
-                        int column_lagOuts = dataReader.GetOrdinal("lag_outs");
-                        int column_kills = dataReader.GetOrdinal("kills");
-                        int column_deaths = dataReader.GetOrdinal("deaths");
-                        int column_knockouts = dataReader.GetOrdinal("knockouts");
-                        int column_teamKills = dataReader.GetOrdinal("team_kills");
-                        int column_soloKills = dataReader.GetOrdinal("solo_kills");
-                        int column_assists = dataReader.GetOrdinal("assists");
-                        int column_forcedReps = dataReader.GetOrdinal("forced_reps");
-                        int column_gunDamageDealt = dataReader.GetOrdinal("gun_damage_dealt");
-                        int column_bombDamageDealt = dataReader.GetOrdinal("bomb_damage_dealt");
-                        int column_teamDamageDealt = dataReader.GetOrdinal("team_damage_dealt");
-                        int column_gunDamageTaken = dataReader.GetOrdinal("gun_damage_taken");
-                        int column_bombDamageTaken = dataReader.GetOrdinal("bomb_damage_taken");
-                        int column_teamDamageTaken = dataReader.GetOrdinal("team_damage_taken");
-                        int column_selfDamage = dataReader.GetOrdinal("self_damage");
-                        int column_killDamage = dataReader.GetOrdinal("kill_damage");
-                        int column_teamKillDamage = dataReader.GetOrdinal("team_kill_damage");
-                        int column_forcedRepDamage = dataReader.GetOrdinal("forced_rep_damage");
-                        int column_bulletFireCount = dataReader.GetOrdinal("bullet_fire_count");
-                        int column_bombFireCount = dataReader.GetOrdinal("bomb_fire_count");
-                        int column_mineFireCount = dataReader.GetOrdinal("mine_fire_count");
-                        int column_bulletHitCount = dataReader.GetOrdinal("bullet_hit_count");
-                        int column_bombHitCount = dataReader.GetOrdinal("bomb_hit_count");
-                        int column_mineHitCount = dataReader.GetOrdinal("mine_hit_count");
-                        int column_firstOutRegular = dataReader.GetOrdinal("first_out_regular");
-                        int column_firstOutCritical = dataReader.GetOrdinal("first_out_critical");
-                        int column_wastedEnergy = dataReader.GetOrdinal("wasted_energy");
-                        int column_wastedRepel = dataReader.GetOrdinal("wasted_repel");
-                        int column_wastedRocket = dataReader.GetOrdinal("wasted_rocket");
-                        int column_wastedThor = dataReader.GetOrdinal("wasted_thor");
-                        int column_wastedBurst = dataReader.GetOrdinal("wasted_burst");
-                        int column_wastedDecoy = dataReader.GetOrdinal("wasted_decoy");
-                        int column_wastedPortal = dataReader.GetOrdinal("wasted_portal");
-                        int column_wastedBrick = dataReader.GetOrdinal("wasted_brick");
-                        int column_enemyDistanceSum = dataReader.GetOrdinal("enemy_distance_sum");
-                        int column_enemyDistanceSamples = dataReader.GetOrdinal("enemy_distance_samples");
-                        int column_teamDistanceSum = dataReader.GetOrdinal("team_distance_sum");
-                        int column_teamDistanceSamples = dataReader.GetOrdinal("team_distance_samples");
+                        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Array | NpgsqlDbType.Bigint, statPeriodIdList);
 
-                        List<TeamVersusPeriodStats> periodStatsList = [];
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            long statPeriodId = dataReader.GetInt64(column_statPeriodId);
-                            StatPeriod? statPeriod = null;
-                            foreach (StatPeriod period in statPeriodList)
+                            int column_statPeriodId = reader.GetOrdinal("stat_period_id");
+                            int column_periodRank = reader.GetOrdinal("period_rank");
+                            int column_rating = reader.GetOrdinal("rating");
+                            int column_gamesPlayed = reader.GetOrdinal("games_played");
+                            int column_playDuration = reader.GetOrdinal("play_duration");
+                            int column_wins = reader.GetOrdinal("wins");
+                            int column_losses = reader.GetOrdinal("losses");
+                            int column_lagOuts = reader.GetOrdinal("lag_outs");
+                            int column_kills = reader.GetOrdinal("kills");
+                            int column_deaths = reader.GetOrdinal("deaths");
+                            int column_knockouts = reader.GetOrdinal("knockouts");
+                            int column_teamKills = reader.GetOrdinal("team_kills");
+                            int column_soloKills = reader.GetOrdinal("solo_kills");
+                            int column_assists = reader.GetOrdinal("assists");
+                            int column_forcedReps = reader.GetOrdinal("forced_reps");
+                            int column_gunDamageDealt = reader.GetOrdinal("gun_damage_dealt");
+                            int column_bombDamageDealt = reader.GetOrdinal("bomb_damage_dealt");
+                            int column_teamDamageDealt = reader.GetOrdinal("team_damage_dealt");
+                            int column_gunDamageTaken = reader.GetOrdinal("gun_damage_taken");
+                            int column_bombDamageTaken = reader.GetOrdinal("bomb_damage_taken");
+                            int column_teamDamageTaken = reader.GetOrdinal("team_damage_taken");
+                            int column_selfDamage = reader.GetOrdinal("self_damage");
+                            int column_killDamage = reader.GetOrdinal("kill_damage");
+                            int column_teamKillDamage = reader.GetOrdinal("team_kill_damage");
+                            int column_forcedRepDamage = reader.GetOrdinal("forced_rep_damage");
+                            int column_bulletFireCount = reader.GetOrdinal("bullet_fire_count");
+                            int column_bombFireCount = reader.GetOrdinal("bomb_fire_count");
+                            int column_mineFireCount = reader.GetOrdinal("mine_fire_count");
+                            int column_bulletHitCount = reader.GetOrdinal("bullet_hit_count");
+                            int column_bombHitCount = reader.GetOrdinal("bomb_hit_count");
+                            int column_mineHitCount = reader.GetOrdinal("mine_hit_count");
+                            int column_firstOutRegular = reader.GetOrdinal("first_out_regular");
+                            int column_firstOutCritical = reader.GetOrdinal("first_out_critical");
+                            int column_wastedEnergy = reader.GetOrdinal("wasted_energy");
+                            int column_wastedRepel = reader.GetOrdinal("wasted_repel");
+                            int column_wastedRocket = reader.GetOrdinal("wasted_rocket");
+                            int column_wastedThor = reader.GetOrdinal("wasted_thor");
+                            int column_wastedBurst = reader.GetOrdinal("wasted_burst");
+                            int column_wastedDecoy = reader.GetOrdinal("wasted_decoy");
+                            int column_wastedPortal = reader.GetOrdinal("wasted_portal");
+                            int column_wastedBrick = reader.GetOrdinal("wasted_brick");
+                            int column_enemyDistanceSum = reader.GetOrdinal("enemy_distance_sum");
+                            int column_enemyDistanceSamples = reader.GetOrdinal("enemy_distance_samples");
+                            int column_teamDistanceSum = reader.GetOrdinal("team_distance_sum");
+                            int column_teamDistanceSamples = reader.GetOrdinal("team_distance_samples");
+
+                            List<TeamVersusPeriodStats> periodStatsList = [];
+
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                             {
-                                if (period.StatPeriodId == statPeriodId)
+                                long statPeriodId = reader.GetInt64(column_statPeriodId);
+                                StatPeriod? statPeriod = null;
+                                foreach (StatPeriod period in statPeriodList)
                                 {
-                                    statPeriod = period;
-                                    break;
+                                    if (period.StatPeriodId == statPeriodId)
+                                    {
+                                        statPeriod = period;
+                                        break;
+                                    }
                                 }
+
+                                if (statPeriod is null)
+                                    continue;
+
+                                periodStatsList.Add(
+                                    new TeamVersusPeriodStats()
+                                    {
+                                        StatPeriod = statPeriod.Value,
+                                        Rank = reader.IsDBNull(column_periodRank) ? null : reader.GetInt32(column_periodRank),
+                                        Rating = reader.IsDBNull(column_rating) ? null : reader.GetInt32(column_rating),
+                                        Games = reader.GetInt64(column_gamesPlayed),
+                                        Wins = reader.GetInt64(column_wins),
+                                        Losses = reader.GetInt64(column_losses),
+                                        FirstOutRegular = reader.GetInt64(column_firstOutRegular),
+                                        FirstOutCritical = reader.GetInt64(column_firstOutCritical),
+                                        PlayDuration = reader.GetTimeSpan(column_playDuration),
+                                        LagOuts = reader.GetInt64(column_lagOuts),
+                                        Kills = reader.GetInt64(column_kills),
+                                        Deaths = reader.GetInt64(column_deaths),
+                                        Knockouts = reader.GetInt64(column_knockouts),
+                                        TeamKills = reader.GetInt64(column_teamKills),
+                                        SoloKills = reader.GetInt64(column_soloKills),
+                                        Assists = reader.GetInt64(column_assists),
+                                        ForcedReps = reader.GetInt64(column_forcedReps),
+                                        GunDamageDealt = reader.GetInt64(column_gunDamageDealt),
+                                        BombDamageDealt = reader.GetInt64(column_bombDamageDealt),
+                                        TeamDamageDealt = reader.GetInt64(column_teamDamageDealt),
+                                        GunDamageTaken = reader.GetInt64(column_gunDamageTaken),
+                                        BombDamageTaken = reader.GetInt64(column_bombDamageTaken),
+                                        TeamDamageTaken = reader.GetInt64(column_teamDamageTaken),
+                                        SelfDamage = reader.GetInt64(column_selfDamage),
+                                        KillDamage = reader.GetInt64(column_killDamage),
+                                        TeamKillDamage = reader.GetInt64(column_teamKillDamage),
+                                        ForcedRepDamage = reader.GetInt64(column_forcedRepDamage),
+                                        BulletFireCount = reader.GetInt64(column_bulletFireCount),
+                                        BombFireCount = reader.GetInt64(column_bombFireCount),
+                                        MineFireCount = reader.GetInt64(column_mineFireCount),
+                                        BulletHitCount = reader.GetInt64(column_bulletHitCount),
+                                        BombHitCount = reader.GetInt64(column_bombHitCount),
+                                        MineHitCount = reader.GetInt64(column_mineHitCount),
+                                        WastedEnergy = reader.GetInt64(column_wastedEnergy),
+                                        WastedRepel = reader.GetInt64(column_wastedRepel),
+                                        WastedRocket = reader.GetInt64(column_wastedRocket),
+                                        WastedThor = reader.GetInt64(column_wastedThor),
+                                        WastedBurst = reader.GetInt64(column_wastedBurst),
+                                        WastedDecoy = reader.GetInt64(column_wastedDecoy),
+                                        WastedPortal = reader.GetInt64(column_wastedPortal),
+                                        WastedBrick = reader.GetInt64(column_wastedBrick),
+                                        EnemyDistanceSum = reader.IsDBNull(column_enemyDistanceSum) ? null : reader.GetInt64(column_enemyDistanceSum),
+                                        EnemyDistanceSamples = reader.IsDBNull(column_enemyDistanceSamples) ? null : reader.GetInt64(column_enemyDistanceSamples),
+                                        TeamDistanceSum = reader.IsDBNull(column_teamDistanceSum) ? null : reader.GetInt64(column_teamDistanceSum),
+                                        TeamDistanceSamples = reader.IsDBNull(column_teamDistanceSamples) ? null : reader.GetInt64(column_teamDistanceSamples),
+                                    });
                             }
 
-                            if (statPeriod is null)
-                                continue;
-
-                            periodStatsList.Add(
-                                new TeamVersusPeriodStats()
-                                {
-                                    StatPeriod = statPeriod.Value,
-                                    Rank = await dataReader.IsDBNullAsync(column_periodRank, cancellationToken).ConfigureAwait(false) ? null : dataReader.GetInt32(column_periodRank),
-                                    Rating = await dataReader.IsDBNullAsync(column_rating, cancellationToken).ConfigureAwait(false) ? null : dataReader.GetInt32(column_rating),
-                                    Games = dataReader.GetInt64(column_gamesPlayed),
-                                    Wins = dataReader.GetInt64(column_wins),
-                                    Losses = dataReader.GetInt64(column_losses),
-                                    FirstOutRegular = dataReader.GetInt64(column_firstOutRegular),
-                                    FirstOutCritical = dataReader.GetInt64(column_firstOutCritical),
-                                    PlayDuration = dataReader.GetTimeSpan(column_playDuration),
-                                    LagOuts = dataReader.GetInt64(column_lagOuts),
-                                    Kills = dataReader.GetInt64(column_kills),
-                                    Deaths = dataReader.GetInt64(column_deaths),
-                                    Knockouts = dataReader.GetInt64(column_knockouts),
-                                    TeamKills = dataReader.GetInt64(column_teamKills),
-                                    SoloKills = dataReader.GetInt64(column_soloKills),
-                                    Assists = dataReader.GetInt64(column_assists),
-                                    ForcedReps = dataReader.GetInt64(column_forcedReps),
-                                    GunDamageDealt = dataReader.GetInt64(column_gunDamageDealt),
-                                    BombDamageDealt = dataReader.GetInt64(column_bombDamageDealt),
-                                    TeamDamageDealt = dataReader.GetInt64(column_teamDamageDealt),
-                                    GunDamageTaken = dataReader.GetInt64(column_gunDamageTaken),
-                                    BombDamageTaken = dataReader.GetInt64(column_bombDamageTaken),
-                                    TeamDamageTaken = dataReader.GetInt64(column_teamDamageTaken),
-                                    SelfDamage = dataReader.GetInt64(column_selfDamage),
-                                    KillDamage = dataReader.GetInt64(column_killDamage),
-                                    TeamKillDamage = dataReader.GetInt64(column_teamKillDamage),
-                                    ForcedRepDamage = dataReader.GetInt64(column_forcedRepDamage),
-                                    BulletFireCount = dataReader.GetInt64(column_bulletFireCount),
-                                    BombFireCount = dataReader.GetInt64(column_bombFireCount),
-                                    MineFireCount = dataReader.GetInt64(column_mineFireCount),
-                                    BulletHitCount = dataReader.GetInt64(column_bulletHitCount),
-                                    BombHitCount = dataReader.GetInt64(column_bombHitCount),
-                                    MineHitCount = dataReader.GetInt64(column_mineHitCount),
-                                    WastedEnergy = dataReader.GetInt64(column_wastedEnergy),
-                                    WastedRepel = dataReader.GetInt64(column_wastedRepel),
-                                    WastedRocket = dataReader.GetInt64(column_wastedRocket),
-                                    WastedThor = dataReader.GetInt64(column_wastedThor),
-                                    WastedBurst = dataReader.GetInt64(column_wastedBurst),
-                                    WastedDecoy = dataReader.GetInt64(column_wastedDecoy),
-                                    WastedPortal = dataReader.GetInt64(column_wastedPortal),
-                                    WastedBrick = dataReader.GetInt64(column_wastedBrick),
-                                    EnemyDistanceSum = await dataReader.IsDBNullAsync(column_enemyDistanceSum, cancellationToken) ? null : dataReader.GetInt64(column_enemyDistanceSum),
-                                    EnemyDistanceSamples = await dataReader.IsDBNullAsync(column_enemyDistanceSamples, cancellationToken) ? null : dataReader.GetInt64(column_enemyDistanceSamples),
-                                    TeamDistanceSum = await dataReader.IsDBNullAsync(column_teamDistanceSum, cancellationToken) ? null : dataReader.GetInt64(column_teamDistanceSum),
-                                    TeamDistanceSamples = await dataReader.IsDBNullAsync(column_teamDistanceSamples, cancellationToken) ? null : dataReader.GetInt64(column_teamDistanceSamples),
-                                });
+                            return periodStatsList;
                         }
-
-                        return periodStatsList;
                     }
                 }
             }
@@ -612,116 +844,122 @@ namespace SubspaceStats.Services
         {
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_game_stats($1,$2,$3,$4);");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, limit);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, offset);
-
-                    var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select * from ss.get_player_versus_game_stats($1,$2,$3,$4);", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        int column_gameId = dataReader.GetOrdinal("game_id");
-                        int column_timePlayed = dataReader.GetOrdinal("time_played");
-                        int column_score = dataReader.GetOrdinal("score");
-                        int column_result = dataReader.GetOrdinal("result");
-                        int column_playDuration = dataReader.GetOrdinal("play_duration");
-                        int column_shipMask = dataReader.GetOrdinal("ship_mask");
-                        int column_lagOuts = dataReader.GetOrdinal("lag_outs");
-                        int column_kills = dataReader.GetOrdinal("kills");
-                        int column_deaths = dataReader.GetOrdinal("deaths");
-                        int column_knockouts = dataReader.GetOrdinal("knockouts");
-                        int column_teamKills = dataReader.GetOrdinal("team_kills");
-                        int column_soloKills = dataReader.GetOrdinal("solo_kills");
-                        int column_assists = dataReader.GetOrdinal("assists");
-                        int column_forcedReps = dataReader.GetOrdinal("forced_reps");
-                        int column_gunDamageDealt = dataReader.GetOrdinal("gun_damage_dealt");
-                        int column_bombDamageDealt = dataReader.GetOrdinal("bomb_damage_dealt");
-                        int column_teamDamageDealt = dataReader.GetOrdinal("team_damage_dealt");
-                        int column_gunDamageTaken = dataReader.GetOrdinal("gun_damage_taken");
-                        int column_bombDamageTaken = dataReader.GetOrdinal("bomb_damage_taken");
-                        int column_teamDamageTaken = dataReader.GetOrdinal("team_damage_taken");
-                        int column_selfDamage = dataReader.GetOrdinal("self_damage");
-                        int column_killDamage = dataReader.GetOrdinal("kill_damage");
-                        int column_teamKillDamage = dataReader.GetOrdinal("team_kill_damage");
-                        int column_forcedRepDamage = dataReader.GetOrdinal("forced_rep_damage");
-                        int column_bulletFireCount = dataReader.GetOrdinal("bullet_fire_count");
-                        int column_bombFireCount = dataReader.GetOrdinal("bomb_fire_count");
-                        int column_mineFireCount = dataReader.GetOrdinal("mine_fire_count");
-                        int column_bulletHitCount = dataReader.GetOrdinal("bullet_hit_count");
-                        int column_bombHitCount = dataReader.GetOrdinal("bomb_hit_count");
-                        int column_mineHitCount = dataReader.GetOrdinal("mine_hit_count");
-                        int column_firstOut = dataReader.GetOrdinal("first_out");
-                        int column_wastedEnergy = dataReader.GetOrdinal("wasted_energy");
-                        int column_wastedRepel = dataReader.GetOrdinal("wasted_repel");
-                        int column_wastedRocket = dataReader.GetOrdinal("wasted_rocket");
-                        int column_wastedThor = dataReader.GetOrdinal("wasted_thor");
-                        int column_wastedBurst = dataReader.GetOrdinal("wasted_burst");
-                        int column_wastedDecoy = dataReader.GetOrdinal("wasted_decoy");
-                        int column_wastedPortal = dataReader.GetOrdinal("wasted_portal");
-                        int column_wastedBrick = dataReader.GetOrdinal("wasted_brick");
-                        int column_ratingChange = dataReader.GetOrdinal("rating_change");
-                        int column_enemyDistanceSum = dataReader.GetOrdinal("enemy_distance_sum");
-                        int column_enemyDistanceSamples = dataReader.GetOrdinal("enemy_distance_samples");
-                        int column_teamDistanceSum = dataReader.GetOrdinal("team_distance_sum");
-                        int column_teamDistanceSamples = dataReader.GetOrdinal("team_distance_samples");
+                        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, limit);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, offset);
 
-                        List<TeamVersusGameStats> statsList = new(limit);
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
-                        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            statsList.Add(new TeamVersusGameStats()
-                            {
-                                GameId = dataReader.GetInt64(column_gameId),
-                                TimePlayed = await dataReader.GetFieldValueAsync<NpgsqlRange<DateTime>>(column_timePlayed, cancellationToken).ConfigureAwait(false),
-                                Score = await dataReader.GetFieldValueAsync<int[]>(column_score, cancellationToken).ConfigureAwait(false),
-                                Result = (GameResult)dataReader.GetInt32(column_result),
-                                PlayDuration = dataReader.GetTimeSpan(column_playDuration),
-                                ShipMask = (ShipMask)dataReader.GetInt16(column_shipMask),
-                                LagOuts = dataReader.GetInt16(column_lagOuts),
-                                Kills = dataReader.GetInt16(column_kills),
-                                Deaths = dataReader.GetInt16(column_deaths),
-                                Knockouts = dataReader.GetInt16(column_knockouts),
-                                TeamKills = dataReader.GetInt16(column_teamKills),
-                                SoloKills = dataReader.GetInt16(column_soloKills),
-                                Assists = dataReader.GetInt16(column_assists),
-                                ForcedReps = dataReader.GetInt16(column_forcedReps),
-                                GunDamageDealt = dataReader.GetInt32(column_gunDamageDealt),
-                                BombDamageDealt = dataReader.GetInt32(column_bombDamageDealt),
-                                TeamDamageDealt = dataReader.GetInt32(column_teamDamageDealt),
-                                GunDamageTaken = dataReader.GetInt32(column_gunDamageTaken),
-                                BombDamageTaken = dataReader.GetInt32(column_bombDamageTaken),
-                                TeamDamageTaken = dataReader.GetInt32(column_teamDamageTaken),
-                                SelfDamage = dataReader.GetInt32(column_selfDamage),
-                                KillDamage = dataReader.GetInt32(column_killDamage),
-                                TeamKillDamage = dataReader.GetInt32(column_teamKillDamage),
-                                ForcedRepDamage = dataReader.GetInt32(column_forcedRepDamage),
-                                BulletFireCount = dataReader.GetInt32(column_bulletFireCount),
-                                BombFireCount = dataReader.GetInt32(column_bombFireCount),
-                                MineFireCount = dataReader.GetInt32(column_mineFireCount),
-                                BulletHitCount = dataReader.GetInt32(column_bulletHitCount),
-                                BombHitCount = dataReader.GetInt32(column_bombHitCount),
-                                MineHitCount = dataReader.GetInt32(column_mineHitCount),
-                                FirstOut = (FirstOut)dataReader.GetInt16(column_firstOut),
-                                WastedEnergy = dataReader.GetInt32(column_wastedEnergy),
-                                WastedRepel = dataReader.GetInt16(column_wastedRepel),
-                                WastedRocket = dataReader.GetInt16(column_wastedRocket),
-                                WastedThor = dataReader.GetInt16(column_wastedThor),
-                                WastedBurst = dataReader.GetInt16(column_wastedBurst),
-                                WastedDecoy = dataReader.GetInt16(column_wastedDecoy),
-                                WastedPortal = dataReader.GetInt16(column_wastedPortal),
-                                WastedBrick = dataReader.GetInt16(column_wastedBrick),
-                                RatingChange = dataReader.GetInt32(column_ratingChange),
-                                EnemyDistanceSum = await dataReader.IsDBNullAsync(column_enemyDistanceSum, cancellationToken) ? null : dataReader.GetInt64(column_enemyDistanceSum),
-                                EnemyDistanceSamples = await dataReader.IsDBNullAsync(column_enemyDistanceSamples, cancellationToken) ? null : dataReader.GetInt32(column_enemyDistanceSamples),
-                                TeamDistanceSum = await dataReader.IsDBNullAsync(column_teamDistanceSum, cancellationToken) ? null : dataReader.GetInt64(column_teamDistanceSum),
-                                TeamDistanceSamples = await dataReader.IsDBNullAsync(column_teamDistanceSamples, cancellationToken) ? null : dataReader.GetInt32(column_teamDistanceSamples),
-                            });
-                        }
+                            int column_gameId = reader.GetOrdinal("game_id");
+                            int column_timePlayed = reader.GetOrdinal("time_played");
+                            int column_score = reader.GetOrdinal("score");
+                            int column_result = reader.GetOrdinal("result");
+                            int column_playDuration = reader.GetOrdinal("play_duration");
+                            int column_shipMask = reader.GetOrdinal("ship_mask");
+                            int column_lagOuts = reader.GetOrdinal("lag_outs");
+                            int column_kills = reader.GetOrdinal("kills");
+                            int column_deaths = reader.GetOrdinal("deaths");
+                            int column_knockouts = reader.GetOrdinal("knockouts");
+                            int column_teamKills = reader.GetOrdinal("team_kills");
+                            int column_soloKills = reader.GetOrdinal("solo_kills");
+                            int column_assists = reader.GetOrdinal("assists");
+                            int column_forcedReps = reader.GetOrdinal("forced_reps");
+                            int column_gunDamageDealt = reader.GetOrdinal("gun_damage_dealt");
+                            int column_bombDamageDealt = reader.GetOrdinal("bomb_damage_dealt");
+                            int column_teamDamageDealt = reader.GetOrdinal("team_damage_dealt");
+                            int column_gunDamageTaken = reader.GetOrdinal("gun_damage_taken");
+                            int column_bombDamageTaken = reader.GetOrdinal("bomb_damage_taken");
+                            int column_teamDamageTaken = reader.GetOrdinal("team_damage_taken");
+                            int column_selfDamage = reader.GetOrdinal("self_damage");
+                            int column_killDamage = reader.GetOrdinal("kill_damage");
+                            int column_teamKillDamage = reader.GetOrdinal("team_kill_damage");
+                            int column_forcedRepDamage = reader.GetOrdinal("forced_rep_damage");
+                            int column_bulletFireCount = reader.GetOrdinal("bullet_fire_count");
+                            int column_bombFireCount = reader.GetOrdinal("bomb_fire_count");
+                            int column_mineFireCount = reader.GetOrdinal("mine_fire_count");
+                            int column_bulletHitCount = reader.GetOrdinal("bullet_hit_count");
+                            int column_bombHitCount = reader.GetOrdinal("bomb_hit_count");
+                            int column_mineHitCount = reader.GetOrdinal("mine_hit_count");
+                            int column_firstOut = reader.GetOrdinal("first_out");
+                            int column_wastedEnergy = reader.GetOrdinal("wasted_energy");
+                            int column_wastedRepel = reader.GetOrdinal("wasted_repel");
+                            int column_wastedRocket = reader.GetOrdinal("wasted_rocket");
+                            int column_wastedThor = reader.GetOrdinal("wasted_thor");
+                            int column_wastedBurst = reader.GetOrdinal("wasted_burst");
+                            int column_wastedDecoy = reader.GetOrdinal("wasted_decoy");
+                            int column_wastedPortal = reader.GetOrdinal("wasted_portal");
+                            int column_wastedBrick = reader.GetOrdinal("wasted_brick");
+                            int column_ratingChange = reader.GetOrdinal("rating_change");
+                            int column_enemyDistanceSum = reader.GetOrdinal("enemy_distance_sum");
+                            int column_enemyDistanceSamples = reader.GetOrdinal("enemy_distance_samples");
+                            int column_teamDistanceSum = reader.GetOrdinal("team_distance_sum");
+                            int column_teamDistanceSamples = reader.GetOrdinal("team_distance_samples");
 
-                        return statsList;
+                            List<TeamVersusGameStats> statsList = new(limit);
+
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                statsList.Add(new TeamVersusGameStats()
+                                {
+                                    GameId = reader.GetInt64(column_gameId),
+                                    TimePlayed = reader.GetFieldValue<NpgsqlRange<DateTime>>(column_timePlayed),
+                                    Score = reader.GetFieldValue<int[]>(column_score),
+                                    Result = (GameResult)reader.GetInt32(column_result),
+                                    PlayDuration = reader.GetTimeSpan(column_playDuration),
+                                    ShipMask = (ShipMask)reader.GetInt16(column_shipMask),
+                                    LagOuts = reader.GetInt16(column_lagOuts),
+                                    Kills = reader.GetInt16(column_kills),
+                                    Deaths = reader.GetInt16(column_deaths),
+                                    Knockouts = reader.GetInt16(column_knockouts),
+                                    TeamKills = reader.GetInt16(column_teamKills),
+                                    SoloKills = reader.GetInt16(column_soloKills),
+                                    Assists = reader.GetInt16(column_assists),
+                                    ForcedReps = reader.GetInt16(column_forcedReps),
+                                    GunDamageDealt = reader.GetInt32(column_gunDamageDealt),
+                                    BombDamageDealt = reader.GetInt32(column_bombDamageDealt),
+                                    TeamDamageDealt = reader.GetInt32(column_teamDamageDealt),
+                                    GunDamageTaken = reader.GetInt32(column_gunDamageTaken),
+                                    BombDamageTaken = reader.GetInt32(column_bombDamageTaken),
+                                    TeamDamageTaken = reader.GetInt32(column_teamDamageTaken),
+                                    SelfDamage = reader.GetInt32(column_selfDamage),
+                                    KillDamage = reader.GetInt32(column_killDamage),
+                                    TeamKillDamage = reader.GetInt32(column_teamKillDamage),
+                                    ForcedRepDamage = reader.GetInt32(column_forcedRepDamage),
+                                    BulletFireCount = reader.GetInt32(column_bulletFireCount),
+                                    BombFireCount = reader.GetInt32(column_bombFireCount),
+                                    MineFireCount = reader.GetInt32(column_mineFireCount),
+                                    BulletHitCount = reader.GetInt32(column_bulletHitCount),
+                                    BombHitCount = reader.GetInt32(column_bombHitCount),
+                                    MineHitCount = reader.GetInt32(column_mineHitCount),
+                                    FirstOut = (FirstOut)reader.GetInt16(column_firstOut),
+                                    WastedEnergy = reader.GetInt32(column_wastedEnergy),
+                                    WastedRepel = reader.GetInt16(column_wastedRepel),
+                                    WastedRocket = reader.GetInt16(column_wastedRocket),
+                                    WastedThor = reader.GetInt16(column_wastedThor),
+                                    WastedBurst = reader.GetInt16(column_wastedBurst),
+                                    WastedDecoy = reader.GetInt16(column_wastedDecoy),
+                                    WastedPortal = reader.GetInt16(column_wastedPortal),
+                                    WastedBrick = reader.GetInt16(column_wastedBrick),
+                                    RatingChange = reader.GetInt32(column_ratingChange),
+                                    EnemyDistanceSum = reader.IsDBNull(column_enemyDistanceSum) ? null : reader.GetInt64(column_enemyDistanceSum),
+                                    EnemyDistanceSamples = reader.IsDBNull(column_enemyDistanceSamples) ? null : reader.GetInt32(column_enemyDistanceSamples),
+                                    TeamDistanceSum = reader.IsDBNull(column_teamDistanceSum) ? null : reader.GetInt64(column_teamDistanceSum),
+                                    TeamDistanceSamples = reader.IsDBNull(column_teamDistanceSamples) ? null : reader.GetInt32(column_teamDistanceSamples),
+                                });
+                            }
+
+                            return statsList;
+                        }
                     }
                 }
             }
@@ -736,39 +974,45 @@ namespace SubspaceStats.Services
         {
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_ship_stats($1,$2);");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
-
-                    var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select * from ss.get_player_versus_ship_stats($1,$2);", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        int column_shipType = dataReader.GetOrdinal("ship_type");
-                        int column_gameUseCount = dataReader.GetOrdinal("game_use_count");
-                        int column_useDuration = dataReader.GetOrdinal("use_duration");
-                        int column_kills = dataReader.GetOrdinal("kills");
-                        int column_deaths = dataReader.GetOrdinal("deaths");
-                        int column_knockouts = dataReader.GetOrdinal("knockouts");
-                        int column_soloKills = dataReader.GetOrdinal("solo_kills");
+                        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
 
-                        List<TeamVersusShipStats> shipStatsList = [];
-                        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            shipStatsList.Add(
-                                new TeamVersusShipStats()
-                                {
-                                    ShipType = (ShipType)dataReader.GetInt16(column_shipType),
-                                    GameUseCount = dataReader.GetInt32(column_gameUseCount),
-                                    UseDuration = dataReader.GetTimeSpan(column_useDuration),
-                                    Kills = dataReader.GetInt64(column_kills),
-                                    Deaths = dataReader.GetInt64(column_deaths),
-                                    Knockouts = dataReader.GetInt64(column_knockouts),
-                                    SoloKills = dataReader.GetInt64(column_soloKills),
-                                });
+                            int column_shipType = reader.GetOrdinal("ship_type");
+                            int column_gameUseCount = reader.GetOrdinal("game_use_count");
+                            int column_useDuration = reader.GetOrdinal("use_duration");
+                            int column_kills = reader.GetOrdinal("kills");
+                            int column_deaths = reader.GetOrdinal("deaths");
+                            int column_knockouts = reader.GetOrdinal("knockouts");
+                            int column_soloKills = reader.GetOrdinal("solo_kills");
+
+                            List<TeamVersusShipStats> shipStatsList = [];
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                shipStatsList.Add(
+                                    new TeamVersusShipStats()
+                                    {
+                                        ShipType = (ShipType)reader.GetInt16(column_shipType),
+                                        GameUseCount = reader.GetInt32(column_gameUseCount),
+                                        UseDuration = reader.GetTimeSpan(column_useDuration),
+                                        Kills = reader.GetInt64(column_kills),
+                                        Deaths = reader.GetInt64(column_deaths),
+                                        Knockouts = reader.GetInt64(column_knockouts),
+                                        SoloKills = reader.GetInt64(column_soloKills),
+                                    });
+                            }
+                            return shipStatsList;
                         }
-                        return shipStatsList;
                     }
                 }
             }
@@ -783,38 +1027,67 @@ namespace SubspaceStats.Services
         {
             try
             {
-                NpgsqlCommand command = _dataSource.CreateCommand("select * from ss.get_player_versus_kill_stats($1,$2,$3);");
-                await using (command.ConfigureAwait(false))
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
                 {
-                    command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
-                    command.Parameters.AddWithValue(NpgsqlDbType.Integer, limit);
-
-                    var dataReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                    await using (dataReader.ConfigureAwait(false))
+                    NpgsqlCommand command = new("select * from ss.get_player_versus_kill_stats($1,$2,$3);", connection);
+                    await using (command.ConfigureAwait(false))
                     {
-                        int column_playerName = dataReader.GetOrdinal("player_name");
-                        int column_kills = dataReader.GetOrdinal("kills");
-                        int column_deaths = dataReader.GetOrdinal("deaths");
+                        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, playerName);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Bigint, statPeriodId);
+                        command.Parameters.AddWithValue(NpgsqlDbType.Integer, limit);
 
-                        List<KillStats> killStatsList = [];
-                        while (await dataReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
                         {
-                            killStatsList.Add(
-                                new KillStats()
-                                {
-                                    PlayerName = dataReader.GetString(column_playerName),
-                                    Kills = dataReader.GetInt64(column_kills),
-                                    Deaths = dataReader.GetInt64(column_deaths),
-                                });
+                            int column_playerName = reader.GetOrdinal("player_name");
+                            int column_kills = reader.GetOrdinal("kills");
+                            int column_deaths = reader.GetOrdinal("deaths");
+
+                            List<KillStats> killStatsList = [];
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                killStatsList.Add(
+                                    new KillStats()
+                                    {
+                                        PlayerName = reader.GetString(column_playerName),
+                                        Kills = reader.GetInt64(column_kills),
+                                        Deaths = reader.GetInt64(column_deaths),
+                                    });
+                            }
+                            return killStatsList;
                         }
-                        return killStatsList;
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting team versus kill stats (playerName:{playerName}, statPeriodId:{statPeriodId}).", playerName, statPeriodId);
+                throw;
+            }
+        }
+
+        public async Task RefreshTeamVersusPlayerStats(long statPeriodId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select ss.refresh_player_versus_stats($1)", connection);
+                    await using (command.ConfigureAwait(false))
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = statPeriodId });
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+                        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refreshing player versus stats. (stat_period_id: {stat_period_id})", statPeriodId);
                 throw;
             }
         }

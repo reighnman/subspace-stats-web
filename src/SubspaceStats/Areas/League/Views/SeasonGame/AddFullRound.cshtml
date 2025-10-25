@@ -1,0 +1,85 @@
+﻿@using SubspaceStats.Areas.League.Models.Season.Game
+@using SubspaceStats.Areas.League.Models.SeasonGame
+@model AddFullRoundViewModel
+
+@{
+    ViewData["Title"] = "Add Season Games";
+}
+
+<h1>Add Season Games</h1>
+<h3>Full round with 2 teams per match</h3>
+
+<div class="mb-3">
+    <a asp-controller="Season" asp-action="Games" asp-route-seasonId="@Model.Season.SeasonId">Back to Season Rounds</a>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 order-md-2">
+            <div class="alert alert-info">
+                <div class="mb-3">
+                    Use this form to add a full round of matches. Only teams that are <em>enabled</em> are included.
+                    The matches will be added with the next unused round number.
+                </div>
+                <div>
+                    Adding all <strong>Combinations</strong> means the order of teams in a match does not matter.
+                    For example, if there are 3 teams:
+                    <ul>
+                        <li>A vs B</li>
+                        <li>A vs C</li>
+                        <li>B vs C</li>
+                    </ul>
+                </div>
+                <div>
+                    Adding all <strong>Permutations</strong> means the order of teams matters.
+                    <ul>
+                        <li>A vs B</li>
+                        <li>B vs A</li>
+                        <li>A vs C</li>
+                        <li>C vs A</li>
+                        <li>B vs C</li>
+                        <li>C vs B</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 order-md-1">
+            <form asp-action="AddFullRound">
+                <h4>Add games to</h4>
+                <div class="ms-3 mb-3">
+                    <label class="form-label">Season</label>
+                    <input type="text" class="form-control" value="@Model.Season.SeasonName" disabled readonly />
+                    <label class="form-label">League</label>
+                    <input type="text" class="form-control" value="@Model.League.Name" disabled readonly />
+                </div>
+                <h4>Choose options</h4>
+                <div class="ms-3">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="mb-3">
+                        <label asp-for="Mode" class="form-label"></label>
+                        <div>
+                        <input asp-for="Mode" type="radio" value="@FullRoundOf.Combinations" id="mode-@FullRoundOf.Combinations" />
+                        <label for="mode-@FullRoundOf.Combinations">Combinations</label>
+                        </div>
+                        <div>
+                        <input asp-for="Mode" type="radio" value="@FullRoundOf.Permutations" id="mode-@FullRoundOf.Permutations" />
+                        <label for="mode-@FullRoundOf.Permutations">Permutations</label>
+                        </div>
+                        <span asp-validation-for="Mode" class="text-danger"></span>
+                    </div>
+                    <div class="d-flex">
+                        <button type="submit" class="btn btn-primary m-2">Add</button>
+                        <a asp-controller="Season" asp-action="Games" asp-route-seasonId="@Model.Season.SeasonId" class="btn btn-secondary m-2">Cancel</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,14 +1,17 @@
 ﻿@using System.Text;
+@using Microsoft.Extensions.Options
 @using SubspaceStats.Models;
 @using SubspaceStats.Models.GameDetails.TeamVersus;
 @using SubspaceStats.Models.Player;
+@inject IOptions<SubspaceStats.Options.GeneralOptions> generalOptions
 
 @* TODO: Maybe use a layout for all variants of player data? @Layout = "_PlayerLayout" *@
 
 @model SubspaceStats.Models.Player.TeamVersusHistoryViewModel
 
 @{
-	ViewData["Title"] = $"{Model.SelectedPeriod.GameType.GetDisplayName()} {Model.SelectedPeriod.GetDisplayDescription()} - {Model.PlayerName}";
+	string selectedGameTypeName = GetGameTypeName(Model.SelectedPeriod.GameTypeId);
+	ViewData["Title"] = $"{selectedGameTypeName} {Model.SelectedPeriod.GetDisplayDescription()} - {Model.PlayerName}";
 
 	string? action = ViewContext.RouteData.Values["action"] as string;
 	string? controller = ViewContext.RouteData.Values["controller"] as string;
@@ -30,6 +33,13 @@
 			_ => "",
 		};
 	}
+
+	public string GetGameTypeName(long gameTypeId)
+	{
+		return Model.GameTypes.TryGetValue(gameTypeId, out GameType? gameType)
+			? gameType.Name
+			: gameTypeId.ToString();
+	}
 }
 
 <h1>@Model.PlayerName</h1>
@@ -45,25 +55,25 @@
 
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
 	<div class="container-fluid">
-		<span class="navbar-brand">@Model.SelectedPeriod.GameType.GetDisplayName()</span>
+		<span class="navbar-brand">@selectedGameTypeName</span>
 		<form asp-action="@action" asp-controller="@controller" method="get">
 			<input type="hidden" name="playerName" value="@Model.PlayerName" />
-			<input type="hidden" name="gameType" value="@Model.SelectedPeriod.GameType" />
+			<input type="hidden" name="gameType" value="@Model.SelectedPeriod.GameTypeId" />
 			<select class="form-select" id="periodSelect" name="period">
 				@{
-					GameType? gameType = null;
+					long? gameTypeId = null;
 
 					int i = 0;
 					while (i < Model.PeriodList.Count)
 					{
-						gameType = Model.PeriodList[i].GameType;
-						<optgroup label="@gameType.Value.GetDisplayName()">
+						gameTypeId = Model.PeriodList[i].GameTypeId;
+						<optgroup label="@GetGameTypeName(gameTypeId.Value)">
 							@do
 							{
 								bool selected = Model.SelectedPeriod.StatPeriodId == Model.PeriodList[i].StatPeriodId;
 								<option value="@Model.PeriodList[i].StatPeriodId" selected="@selected">@Model.PeriodList[i].GetDisplayDescription()</option>
 							}
-							while (++i < Model.PeriodList.Count && Model.PeriodList[i].GameType == gameType);
+							while (++i < Model.PeriodList.Count && Model.PeriodList[i].GameTypeId == gameTypeId);
 						</optgroup>
 					}
 				}
@@ -75,7 +85,7 @@
 		<div class="collapse navbar-collapse" id="navbarNav">
 			<ul class="navbar-nav">
 				<li class="nav-item">
-					<a class="nav-link" asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@Model.SelectedPeriod.GameType" asp-route-period="@Model.SelectedPeriod.StatPeriodId">View Leaderboard</a>
+					<a class="nav-link" asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@Model.SelectedPeriod.GameTypeId" asp-route-period="@Model.SelectedPeriod.StatPeriodId">View Leaderboard</a>
 				</li>
 				<li class="nav-item">
 					<a class="nav-link" asp-controller="Player" asp-action="Index" asp-route-playerName="@Model.PlayerName">View Player Details</a>
@@ -92,7 +102,7 @@
 				<table class="table table-bordered table-hover text-end text-nowrap">
 					<thead>
 						<tr class="table-secondary align-top">
-							<th scope="colgroup" class="h4 align-middle text-start text-wrap">@Model.SelectedPeriod.GameType.GetDisplayName() Overall Stats</th>
+							<th scope="colgroup" class="h4 align-middle text-start text-wrap">@selectedGameTypeName Overall Stats</th>
 							<th scope="col" class="text-center">
 								<div title="Wins-Losses">W-L</div>
 								<div title="Rating">Rating</div>
@@ -293,19 +303,19 @@
 					<thead>
 						<tr>
 							<th scope="colgroup" colspan="17" class="text-center">
-								@Model.SelectedPeriod.GameType.GetDisplayName() Game History
+								@selectedGameTypeName Game History
 								@{
 									if (Model.GameStatsPaging.Offset > 0)
 									{
 										int offset = Math.Max(0, Model.GameStatsPaging.Offset - Model.GameStatsPaging.Limit);
-										@Html.ActionLink("Previous", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameType, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = offset }, new { @class = "float-start"})
+										@Html.ActionLink("Previous", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameTypeId, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = offset }, new { @class = "float-start"})
 									}
 
 									if (Model.GameStatsPaging.HasMore)
 									{
 										if (action is not null)
 										{
-											@Html.ActionLink("Next", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameType, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = Model.GameStatsPaging.Offset + Model.GameStatsPaging.Limit }, new { @class = "float-end"})
+											@Html.ActionLink("Next", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameTypeId, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = Model.GameStatsPaging.Offset + Model.GameStatsPaging.Limit }, new { @class = "float-end"})
 										}
 									}
 								}
@@ -358,7 +368,7 @@
 							</th>
 							<th scope="col" class="text-center">
 								<div>Date</div>
-								<div>Time</div>
+								<div title="Time @generalOptions.Value.TimeZone.DisplayName">Time</div>
 							</th>
 						</tr>
 					</thead>
@@ -488,9 +498,11 @@
 									</div>
 								</td>
 								<td class="text-center">
-									<div>@gameStats.TimePlayed.UpperBound.ToString("yyyy-MM-dd")</div>
-									<div>@gameStats.TimePlayed.UpperBound.ToString("HH:mm:ss")</div>
-									
+									@{
+										DateTime timePlayed = TimeZoneInfo.ConvertTimeFromUtc(gameStats.TimePlayed.LowerBound, generalOptions.Value.TimeZone);
+										<div>@timePlayed.ToString("yyyy-MM-dd")</div>
+										<div>@timePlayed.ToString("HH:mm:ss")</div>
+									}
 								</td>
 							</tr>
 						}
@@ -498,19 +510,19 @@
 					<tfoot>
 						<tr>
 							<th colspan="17" class="text-center">
-								@Model.SelectedPeriod.GameType.GetDisplayName() Game History
+								@selectedGameTypeName Game History
 								@{
 									if (Model.GameStatsPaging.Offset > 0)
 									{
 										int offset = Math.Max(0, Model.GameStatsPaging.Offset - Model.GameStatsPaging.Limit);
-										@Html.ActionLink("Previous", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameType, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = offset }, new { @class = "float-start"})
+										@Html.ActionLink("Previous", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameTypeId, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = offset }, new { @class = "float-start"})
 									}
 
 									if (Model.GameStatsPaging.HasMore)
 									{
 										if (action is not null)
 										{
-											@Html.ActionLink("Next", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameType, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = Model.GameStatsPaging.Offset + Model.GameStatsPaging.Limit }, new { @class = "float-end"})
+											@Html.ActionLink("Next", action, new { playerName = Model.PlayerName, gameType = Model.SelectedPeriod.GameTypeId, period = Model.SelectedPeriod.StatPeriodId, limit = Model.GameStatsPaging.Limit, offset = Model.GameStatsPaging.Offset + Model.GameStatsPaging.Limit }, new { @class = "float-end"})
 										}
 									}
 								}
@@ -541,7 +553,7 @@
 						@foreach (var shipStats in Model.ShipStatsList)
 						{
 							<tr>
-								<th scope="row" class="text-center"><img src="@GetShipImage(shipStats.ShipType)" alt="@shipStats.ShipType" title="@shipStats.ShipType" width="24" /></th>
+								<th scope="row" class="text-center"><img src="@GetShipImage(shipStats.ShipType)" alt="@shipStats.ShipType" title="@shipStats.ShipType" width="24" asp-append-version="true" /></th>
 								<td>@shipStats.Kills</td>
 								<td>@shipStats.Deaths</td>
 								<td>@shipStats.Knockouts</td>
@@ -572,7 +584,7 @@
 							float ratio = killStats.Deaths == 0 ? killStats.Kills : (float)killStats.Kills / killStats.Deaths;
 							<tr>
 								<td class="text-start">
-									<a asp-controller="Player" asp-action="Index" asp-route-playerName="@killStats.PlayerName" asp-route-gameType="@Model.SelectedPeriod.GameType" asp-route-period="@Model.SelectedPeriod.StatPeriodId">@killStats.PlayerName</a>
+									<a asp-controller="Player" asp-action="Index" asp-route-playerName="@killStats.PlayerName" asp-route-gameType="@Model.SelectedPeriod.GameTypeId" asp-route-period="@Model.SelectedPeriod.StatPeriodId">@killStats.PlayerName</a>
 								</td>
 								<td>@killStats.Kills</td>
 								<td>@killStats.Deaths</td>
@@ -589,9 +601,9 @@
 @section Scripts {
 	<script type="text/javascript">
 		$(document).ready(function () {
-			var periodSelect = $("#periodSelect");
-			periodSelect.on("change", function () {
-				periodSelect.closest("form").submit();
+			var $periodSelect = $("#periodSelect");
+			$periodSelect.on("change", function () {
+				$periodSelect.closest("form").submit();
 			});
 		});
 	</script>

@@ -3,7 +3,7 @@
   "defaultProvider": "cdnjs",
   "libraries": [
     {
-      "library": "bootstrap@5.3.3",
+      "library": "bootstrap@5.3.8",
       "destination": "wwwroot/lib/bootstrap/"
     },
     {
@@ -17,6 +17,18 @@
     {
       "library": "jquery-validation-unobtrusive@4.0.0",
       "destination": "wwwroot/lib/jquery-validation-unobtrusive/"
+    },
+    {
+      "provider": "cdnjs",
+      "library": "bootstrap-icons@1.13.1",
+      "destination": "wwwroot/lib/bootstrap-icons/",
+      "files": [
+        "font/fonts/bootstrap-icons.woff",
+        "font/fonts/bootstrap-icons.woff2",
+        "font/bootstrap-icons.css",
+        "font/bootstrap-icons.json",
+        "font/bootstrap-icons.min.css"
+      ]
     }
   ]
 }

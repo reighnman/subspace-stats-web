@@ -1,0 +1,153 @@
+﻿@using Microsoft.Extensions.Options
+@using SubspaceStats.Areas.League.Models
+@using SubspaceStats.Areas.League.Models.Season.Team
+@using SubspaceStats.Options
+@model TeamDetailsViewModel
+@inject IOptions<GeneralOptions> generalOptions
+@inject IOptions<LeagueOptions> leagueOptions
+
+@{
+    ViewData["Title"] = "Team";
+}
+
+<div class="container">
+    <h3 class="row">@Model.TeamInfo.TeamName</h3>
+    <div class="row">
+        <div class="col-12 col-md-6">
+            @if (!string.IsNullOrWhiteSpace(Model.TeamInfo.BannerLarge))
+            {
+                <div><img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.TeamInfo.TeamId}/{Model.TeamInfo.BannerLarge}")" asp-append-version="true" /></div>
+            }
+            else if (!string.IsNullOrWhiteSpace(Model.TeamInfo.BannerSmall))
+            {
+                <div><img src="@($"{leagueOptions.Value.ImageUrlPath}/TeamBanners/{Model.TeamInfo.TeamId}/{Model.TeamInfo.BannerSmall}")" asp-append-version="true" /></div>
+            }
+            <dl class="row">
+                <dt class="col-4">
+                    League:
+                </dt>
+                <dd class="col-8">
+                    <a asp-controller="League" asp-action="Details" asp-route-leagueId="@Model.TeamInfo.LeagueId">@Model.TeamInfo.LeagueName</a>
+                </dd>
+                <dt class="col-4">
+                    Season:
+                </dt>
+                <dd class="col-8">
+                    <a asp-controller="Season" asp-action="Index" asp-route-seasonId="@Model.TeamInfo.SeasonId">@Model.TeamInfo.SeasonName</a>
+                </dd>
+                @if (Model.TeamInfo.FranchiseId is not null)
+                {
+                    <dt class="col-4">
+                        Franchise:
+                    </dt>
+                    <dd class="col-8">
+                        <a asp-controller="Franchise" asp-action="Details" asp-route-franchiseId="@Model.TeamInfo.FranchiseId.Value">@Model.TeamInfo.FranchiseName</a>
+                    </dd>
+                }
+            </dl>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered table-hover text-nowrap text-end">
+                    <thead>
+                        <tr><th colspan="3" class="text-center">Season Record</th></tr>
+                        <tr>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Draws</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>@Model.TeamInfo.Wins</td>
+                            <td>@Model.TeamInfo.Losses</td>
+                            <td>@Model.TeamInfo.Draws</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 table-responsive">
+            <table class="table table-bordered table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th colspan="2" class="text-center">Roster</th>
+                    </tr>
+                    <tr>
+                        <th colspan="2">Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var rosterItem in Model.Roster)
+                    {
+                        <tr>
+                            <td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@rosterItem.PlayerName">@rosterItem.PlayerName</a></td>
+                            <td class="text-end">
+                                @if (rosterItem.IsSuspended)
+                                {
+                                    <span class="badge text-bg-danger mx-2">Suspended</span>
+                                }
+
+                                @if (rosterItem.IsCaptain)
+                                {
+                                    <span>Captain</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <table class="table table-striped table-bordered table-hover text-nowrap">
+                <thead>
+                    <tr>
+                        <th colspan="5" class="text-center">Matches</th>
+                    </tr>
+                    <tr>
+                        <th>Teams</th>
+                        <th title="Time @generalOptions.Value.TimeZone.DisplayName">Time</th>
+                        <th>Round</th>
+                        <th>Result</th>
+                        <th>Scores</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var game in Model.GameRecords)
+                    {
+                        <tr>
+                            <td>
+                                @if (game.GameId is null)
+                                {
+                                    @game.Teams
+                                }
+                                else
+                                {
+                                    <a asp-area="" asp-controller="Game" asp-action="Index" asp-route-id="@game.GameId">@game.Teams</a>
+                                }
+                            </td>
+                            <td>
+                                @if (game.GameTimestamp is not null)
+                                {
+                                    @TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, generalOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(game.RoundName))
+                                {
+                                    @game.RoundName
+                                }
+                                else if (game.RoundNumber is not null)
+                                {
+                                    @game.RoundNumber
+                                }
+                            </td>
+                            <td>@game.Result</td>
+                            <td>@game.Scores</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,98 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using SubspaceStats.Areas.Identity.Data
+@using SubspaceStats.Areas.League.Authorization
+@using SubspaceStats.Areas.League.Models.Season.Roles
+@model SeasonRolesViewModel
+@inject IAuthorizationService AuthorizationService
+@inject UserManager<SubspaceStatsUser> UserManager
+
+@{
+	ViewData["Title"] = "Manage Roles";
+	bool canModifyRoles = (await AuthorizationService.AuthorizeAsync(User, Model.League, PolicyNames.Manager)).Succeeded;
+	SelectListItem[] roles = [new SelectListItem("Manager", "1")];
+}
+
+<partial name="_LeagueSeasonChooser" model="@Model.LeagueSeasonChooser" />
+<partial name="_SeasonNav" />
+
+<h4>Season Roles</h4>
+<div class="row">
+	<div class="col-12 col-md-4 order-md-2">
+		@if (canModifyRoles)
+		{
+			<div class="card mb-3">
+				<form asp-action="Add">
+					<h5 class="card-header">Assign role</h5>
+					<div class="card-body">
+						<div class="mb-3">
+							<label asp-for="AddUserRole.UserName" class="form-label"></label>
+							<input asp-for="AddUserRole.UserName" class="form-control" />
+						</div>
+						<div class="mb-3">
+							<label asp-for="AddUserRole.Role" class="form-label"></label>
+							<select asp-for="AddUserRole.Role" asp-items="@roles" class="form-select">
+							</select>
+						</div>
+						<div class="d-flex mb-3">
+							<button type="submit" class="btn btn-primary m-2">Add</button>
+						</div>
+						@if (!string.IsNullOrWhiteSpace(Model.AddUserRoleMessage))
+						{
+							<div class="alert alert-warning">@Model.AddUserRoleMessage</div>
+						}
+					</div>
+				</form>
+			</div>
+		}
+	</div>
+	<div class="col-12 col-md-8 order-md-1">
+		<div class="table-responsive">
+			<table class="table table-bordered table-striped">
+				<thead>
+					<tr>
+						<th>User</th>
+						<th>Role</th>
+						@if (canModifyRoles)
+						{
+							<th>Action</th>
+						}
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var record in Model.Roles)
+					{
+						SubspaceStatsUser? user = await UserManager.FindByIdAsync(record.UserId);
+						<tr>
+							<td>
+								@if (user is not null)
+								{
+									@user.UserName
+								}
+								else
+								{
+									<span class="fst-italic">record.UserId</span>
+								}
+							</td>
+							<td>
+								@record.Role
+							</td>
+							@if (canModifyRoles)
+							{
+								<td>
+									<div class="d-flex">
+										<a asp-action="Delete" asp-route-userId="@record.UserId" asp-route-role="@record.Role">Delete</a>
+									</div>
+								</td>
+							}
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<partial name="_LeagueSeasonChooseScript" model="@Model.LeagueSeasonChooser" />
+}

@@ -1,0 +1,77 @@
+﻿@using Microsoft.Extensions.Options
+@using SubspaceStats.Areas.League.Models.Season
+@using SubspaceStats.Areas.League.Models.Season.Team
+@using SubspaceStats.Options
+@model PlayersViewModel
+@inject IOptions<GeneralOptions> generalOptions
+
+@{
+	ViewData["Title"] = "Manage Players";
+}
+
+@await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
+@await Html.PartialAsync("_SeasonNav")
+@* <h1>Manage Players</h1> *@
+
+<div class="mb-3">
+	<a asp-controller="SeasonPlayer" asp-action="Add" asp-route-seasonId="@Model.SeasonDetails.SeasonId" class="mx-2 text-nowrap">Add Players</a>
+</div>
+
+<div class="table-responsive">
+	<table class="table table-striped table-bordered table-hover">
+		<thead>
+			<tr>
+				<th>Player</th>
+				<th title="Signup Time @generalOptions.Value.TimeZone.DisplayName">Signup Time</th>
+				<th>Team</th>
+				<th title="Enroll Time @generalOptions.Value.TimeZone.DisplayName">Enroll Time</th>
+				<th>Is Captain</th>
+				<th>Suspended</th>
+				<th colspan="2">Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var player in Model.Players)
+			{
+				TeamModel? team = null;
+				if (player.TeamId is not null)
+					Model.Teams.TryGetValue(player.TeamId.Value, out team);
+
+				<tr>
+					@* TODO: Add game_type_id and period to the player link *@
+					<td><a asp-area="" asp-controller="Player" asp-action="Index" asp-route-playerName="@player.Name">@player.Name</a></td>
+					<td>
+						@if (player.SignupTimestamp is not null)
+						{
+							@TimeZoneInfo.ConvertTimeFromUtc(player.SignupTimestamp.Value, generalOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
+						}
+					</td>
+					<td>
+						@if (team is not null)
+						{
+							<a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.TeamId">@team.TeamName</a>
+						}
+						else
+						{
+							<text>@player.TeamId</text>
+						}
+					</td>
+					<td>
+						@if (player.EnrollTimestamp is not null)
+						{
+							@TimeZoneInfo.ConvertTimeFromUtc(player.EnrollTimestamp.Value, generalOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")
+						}
+					</td>
+					<td>@player.IsCaptain</td>
+					<td>@player.IsSuspended</td>
+					<td><a asp-controller="SeasonPlayer" asp-action="Edit" asp-route-seasonId="@Model.SeasonDetails.SeasonId" asp-route-playerName="@player.Name">Edit</a></td>
+					<td><a asp-controller="SeasonPlayer" asp-action="Delete" asp-route-seasonId="@Model.SeasonDetails.SeasonId" asp-route-playerName="@player.Name">Delete</a></td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+@section Scripts {
+	@await Html.PartialAsync("_LeagueSeasonChooseScript", Model.LeagueSeasonChooser)
+}

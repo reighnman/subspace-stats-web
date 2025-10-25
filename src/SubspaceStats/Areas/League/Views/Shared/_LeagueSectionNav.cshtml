@@ -1,0 +1,49 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using SubspaceStats.Areas.League.Authorization
+@using SubspaceStats.Areas.League.Models.League
+@model ILeagueViewModel
+@inject IAuthorizationService AuthorizationService
+
+@{
+	bool isManager = (await AuthorizationService.AuthorizeAsync(User, Model.League, PolicyNames.Manager)).Succeeded;
+}
+
+@* <ul class="nav nav-underline">
+	@if (Model.League is not null)
+	{
+		<li class="nav-item">
+			<a asp-action="Details" class="nav-link @(Model.Section == LeagueSection.Details ? "nav-active" : "")">League Details</a>
+		</li>
+		<li class="nav-item">
+			<a asp-action="Roles" class="nav-link @(Model.Section == LeagueSection.Roles ? "nav-active" : "")">League Roles</a>
+		</li>
+		@if (isManager)
+		{
+			<li class="nav-item">
+				<a asp-action="Edit" class="nav-link @(Model.Section == LeagueSection.Edit ? "nav-active" : "")">Edit League</a>
+			</li>
+		}
+		@if (User.IsInRole(RoleNames.Administrator))
+		{
+			<li class="nav-item">
+				<a asp-action="Index" class="nav-link @(Model.Section == LeagueSection.Manage ? "nav-active" : "")">Manage Leagues</a>
+			</li>
+		}
+	} *@
+</ul>
+<nav class="nav nav-underline">
+	@if (Model.League is not null)
+	{
+		<a asp-controller="League" asp-action="Details" asp-route-leagueId="@Model.League.Id" class="nav-link @(Model.Section == LeagueSection.Details ? "active" : "")">League Details</a>
+		@if (isManager)
+		{
+			<a asp-controller="LeagueRoles" asp-action="Index" asp-route-leagueId="@Model.League.Id" class="nav-link @(Model.Section == LeagueSection.Roles ? "active" : "")">League Roles</a>
+			<a asp-controller="League" asp-action="Edit" asp-route-leagueId="@Model.League.Id" class="nav-link @(Model.Section == LeagueSection.Edit ? "active" : "")">Edit League</a>
+		}
+	}
+
+	@if (User.IsInRole(RoleNames.Administrator))
+	{
+		<a asp-controller="League" asp-action="Index" class="nav-link @(Model.Section == LeagueSection.Manage ? "active" : "")">Manage Leagues</a>
+	}
+</nav>

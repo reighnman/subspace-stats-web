@@ -1,0 +1,245 @@
+﻿@using Microsoft.Extensions.Options
+@using SubspaceStats.Areas.League.Models
+@using SubspaceStats.Areas.League.Models.Season
+@using SubspaceStats.Options
+@using System.Text
+@model OverviewViewModel
+@inject IOptions<GeneralOptions> generalOptions
+
+@{
+	ViewData["Title"] = "Season";
+}
+
+@await Html.PartialAsync("_LeagueSeasonChooser", Model.LeagueSeasonChooser)
+@await Html.PartialAsync("_SeasonNav")
+@* <h1>Season</h1> *@
+
+<div class="container mt-3">
+	<div class="row">
+		<div class="col-12 col-lg-8">
+			<div class="table-responsive">
+				<table class="table table-striped table-bordered table-hover">
+					<thead>
+						<tr>
+							<th colspan="5" class="text-center"><i class="bi bi-calendar3 me-1"></i>Upcoming Matches</th>
+						</tr>
+						<tr>
+							<th title="Time @generalOptions.Value.TimeZone.DisplayName">Time</th>
+							<th>Teams</th>
+							<th>Round</th>
+							<th>Status</th>
+							<th class="text-end">Match ID</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var scheduledGame in Model.ScheduledGames)
+						{
+							<tr>
+								<td>
+									@if (scheduledGame.GameTimestamp is null)
+									{
+										<span class="fst-italic">Not scheduled</span>
+									}
+									else
+									{
+										DateTime? gameTime = TimeZoneInfo.ConvertTimeFromUtc(scheduledGame.GameTimestamp.Value, generalOptions.Value.TimeZone);
+										<span class="text-nowrap pe-1">@gameTime.Value.ToString("yyyy-MM-dd")</span>
+										<span class="text-nowrap">@gameTime.Value.ToString("hh:mm tt")</span>
+									}
+								</td>
+								<td>@scheduledGame.Teams</td>
+								<td>
+									@if (!string.IsNullOrWhiteSpace(scheduledGame.RoundName))
+									{
+										@scheduledGame.RoundName
+									}
+									else if (scheduledGame.RoundNumber is not null)
+									{
+										@scheduledGame.RoundNumber
+									}
+								</td>
+								<td>@scheduledGame.Status</td>
+								<td class="text-end">@scheduledGame.SeasonGameId</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="col-12 col-lg-4">
+			<div class="table-responsive">
+				<table class="table table-striped table-bordered table-hover">
+					<thead>
+						<tr>
+							<th colspan="4" class="text-center"><i class="bi bi-bar-chart-fill me-1"></i>Standings</th>
+						</tr>
+						<tr>
+							<th>Team</th>
+							<th class="text-end">Wins</th>
+							<th class="text-end">Losses</th>
+							<th class="text-end">Draws</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var teamStanding in Model.Standings)
+						{
+							<tr>
+								<td><a asp-controller="Team" asp-action="Index" asp-route-teamId="@teamStanding.TeamId">@teamStanding.TeamName</a></td>
+								<td class="text-end">@teamStanding.Wins</td>
+								<td class="text-end">@teamStanding.Losses</td>
+								<td class="text-end">@teamStanding.Draws</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="col-12">
+			@{
+				bool isOnly2TeamMatches = true;
+				foreach (var game in Model.CompletedGames)
+				{
+					if (game.Teams.Count != 2)
+					{
+						isOnly2TeamMatches = false;
+						break;
+					}
+				}
+			}
+			<div class="table-responsive">
+				<table class="table table-striped table-bordered table-hover align-middle">
+					<thead>
+						<tr>
+							<th colspan="5" class="text-center"><i class="bi bi-clipboard-data me-1"></i>Match Results</th>
+						</tr>
+						<tr>
+							<th title="Time @generalOptions.Value.TimeZone.DisplayName">Time</th>
+							<th>Round</th>
+							<th class="@(isOnly2TeamMatches ? "text-center" : "")">Teams</th>
+							<th class="@(isOnly2TeamMatches ? "text-center" : "")">Score</th>
+							<th>Winner</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (GameRecord game in Model.CompletedGames)
+						{
+							<tr>
+								<td>
+									@if (game.GameTimestamp is not null)
+									{
+										DateTime? gameTime = TimeZoneInfo.ConvertTimeFromUtc(game.GameTimestamp.Value, generalOptions.Value.TimeZone);
+										<span class="text-nowrap pe-1">@gameTime.Value.ToString("yyyy-MM-dd")</span>
+										<span class="text-nowrap">@gameTime.Value.ToString("hh:mm tt")</span>
+									}
+								</td>
+								<td>
+									@if (!string.IsNullOrWhiteSpace(game.RoundName))
+									{
+										@game.RoundName
+									}
+									else
+									{
+										@game.RoundNumber
+									}
+								</td>
+								<td>
+									@if (isOnly2TeamMatches)
+									{
+										<div class="d-flex align-items-center">
+											<div class="col text-end">
+												<a asp-controller="Team" asp-action="Index" asp-route-teamId="@game.Teams[0].TeamId">@game.Teams[0].TeamName</a>
+											</div>
+											<div class="col-auto px-2">vs</div>
+											<div class="col text-start">
+												<a asp-controller="Team" asp-action="Index" asp-route-teamId="@game.Teams[1].TeamId">@game.Teams[1].TeamName</a>
+											</div>
+										</div>
+									}
+									else
+									{
+										for (int i = 0; i < game.Teams.Count; i++)
+										{
+											TeamRecord team = game.Teams[i];
+											if (i > 0)
+											{
+												<text> vs </text>
+											}
+											<a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.TeamId" class="text-nowrap">@team.TeamName</a>
+										}
+									}
+								</td>
+								<td>
+									@if (isOnly2TeamMatches)
+									{
+										if (game.GameId is not null)
+										{
+											<a asp-area="" asp-controller="Game" asp-action="Index" asp-route-id="@game.GameId.Value">
+												<div class="d-flex align-items-center">
+													<div class="col text-end">@game.Teams[0].Score</div>
+													<div class="col-auto">-</div>
+													<div class="col text-start">@game.Teams[1].Score</div>
+												</div>
+											</a>
+										}
+										else
+										{
+											<div class="d-flex align-items-center">
+												<div class="col text-end">@game.Teams[0].Score</div>
+												<div class="col-auto">-</div>
+												<div class="col text-start">@game.Teams[1].Score</div>
+											</div>
+										}
+									}
+									else
+									{
+										StringBuilder builder = new();
+										for (int i = 0; i < game.Teams.Count; i++)
+										{
+											if (i > 0)
+											{
+												builder.Append(" - ");
+											}
+
+											builder.Append(game.Teams[i].Score);
+										}
+
+										if (game.GameId is not null)
+										{
+											<a asp-area="" asp-controller="Game" asp-action="Index" asp-route-id="@game.GameId.Value">@builder.ToString()</a>
+										}
+										else
+										{
+											@builder.ToString()
+										}
+									}
+								</td>
+								<td>
+									@{
+										int winnerCount = 0;
+										for (int i = 0; i < game.Teams.Count; i++)
+										{
+											TeamRecord team = game.Teams[i];
+											if (team.IsWinner)
+											{
+												if (winnerCount++ > 0)
+												{
+													<text>, </text>
+												}
+
+												<a asp-controller="Team" asp-action="Index" asp-route-teamId="@team.TeamId" class="text-nowrap">@team.TeamName</a>
+											}
+										}
+									}
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	@await Html.PartialAsync("_LeagueSeasonChooseScript", Model.LeagueSeasonChooser)
+}

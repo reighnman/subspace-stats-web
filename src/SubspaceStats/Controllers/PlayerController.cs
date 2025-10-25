@@ -18,16 +18,13 @@ public class PlayerController(
 
     public async Task<IActionResult> Index(
         string playerName,
-        GameType? gameType,
+        [Bind(Prefix ="gameType")]long? gameTypeId,
         long? period,
         CancellationToken cancellationToken,
         int limit = 100,
         int offset = 0)
     {
         if (string.IsNullOrWhiteSpace(playerName))
-            return BadRequest();
-
-        if (gameType is not null && !Enum.IsDefined(gameType.Value))
             return BadRequest();
 
         limit = Math.Clamp(limit, 1, 200);
@@ -56,12 +53,12 @@ public class PlayerController(
             if (selectedPeriod is null)
             {
                 // The specified period is invalid.
-                if (gameType is not null)
+                if (gameTypeId is not null)
                 {
                     // Try to find the first available period that matches the specified game type.
                     foreach (StatPeriod statPeriod in statPeriodList)
                     {
-                        if (statPeriod.GameType == gameType.Value)
+                        if (statPeriod.GameTypeId == gameTypeId.Value)
                         {
                             selectedPeriod = statPeriod;
                             break;
@@ -74,31 +71,30 @@ public class PlayerController(
                     new
                     {
                         playerName,
-                        gameType = selectedPeriod?.GameType,
+                        gameType = selectedPeriod?.GameTypeId,
                         period = selectedPeriod?.StatPeriodId
                     });
             }
-            else if (selectedPeriod.Value.GameType != gameType)
+            else if (selectedPeriod.Value.GameTypeId != gameTypeId)
             {
                 return RedirectToAction(
                     null,
                     new
                     {
                         playerName,
-                        gameType = selectedPeriod?.GameType,
+                        gameType = selectedPeriod?.GameTypeId,
                         period = selectedPeriod?.StatPeriodId
                     });
             }
 
-            GameCategory? gameCategory = selectedPeriod.Value.GameType.GetGameCategory();
-            if (gameCategory is null)
+            GameType? gameType = await _statsRepository.GetGameTypeAsync(selectedPeriod.Value.GameTypeId, cancellationToken);
+            if (gameType is null)
             {
                 return BadRequest();
             }
 
             // Different data/view based on game category.
-            // TODO: Make a solo view
-            if (gameCategory.Value == GameCategory.TeamVersus || gameCategory.Value == GameCategory.Solo)
+            if (gameType.GameMode == GameMode.TeamVersus)
             {
                 var periodStatsTask = GetPeriodStats(selectedPeriod.Value);
                 var gameStatsTask = _statsRepository.GetTeamVersusGameStats(playerName, selectedPeriod.Value.StatPeriodId, limit + 1, offset, cancellationToken);
@@ -131,26 +127,27 @@ public class PlayerController(
                     },
                     ShipStatsList = shipStatsTask.Result,
                     KillStatsList = killStatsTask.Result,
+                    GameTypes = await _statsRepository.GetGameTypesAsync(cancellationToken),
                 });
             }
-            //else if (gameCategory == GameCategory.Solo) // TODO:
+            //else if (gameType.GameMode == GameMode.Solo) // TODO:
             //{
             //}
-            //else if (gameCategory == GameCategory.Powerball) // TODO:
+            //else if (gameType.GameMode == GameMode.Powerball) // TODO:
             //{
             //}
             else
             {
-                _logger.LogError("Unsupported game category ({gameCategory}", gameCategory.Value);
+                _logger.LogError("Unsupported game mode ({GameMode}).", gameType.GameMode);
                 return RedirectToAction(null, new { playerName });
             }
         }
-        else if (gameType is not null)
+        else if (gameTypeId is not null)
         {
             // Try to find the first available period that matches the specified game type.
             foreach (StatPeriod statPeriod in statPeriodList)
             {
-                if (statPeriod.GameType == gameType.Value)
+                if (statPeriod.GameTypeId == gameTypeId.Value)
                 {
                     selectedPeriod = statPeriod;
                     break;
@@ -162,28 +159,31 @@ public class PlayerController(
                 new
                 {
                     playerName,
-                    gameType = selectedPeriod?.GameType,
+                    gameType = selectedPeriod?.GameTypeId,
                     period = selectedPeriod?.StatPeriodId
                 });
         }
         else
         {
-            List<ParticipationRecord> participationRecordList = await _statsRepository.GetPlayerParticipationOverview(playerName, _options.PeriodCutoff, cancellationToken);
-
+            var participationRecordsTask = _statsRepository.GetPlayerParticipationOverview(playerName, _options.PeriodCutoff, cancellationToken);
+            var gameTypesTask = _statsRepository.GetGameTypesAsync(cancellationToken);
             // TODO: var recentMatches = 
+
+            await Task.WhenAll(participationRecordsTask, gameTypesTask);
 
             return View("Overview", new OverviewViewModel()
             {
                 PlayerName = playerName,
                 PlayerInfo = playerInfo,
-                ParticipationRecordList = participationRecordList,
+                ParticipationRecordList = participationRecordsTask.Result,
+                GameTypes = gameTypesTask.Result,
             });
         }
 
 
         async Task<List<TeamVersusPeriodStats>> GetPeriodStats(StatPeriod selectedPeriod)
         {
-            StatPeriod? foreverStatPeriod = await _statsRepository.GetForeverStatPeriod(selectedPeriod.GameType, cancellationToken);
+            StatPeriod? foreverStatPeriod = await _statsRepository.GetForeverStatPeriod(selectedPeriod.GameTypeId, cancellationToken);
             List<StatPeriod> statPeriodList = foreverStatPeriod is not null
                 ? new(2) { selectedPeriod, foreverStatPeriod.Value }
                 : new(1) { selectedPeriod };

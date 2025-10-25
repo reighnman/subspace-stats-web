@@ -1,3 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
+using SubspaceStats.Areas.Identity.Data;
+using SubspaceStats.Areas.League.Authorization;
 using SubspaceStats.Filters;
 using SubspaceStats.Options;
 using SubspaceStats.Services;
@@ -6,28 +13,55 @@ namespace SubspaceStats
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-            builder.Services.Configure<StatOptions>(
-                builder.Configuration.GetSection(StatOptions.StatsSectionKey));
+            const string identityConnectionStringName = "AspNetCoreIdentity";
+            var connectionString = builder.Configuration.GetConnectionString(identityConnectionStringName) ?? throw new InvalidOperationException($"Connection string '{identityConnectionStringName}' not found.");
+            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 
-            // StatRepositoryOptions contains the connection string.
+            builder.Services.AddDefaultIdentity<SubspaceStatsUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddRoles<IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>();
+
+            builder.Services.Configure<GeneralOptions>(builder.Configuration.GetSection(GeneralOptions.GeneralSectionKey));
+            builder.Services.Configure<StatOptions>(builder.Configuration.GetSection(StatOptions.StatsSectionKey));
+            builder.Services.Configure<LeagueOptions>(builder.Configuration.GetSection(LeagueOptions.LeagueSectionKey));
+
+            // The connection string the services use is named: "SubspaceStats"
             // In Development use user-secrets.
             // In Production use Environment Variables or an online secrets store, depending on your host.
-            builder.Services.AddOptions<StatRepositoryOptions>()
-                .Bind(builder.Configuration.GetSection(StatRepositoryOptions.StatRepositoryOptionsKey))
-                .ValidateDataAnnotations();
 
+            builder.Services.AddHybridCache();
+
+            builder.Services.AddSingleton<ILeagueRepository, LeagueRepository>();
             builder.Services.AddSingleton<IStatsRepository, StatsRepository>();
+
+            // Note: Scoped because it uses ASP.NET Identity
+            builder.Services.AddScoped<IAuthorizationHandler, ManageLeagueAuthorizationHandler>();
+            builder.Services.AddScoped<IAuthorizationHandler, ManageSeasonAuthorizationHandler>();
+            builder.Services.AddScoped<IAuthorizationHandler, ManageSeasonDetailsAuthorizationHandler>();
+
+            builder.Services.AddAuthorizationBuilder()
+                .AddPolicy(PolicyNames.Manager, policy => policy.AddRequirements(new ManagerRequirement()));
+
             builder.Services.AddControllersWithViews(options =>
             {
                 options.Filters.Add<OperationCanceledExceptionFilter>();
             });
 
             var app = builder.Build();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var serviceProvider = scope.ServiceProvider;
+                var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
+                context.Database.Migrate();
+
+                await SeedAuth.Initialize(serviceProvider);
+            }
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
@@ -38,35 +72,140 @@ namespace SubspaceStats
             }
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
+
+            app.MapStaticAssets();
+
+            IOptions<LeagueOptions> leagueOptions = app.Services.GetRequiredService<IOptions<LeagueOptions>>();
+
+            if(!string.IsNullOrWhiteSpace(leagueOptions.Value.ImagePhysicalPath) && !string.IsNullOrWhiteSpace(leagueOptions.Value.ImageUrlPath))
+            app.UseStaticFiles(
+                new StaticFileOptions()
+                {
+                    FileProvider = new PhysicalFileProvider(leagueOptions.Value.ImagePhysicalPath),
+                    RequestPath = leagueOptions.Value.ImageUrlPath
+                });
 
             app.UseRouting();
 
             app.UseAuthorization();
 
-            //app.MapControllerRoute(
-            //    name: "2v2leaderboard",
-            //    pattern: "2v2",
-            //    defaults: new { controller = "leaderboard", action = "2v2" });
+            app.MapAreaControllerRoute(
+                name: "LeagueSeasonPlayers",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/Players/{action}",
+                defaults: new { controller = "SeasonPlayer" });
 
-            //app.MapControllerRoute(
-            //    name: "3v3leaderboard",
-            //    pattern: "3v3",
-            //    defaults: new { controller = "leaderboard", action = "3v3" });
+            app.MapAreaControllerRoute(
+                name: "LeagueSeasonTeamCreate",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/Teams/Create",
+                defaults: new { controller = "Team", action = "Create" });
 
-            //app.MapControllerRoute(
-            //    name: "4v4leaderboard",
-            //    pattern: "4v4",
-            //    defaults: new { controller = "leaderboard", action = "4v4" });
+            app.MapAreaControllerRoute(
+                name: "LeagueSeasonGames",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/Games/{action}",
+                defaults: new { controller = "SeasonGame" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueSeasonRound",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/Rounds/{roundNumber:int}/{action=Detail}",
+                defaults: new { controller = "SeasonRound" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueSeasonRoundCreate",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/Rounds/Create",
+                defaults: new { controller = "SeasonRound", action = "Create" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueSeasonRound",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/Roles/{action=Index}",
+                defaults: new { controller = "SeasonRoles" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueSeason",
+                areaName: "League",
+                pattern: "League/Season/{seasonId:long}/{action=Index}",
+                defaults: new { controller = "Season" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueCreateSeason",
+                areaName: "League",
+                pattern: "League/{leagueId:long}/CreateSeason",
+                defaults: new { controller = "Season", action = "Create" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueManage",
+                areaName: "League",
+                pattern: "League/Manage",
+                defaults: new { controller = "League", action = "Index" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueNav",
+                areaName: "League",
+                pattern: "League/Nav",
+                defaults: new { controller = "Home", action = "Nav" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueCreate",
+                areaName: "League",
+                pattern: "League/Create",
+                defaults: new { controller = "League", action = "Create" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueFranchise",
+                areaName: "League",
+                pattern: "League/Franchise",
+                defaults: new { controller = "Franchise", action = "Index" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueFranchise",
+                areaName: "League",
+                pattern: "League/Franchise/{franchiseId:long}/{action=Details}",
+                defaults: new { controller = "Franchise" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueTeam",
+                areaName: "League",
+                pattern: "League/Team/{teamId:long}/{action=Index}",
+                defaults: new { controller = "Team" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueLeagueRoles",
+                areaName: "League",
+                pattern: "League/{leagueId:long}/Roles/{action=Index}",
+                defaults: new { controller = "LeagueRoles" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueLeague",
+                areaName: "League",
+                pattern: "League/{leagueId:long}/{action=Details}",
+                defaults: new { controller = "League" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueAreaDefault",
+                areaName: "League",
+                pattern: "League/{controller=Home}/{action=Index}/{id?}");
+
+            app.MapAreaControllerRoute(
+                name: "AdminArea",
+                areaName: "Admin",
+                pattern: "Admin/{controller=Home}/{action=Index}/{id?}");
 
             app.MapControllerRoute(
                 name: "Game",
-                pattern: "Game/{id}",
+                pattern: "Game/{id:long}",
                 defaults: new { controller = "Game", action = "Index" });
 
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
+
+            // For using the ASP.NET Core Identity RCL
+            app.MapRazorPages();
 
             app.Run();
         }

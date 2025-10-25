@@ -1,8 +1,10 @@
 ﻿@using Microsoft.Extensions.Options
 @using SubspaceStats.Options;
+@using SubspaceStats.Services
 @inject IOptions<StatOptions> statOptions
+@inject IStatsRepository statsRepository
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,6 +20,7 @@
         })();
     </script>
     <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SubspaceStats.styles.css" asp-append-version="true" />
 </head>
@@ -35,16 +38,24 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
-                        @foreach(GameType gameType in statOptions.Value.Navbar.LeaderboardGameTypes)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@gameType">@gameType.GetDisplayName()</a>
-                            </li>
+                        @{
+                            var gameTypes = await statsRepository.GetGameTypesAsync(Context.RequestAborted);
+                            foreach (long gameTypeId in statOptions.Value.Navbar.LeaderboardGameTypes)
+                            {
+                                string gameTypeName = gameTypes.TryGetValue(gameTypeId, out GameType? gameType) ? gameType.Name : gameTypeId.ToString();
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Leaderboard" asp-action="Index" asp-route-gameType="@gameTypeId">@gameTypeName</a>
+                                </li>
+                            }
                         }
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="League" asp-controller="Home" asp-action="Index">Leagues</a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
                     </ul>
+                    <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>

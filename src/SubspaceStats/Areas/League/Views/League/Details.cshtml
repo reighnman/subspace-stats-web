@@ -1,0 +1,94 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Options
+@using SubspaceStats.Areas.League.Authorization
+@using SubspaceStats.Areas.League.Models.League
+@using SubspaceStats.Options
+@model LeagueDetailsViewModel
+@inject IOptions<GeneralOptions> generalOptions
+@inject IAuthorizationService AuthorizationService
+
+@{
+	ViewData["Title"] = "League Details";
+
+	bool isAdministrator = User.IsInRole(RoleNames.Administrator);
+	bool isManager = (await AuthorizationService.AuthorizeAsync(User, Model.League, PolicyNames.Manager)).Succeeded;
+
+    string gameTypeName = Model.GameTypes.TryGetValue(Model.League.GameTypeId, out GameType? gameType) ? gameType.Name : Model.League.GameTypeId.ToString();
+}
+
+<partial name="_LeagueNav" />
+<h2>@Model.League.Name</h2>
+<partial name="_LeagueSectionNav" />
+
+<div class="container">
+	<table class="table table-borderless table-sm w-auto">
+		<tr>
+			<td class="fw-bold">@Html.DisplayNameFor(m => m.League.Id):</td>
+			<td>@Model.League.Id</td>
+		</tr>
+		<tr>
+			<td class="fw-bold">@Html.DisplayNameFor(m => m.League.GameTypeId):</td>
+			<td>@gameTypeName</td>
+		</tr>
+		@if (isManager)
+		{
+			<tr>
+				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.MinTeamsPerGame):</td>
+				<td>@Model.League.MinTeamsPerGame</td>
+			</tr>
+			<tr>
+				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.MaxTeamsPerGame):</td>
+				<td>@Model.League.MaxTeamsPerGame</td>
+			</tr>
+			<tr>
+				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.FreqStart):</td>
+				<td>@Model.League.FreqStart</td>
+			</tr>
+			<tr>
+				<td class="fw-bold">@Html.DisplayNameFor(m => m.League.FreqIncrement):</td>
+				<td>@Model.League.FreqIncrement</td>
+			</tr>
+		}
+	</table>
+</div>
+
+<h4>Seasons</h4>
+
+@if (isManager)
+{
+	<div class="mb-3">
+		<a asp-controller="Season" asp-action="Create" asp-route-leagueId="@Model.League.Id">New Season</a>
+	</div>
+}
+
+<div class="table-responsive">
+	<table class="table table-striped table-bordered table-hover">
+		<thead>
+			<tr>
+				<th class="text-end">ID</th>
+				<th>Name</th>
+				<th title="Created @generalOptions.Value.TimeZone.DisplayName">Created</th>
+				@if (isManager)
+				{
+					<th colspan="3">Actions</th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var season in Model.Seasons)
+			{
+				<tr>
+					<td class="text-end">@season.Id</td>
+					<td><a asp-controller="Season" asp-action="Index" asp-route-seasonId="@season.Id" class="link-underline link-underline-opacity-0 link-underline-opacity-75-hover">@season.Name</a></td>
+					<td>@TimeZoneInfo.ConvertTimeFromUtc(season.CreatedTimestamp, generalOptions.Value.TimeZone).ToString("yyyy-MM-dd hh:mm tt")</td>
+					@if (isManager)
+					{
+						<td><a asp-controller="Season" asp-action="Edit" asp-route-seasonId="@season.Id">Edit</a></td>
+						<td><a asp-controller="Season" asp-action="Copy" asp-route-seasonId="@season.Id">Copy</a></td>
+						<td><a asp-controller="Season" asp-action="Delete" asp-route-seasonId="@season.Id">Delete</a></td>
+					}
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>

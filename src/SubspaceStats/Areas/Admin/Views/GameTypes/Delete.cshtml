@@ -1,0 +1,43 @@
+﻿@using SubspaceStats.Areas.Admin.Models.GameTypes
+@model GameTypeViewModel
+
+@{
+    ViewData["Title"] = "Delete - Game Types";
+    IEnumerable<SelectListItem> gameModes =
+        from gameMode in Enum.GetValues<GameMode>()
+        where gameMode != GameMode.Undefined
+        select new SelectListItem(gameMode.ToString(), ((int)gameMode).ToString());
+}
+
+<h2>Delete Game Type</h2>
+<div class="container">
+    <div class="row">
+        <div class="col-12 col-md-4 order-md-2">
+            <div class="alert alert-info">
+                <p>You can only delete a <strong>Game Type</strong> if it is not used. Otherwise, the delete will fail. So, this is only useful if you create a <strong>Game Type</strong>, never use it, and decide it's no longer needed.</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-8 order-md-1">
+            <h5>Are you sure you want to delete this Game Type?</h5>
+            <form asp-action="Delete">
+                <div class="mb-3">
+                    <label asp-for="GameTypeId" class="form-label"></label>
+                    <input asp-for="GameTypeId" class="form-control" disabled readonly />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="GameTypeName" class="form-label"></label>
+                    <input asp-for="GameTypeName" class="form-control" disabled readonly />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="GameMode" class="form-label"></label>
+                    <select asp-for="GameMode" asp-items="@gameModes" class="form-select" disabled>
+                    </select>
+                </div>
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-primary m-2">Delete</button>
+                    <a asp-action="Index" class="btn btn-secondary m-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

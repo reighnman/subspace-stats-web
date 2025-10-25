@@ -1,28 +1,35 @@
-﻿@model SubspaceStats.Models.Leaderboard.TeamVersusLeaderboardViewModel
+﻿@using System.Text
+@model SubspaceStats.Models.Leaderboard.TeamVersusLeaderboardViewModel
 
 @{
-	ViewData["Title"] = $"{Model.GameType.GetDisplayName()} {(Model.SelectedPeriod is not null ? Model.SelectedPeriod.Value.GetDisplayDescription() : "")} Leaderboard";
+	ViewData["Title"] = $"{Model.GameType.Name} {(Model.SelectedPeriod is not null ? Model.SelectedPeriod.Value.GetDisplayDescription() : "")} Leaderboard";
 
 	string? action = ViewContext.RouteData.Values["action"] as string;
 	string? controller = ViewContext.RouteData.Values["controller"] as string;
 }
 
+@functions {
+	public static string GetStatPeriodUnitDisplayName(StatPeriodType statPeriodType)
+	{
+		return statPeriodType switch
+		{
+			StatPeriodType.Monthly => "Month",
+			StatPeriodType.LeagueSeason => "Season",
+			_ => "Period",
+		};
+	}
+}
+
 <div class="d-flex">
-	<h1>@Model.GameType.GetDisplayName()</h1>
+	<h1>@Model.GameType.Name</h1>
 	<div class="p-2 align-bottom">
 		<form asp-action="@action" asp-controller="@controller" method="get">
-			<input type="hidden" name="gameType" value="@Model.GameType" />
+			<input type="hidden" name="gameType" value="@Model.GameType.Id" />
 			<select class="form-select" id="periodSelect" name="period">
 				@foreach (var period in Model.Periods)
 				{
 					bool selected = Model.SelectedPeriod is not null && Model.SelectedPeriod.Value.StatPeriodId == period.StatPeriodId;
-					string periodDescription = period.StatPeriodType switch
-					{
-						StatPeriodType.Monthly => period.PeriodRange.LowerBound.ToString("yyyy-MM"),
-						_ => period.PeriodRange.ToString(),
-					};
-
-					<option value="@period.StatPeriodId" selected="@selected">@periodDescription</option>
+					<option value="@period.StatPeriodId" selected="@selected">@period.GetDisplayDescription()</option>
 				}
 			</select>
 		</form>
@@ -51,7 +58,7 @@ TODO: TOP 5 lists
 								{
 									<tr>
 										<td class="fw-bold">@record.Rank</td>
-										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
+										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType.Id" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
 										<td class="text-end">@record.Rating</td>
 									</tr>
 								}
@@ -73,7 +80,7 @@ TODO: TOP 5 lists
 								{
 									<tr>
 										<td class="fw-bold">@record.Rank</td>
-										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
+										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType.Id" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
 										<td class="text-end">@record.AvgRating.ToString("f2")</td>
 									</tr>
 								}
@@ -95,7 +102,7 @@ TODO: TOP 5 lists
 								{
 									<tr>
 										<td class="fw-bold">@record.Rank</td>
-										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
+										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType.Id" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
 										<td class="text-end">@((record.KillsPerMinute * 10f).ToString("f2"))</td>
 									</tr>
 								}
@@ -106,19 +113,19 @@ TODO: TOP 5 lists
 			</div>
 		}
 
-		@if (Model.TopRatingLastMonth is not null && Model.TopRatingLastMonth.Count > 0)
+		@if (Model.TopRatingPriorPeriod is not null && Model.TopRatingPriorPeriod.TopList.Count > 0)
 		{
 			<div class="col-12 col-md-6 col-lg-3">
 				<div class="card h-100">
-					<h5 class="card-header text-center">Top Last Month</h5>
+					<h5 class="card-header text-center">Top Last @GetStatPeriodUnitDisplayName(Model.TopRatingPriorPeriod.Period.StatPeriodType)</h5>
 					<div class="card-body">
 						<table class="table table-sm table-borderless m-0">
 							<tbody>
-								@foreach (var record in Model.TopRatingLastMonth)
+								@foreach (var record in Model.TopRatingPriorPeriod.TopList)
 								{
 									<tr>
 										<td class="fw-bold">@record.Rank</td>
-										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType" asp-route-period="@Model.SelectedPeriod?.StatPeriodId">@record.PlayerName</a></td>
+										<td><a asp-controller="Player" asp-action="Index" asp-route-playerName="@record.PlayerName" , asp-route-gameType="@Model.GameType.Id" asp-route-period="@Model.TopRatingPriorPeriod.Period.StatPeriodId">@record.PlayerName</a></td>
 										<td class="text-end">@record.Rating</td>
 									</tr>
 								}
@@ -137,19 +144,19 @@ TODO: TOP 5 lists
 		<thead>
 			<tr>
 				<th scope="colgroup" colspan="14" class="text-center">
-					@Model.GameType.GetDisplayName() Leaderboard Statistics
+					@Model.GameType.Name Leaderboard Statistics
 					@{
 						if (Model.StatsPaging.Offset > 0)
 						{
 							int offset = Math.Max(0, Model.StatsPaging.Offset - Model.StatsPaging.Limit);
-							@Html.ActionLink("Previous", action, new { gameType = Model.SelectedPeriod?.GameType, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = offset }, new { @class = "float-start" })
+							@Html.ActionLink("Previous", action, new { gameType = Model.SelectedPeriod?.GameTypeId, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = offset }, new { @class = "float-start" })
 						}
 
 						if (Model.StatsPaging.HasMore)
 						{
 							if (action is not null)
 							{
-								@Html.ActionLink("Next", action, new { gameType = Model.SelectedPeriod?.GameType, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = Model.StatsPaging.Offset + Model.StatsPaging.Limit }, new { @class = "float-end"})
+								@Html.ActionLink("Next", action, new { gameType = Model.SelectedPeriod?.GameTypeId, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = Model.StatsPaging.Offset + Model.StatsPaging.Limit }, new { @class = "float-end"})
 							}
 						}
 					}
@@ -191,7 +198,7 @@ TODO: TOP 5 lists
 
 					<tr>
 						<td class="text-center">@pilotStats.RatingRank</td>
-						<td>@Html.ActionLink(pilotStats.PlayerName, "Index", "Player", new { playerName = pilotStats.PlayerName, gameType = Model.GameType, period = Model.SelectedPeriod?.StatPeriodId })</td>
+						<td>@Html.ActionLink(pilotStats.PlayerName, "Index", "Player", new { playerName = pilotStats.PlayerName, gameType = Model.GameType.Id, period = Model.SelectedPeriod?.StatPeriodId })</td>
 						<td>@pilotStats.SquadName</td>
 						<td class="text-end">@pilotStats.Rating</td>
 						<td class="text-end @avgRatingClass">@avgRating</td>
@@ -211,19 +218,19 @@ TODO: TOP 5 lists
 		<tfoot>
 			<tr>
 				<th scope="colgroup" colspan="14" class="text-center">
-					@Model.GameType.GetDisplayName() Leaderboard Statistics
+					@Model.GameType.Name Leaderboard Statistics
 					@{
 						if (Model.StatsPaging.Offset > 0)
 						{
 							int offset = Math.Max(0, Model.StatsPaging.Offset - Model.StatsPaging.Limit);
-							@Html.ActionLink("Previous", action, new { gameType = Model.SelectedPeriod?.GameType, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = offset }, new { @class = "float-start"})
+							@Html.ActionLink("Previous", action, new { gameType = Model.SelectedPeriod?.GameTypeId, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = offset }, new { @class = "float-start"})
 						}
 
 						if (Model.StatsPaging.HasMore)
 						{
 							if (action is not null)
 							{
-								@Html.ActionLink("Next", action, new { gameType = Model.SelectedPeriod?.GameType, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = Model.StatsPaging.Offset + Model.StatsPaging.Limit }, new { @class = "float-end"})
+								@Html.ActionLink("Next", action, new { gameType = Model.SelectedPeriod?.GameTypeId, period = Model.SelectedPeriod?.StatPeriodId, limit = Model.StatsPaging.Limit, offset = Model.StatsPaging.Offset + Model.StatsPaging.Limit }, new { @class = "float-end"})
 							}
 						}
 					}
@@ -236,9 +243,9 @@ TODO: TOP 5 lists
 @section Scripts {
 	<script type="text/javascript">
 		$(document).ready(function () {
-			var periodSelect = $("#periodSelect");
-			periodSelect.on("change", function () {
-				periodSelect.closest("form").submit();
+			var $periodSelect = $("#periodSelect");
+			$periodSelect.on("change", function () {
+				$periodSelect.closest("form").submit();
 			});
 		});
 	</script>

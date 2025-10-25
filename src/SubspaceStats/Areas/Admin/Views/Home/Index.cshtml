@@ -1,0 +1,29 @@
+﻿@using SubspaceStats.Areas.Admin.Models
+@model HomeViewModel
+
+@{
+	ViewData["Title"] = "General";
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+	<div class="alert alert-primary" role="alert">@Model.Message</div>
+}
+
+<div class="container">
+	<div class="row">
+		<div class="col-12 col-md-6 col-lg-4">
+			<div class="card">
+				<div class="card-header">
+					Clear Cache - Game Type
+				</div>
+				<div class="card-body">
+					The web server caches <strong>Game Type</strong> data. If a new record is added to the <em>ss.game_type</em> table, the server will not see it. Clearing the cache will force the server to read the data from the database the next time it's needed.
+					<form asp-action="ClearGameTypeCache">
+						<button class="btn btn-primary" type="submit">Clear Cache</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
