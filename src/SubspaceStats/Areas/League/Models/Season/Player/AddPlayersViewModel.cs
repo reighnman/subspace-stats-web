@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using SubspaceStats.Areas.League.Models.Season;
 using SubspaceStats.Areas.League.Models.Season.Team;
 using System.ComponentModel.DataAnnotations;
@@ -7,8 +8,6 @@ namespace SubspaceStats.Areas.League.Models.Season.Player
 {
     public class AddPlayersViewModel
     {
-        public required SeasonDetails Season { get; set; }
-
         [Display(Name = "Player Names")]
         [DataType(DataType.MultilineText)]
         [Required]
@@ -17,6 +16,11 @@ namespace SubspaceStats.Areas.League.Models.Season.Player
         [Display(Name = "Team (optional)")]
         public long? TeamId { get; set; }
 
+        [BindNever]
+        [ValidateNever]
+        public required SeasonDetails Season { get; set; }
+
+        [BindNever]
         [ValidateNever]
         public required OrderedDictionary<long, TeamModel> Teams { get; set; }
     }
