@@ -44,6 +44,10 @@ namespace SubspaceStats
             builder.Services.AddScoped<IAuthorizationHandler, ManageSeasonAuthorizationHandler>();
             builder.Services.AddScoped<IAuthorizationHandler, ManageSeasonDetailsAuthorizationHandler>();
 
+            //Identity Email Sender Service
+            builder.Services.AddTransient<IEmailSender<SubspaceStatsUser>, EmailSender>();
+            builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration);
+
             builder.Services.AddAuthorizationBuilder()
                 .AddPolicy(PolicyNames.Manager, policy => policy.AddRequirements(new ManagerRequirement()));
 
