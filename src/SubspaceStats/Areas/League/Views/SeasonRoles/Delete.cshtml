@@ -14,18 +14,20 @@
 		<h5>Are you sure you want to delete the following user role?</h5>
 		<div class="mb-3">
 			<label asp-for="UserId" class="form-label"></label>
-			<input asp-for="UserId" class="form-control" readonly />
+			<input asp-for="UserId" class="form-control" disabled />
+			<input type="hidden" name="UserId" value="@Model.UserId" />
 		</div>
 		@if (!string.IsNullOrWhiteSpace(Model.UserName))
 		{
 			<div class="mb-3">
 				<label asp-for="UserName" class="form-label"></label>
-				<input asp-for="UserName" class="form-control" disabled readonly />
+				<input asp-for="UserName" class="form-control" disabled />
 			</div>
 		}
 		<div class="mb-3">
-			<label asp-for="Role" class="form-label"></label>
-			<input asp-for="Role" class="form-control" readonly />
+			<label for="RoleDisplay" class="form-label">@Html.DisplayNameFor(m => m.Role)</label>
+			<input id="RoleDisplay" type="text" value="@Model.Role?.ToDisplayString()" class="form-control" disabled />
+			<input type="hidden" asp-for="Role" />
 		</div>
 		<div class="d-flex">
 			<button type="submit" class="btn btn-primary m-2">Delete</button>

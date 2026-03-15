@@ -6,6 +6,7 @@ using SubspaceStats.Areas.League.Authorization;
 using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Areas.League.Models.League.Roles;
+using SubspaceStats.Models;
 using SubspaceStats.Services;
 
 namespace SubspaceStats.Areas.League.Controllers
@@ -19,6 +20,9 @@ namespace SubspaceStats.Areas.League.Controllers
         private readonly IAuthorizationService _authorizationService = authorizationService;
         private readonly UserManager<SubspaceStatsUser> _userManager = userManager;
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
+
+        private const string AddUserRoleMessageKey = "AddUserRoleMessage";
+        private const string AddUserRoleErrorMessageKey = "AddUserRoleErrorMessage";
 
         // GET League/{leagueId}/Roles
         public async Task<IActionResult> Index(long? leagueId, CancellationToken cancellationToken)
@@ -49,7 +53,7 @@ namespace SubspaceStats.Areas.League.Controllers
             }
 
             Task<List<LeagueNavItem>> navTask = _leagueRepository.GetLeaguesWithSeasonsAsync(cancellationToken);
-            Task<List<LeagueUserRole>> rolesTask = _leagueRepository.GetLeagueUserRoles(leagueId.Value, cancellationToken);
+            Task<List<LeagueUserRole>> rolesTask = _leagueRepository.GetLeagueUserRolesAsync(leagueId.Value, cancellationToken);
 
             await Task.WhenAll(navTask, rolesTask);
 
@@ -62,8 +66,14 @@ namespace SubspaceStats.Areas.League.Controllers
                     AddUserRole = new AddUserRoleViewModel()
                     {
                         Role = LeagueRole.Manager,
+                        AvailableRoles = [
+                            LeagueRole.Manager,
+                            LeagueRole.PermitManager,
+                            // In the future, other roles could make sense if a linkage mechanism between website user and player is added.
+                        ],
+                        Message = TempData[AddUserRoleMessageKey] as string,
+                        ErrorMessage = TempData[AddUserRoleErrorMessageKey] as string,
                     },
-                    AddUserRoleMessage = TempData["AddUserRoleMessage"] as string,
                 });
         }
 
@@ -89,19 +99,27 @@ namespace SubspaceStats.Areas.League.Controllers
 
             if (!ModelState.IsValid || string.IsNullOrWhiteSpace(model.UserName) || model.Role is null)
             {
-                TempData["AddUserRoleMessage"] = "Invalid input.";
+                TempData[AddUserRoleErrorMessageKey] = "Invalid input.";
                 return RedirectToAction("Index");
             }
 
             SubspaceStatsUser? user = await _userManager.FindByNameAsync(model.UserName);
             if (user is null)
             {
-                TempData["AddUserRoleMessage"] = $"User '{model.UserName}' not found.";
+                TempData[AddUserRoleErrorMessageKey] = $"User '{model.UserName}' not found.";
                 return RedirectToAction("Index");
             }
 
-            await _leagueRepository.InsertLeagueUserRole(leagueId.Value, user.Id, model.Role.Value, cancellationToken);
-            TempData["AddUserRoleMessage"] = $"Successfully assigned '{model.Role}' to '{model.UserName}'.";
+            try
+            {
+                await _leagueRepository.InsertLeagueUserRoleAsync(leagueId.Value, user.Id, model.Role.Value, cancellationToken);
+                TempData[AddUserRoleMessageKey] = $"Successfully assigned '{model.Role.Value.ToDisplayString()}' to '{model.UserName}'.";
+            }
+            catch
+            {
+                TempData[AddUserRoleErrorMessageKey] = $"Error assigning '{model.Role.Value.ToDisplayString()}' to '{model.UserName}'.";
+            }
+
             return RedirectToAction("Index");
         }
 
@@ -169,7 +187,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 return RedirectToAction("Index");
             }
 
-            await _leagueRepository.DeleteLeagueUserRole(leagueId.Value, model.UserId!, model.Role!.Value, cancellationToken);
+            await _leagueRepository.DeleteLeagueUserRoleAsync(leagueId.Value, model.UserId!, model.Role!.Value, cancellationToken);
             return RedirectToAction("Index");
         }
     }

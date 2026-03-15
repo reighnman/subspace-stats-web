@@ -7,16 +7,19 @@
 @inject UserManager<SubspaceStatsUser> UserManager
 
 @{
-	ViewData["Title"] = "League Roles";
+	ViewData["Title"] = "League User Roles";
 	bool canModifyRoles = User.IsInRole(RoleNames.Administrator);
-	SelectListItem[] roles = [new SelectListItem("Manager", "1")];
+	IEnumerable<SelectListItem> roleItems =
+		from item in Html.GetEnumSelectList<LeagueRole>()
+		where Model.AddUserRole.AvailableRoles is not null
+			&& Model.AddUserRole.AvailableRoles.Contains((LeagueRole)int.Parse(item.Value))
+		select item;
 }
 
 <partial name="_LeagueNav" />
 <h2>@Model.League.Name</h2>
 <partial name="_LeagueSectionNav" />
 
-<h4>League Roles</h4>
 <div class="row">
 	<div class="col-12 col-md-4 order-md-2">
 		@if (canModifyRoles)
@@ -28,18 +31,23 @@
 						<div class="mb-3">
 							<label asp-for="AddUserRole.UserName" class="form-label"></label>
 							<input asp-for="AddUserRole.UserName" class="form-control" />
+							<span asp-validation-for="AddUserRole.UserName" class="text-danger"></span>
 						</div>
 						<div class="mb-3">
 							<label asp-for="AddUserRole.Role" class="form-label"></label>
-							<select asp-for="AddUserRole.Role" asp-items="@roles" class="form-select">
-							</select>
+							<select asp-for="AddUserRole.Role" asp-items="@roleItems" class="form-select"></select>
+							<span asp-validation-for="AddUserRole.Role" class="text-danger"></span>
 						</div>
 						<div class="d-flex mb-3">
 							<button type="submit" class="btn btn-primary m-2">Add</button>
 						</div>
-						@if (!string.IsNullOrWhiteSpace(Model.AddUserRoleMessage))
+						@if (!string.IsNullOrWhiteSpace(Model.AddUserRole.Message))
 						{
-							<div class="alert alert-warning">@Model.AddUserRoleMessage</div>
+							<div class="alert alert-info">@Model.AddUserRole.Message</div>
+						}
+						@if (!string.IsNullOrWhiteSpace(Model.AddUserRole.ErrorMessage))
+						{
+							<div class="alert alert-danger">@Model.AddUserRole.ErrorMessage</div>
 						}
 					</div>
 				</form>
@@ -75,7 +83,7 @@
 								}
 							</td>
 							<td>
-								@record.Role
+								@Html.DisplayFor(modelItem => record.Role)
 							</td>
 							@if (canModifyRoles)
 							{
@@ -92,3 +100,9 @@
 		</div>
 	</div>
 </div>
+
+@section Scripts {
+	@{
+		await Html.RenderPartialAsync("_ValidationScriptsPartial");
+	}
+}

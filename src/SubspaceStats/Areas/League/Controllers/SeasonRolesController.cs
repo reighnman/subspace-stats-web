@@ -7,6 +7,7 @@ using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.League;
 using SubspaceStats.Areas.League.Models.Season;
 using SubspaceStats.Areas.League.Models.Season.Roles;
+using SubspaceStats.Models;
 using SubspaceStats.Services;
 
 namespace SubspaceStats.Areas.League.Controllers
@@ -20,6 +21,9 @@ namespace SubspaceStats.Areas.League.Controllers
         private readonly IAuthorizationService _authorizationService = authorizationService;
         private readonly UserManager<SubspaceStatsUser> _userManager = userManager;
         private readonly ILeagueRepository _leagueRepository = leagueRepository;
+
+        private const string AddUserRoleMessageKey = "AddUserRoleMessage";
+        private const string AddUserRoleErrorMessageKey = "AddUserRoleErrorMessage";
 
         // GET League/Season/{seasonId}/Roles
         public async Task<IActionResult> Index(long? seasonId, CancellationToken cancellationToken)
@@ -70,12 +74,16 @@ namespace SubspaceStats.Areas.League.Controllers
                     SeasonDetails = seasonDetails,
                     League = league,
                     LeagueSeasonChooser = seasonChooser,
-                    Roles = await _leagueRepository.GetSeasonUserRoles(seasonId.Value, cancellationToken),
+                    Roles = await _leagueRepository.GetSeasonUserRolesAsync(seasonId.Value, cancellationToken),
                     AddUserRole = new AddUserRoleViewModel()
                     {
                         Role = SeasonRole.Manager,
+                        AvailableRoles = [
+                            SeasonRole.Manager
+                        ],
+                        Message = TempData[AddUserRoleMessageKey] as string,
+                        ErrorMessage = TempData[AddUserRoleErrorMessageKey] as string,
                     },
-                    AddUserRoleMessage = TempData["AddUserRoleMessage"] as string,
                 });
         }
 
@@ -120,19 +128,27 @@ namespace SubspaceStats.Areas.League.Controllers
 
             if (!ModelState.IsValid || string.IsNullOrWhiteSpace(model.UserName) || model.Role is null)
             {
-                TempData["AddUserRoleMessage"] = "Invalid input.";
+                TempData[AddUserRoleErrorMessageKey] = "Invalid input.";
                 return RedirectToAction("Index");
             }
 
             SubspaceStatsUser? user = await _userManager.FindByNameAsync(model.UserName);
             if (user is null)
             {
-                TempData["AddUserRoleMessage"] = $"User '{model.UserName}' not found.";
+                TempData[AddUserRoleErrorMessageKey] = $"User '{model.UserName}' not found.";
                 return RedirectToAction("Index");
             }
 
-            await _leagueRepository.InsertSeasonUserRole(seasonId.Value, user.Id, model.Role.Value, cancellationToken);
-            TempData["AddUserRoleMessage"] = $"Successfully assigned '{model.Role}' to '{model.UserName}'.";
+            try
+            {
+                await _leagueRepository.InsertSeasonUserRoleAsync(seasonId.Value, user.Id, model.Role.Value, cancellationToken);
+                TempData[AddUserRoleMessageKey] = $"Successfully assigned '{model.Role.Value.ToDisplayString()}' to '{model.UserName}'.";
+            }
+            catch
+            {
+                TempData[AddUserRoleErrorMessageKey] = $"Error assigning '{model.Role.Value.ToDisplayString()}' to '{model.UserName}'.";
+            }
+
             return RedirectToAction("Index");
         }
 
@@ -248,7 +264,7 @@ namespace SubspaceStats.Areas.League.Controllers
                 return RedirectToAction("Index");
             }
 
-            await _leagueRepository.DeleteSeasonUserRole(seasonId.Value, model.UserId!, model.Role!.Value, cancellationToken);
+            await _leagueRepository.DeleteSeasonUserRoleAsync(seasonId.Value, model.UserId!, model.Role!.Value, cancellationToken);
             return RedirectToAction("Index");
         }
     }

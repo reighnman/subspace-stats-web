@@ -10,6 +10,7 @@
     {
         Details,
         Roles,
+        PlayerRoles,
         Edit,
         Manage,
     }

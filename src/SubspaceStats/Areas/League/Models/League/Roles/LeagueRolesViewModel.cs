@@ -7,7 +7,6 @@
         public required LeagueSeasonChooserViewModel LeagueSeasonChooser { get; init; }
         public required List<LeagueUserRole> Roles { get; init; }
 
-        public AddUserRoleViewModel? AddUserRole { get; init; }
-        public string? AddUserRoleMessage { get; init; }
+        public required AddUserRoleViewModel AddUserRole { get; init; }
     }
 }

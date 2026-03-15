@@ -2,6 +2,7 @@
 using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.League;
+using SubspaceStats.Areas.League.Models.League.PlayerRoles;
 using SubspaceStats.Areas.League.Models.League.Roles;
 using SubspaceStats.Areas.League.Models.Season;
 using SubspaceStats.Areas.League.Models.Season.Game;
@@ -113,15 +114,21 @@ namespace SubspaceStats.Services
         #region Authorization
 
         Task<bool> IsLeagueManager(string userId, long leagueId, CancellationToken cancellationToken);
+        Task<bool> IsUserLeaguePermitManager(string userId, long leagueId, CancellationToken cancellationToken);
         Task<bool> IsLeagueOrSeasonManager(string userId, long seasonId, CancellationToken cancellationToken);
 
-        Task<List<LeagueUserRole>> GetLeagueUserRoles(long leagueId, CancellationToken cancellationToken);
-        Task InsertLeagueUserRole(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken);
-        Task DeleteLeagueUserRole(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken);
+        Task<List<LeagueUserRole>> GetLeagueUserRolesAsync(long leagueId, CancellationToken cancellationToken);
+        Task InsertLeagueUserRoleAsync(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken);
+        Task DeleteLeagueUserRoleAsync(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken);
 
-        Task<List<SeasonUserRole>> GetSeasonUserRoles(long seasonId, CancellationToken cancellationToken);
-        Task InsertSeasonUserRole(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken);
-        Task DeleteSeasonUserRole(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken);
+        Task<List<LeaguePlayerRoleRequest>> GetLeaguePlayerRoleRequestsAsync(long leagueId, IEnumerable<LeagueRole>? filterRoles, CancellationToken cancellationToken);
+        Task<List<LeaguePlayerRole>> GetLeaguePlayerRolesAsync(long leagueId, IEnumerable<LeagueRole>? filterRoles, CancellationToken cancellationToken);
+        Task<bool> InsertLeaguePlayerRoleAsync(long leagueId, string playerName, LeagueRole role, string? byUserId, string? notes, CancellationToken cancellationToken);
+        Task<bool> DeleteLeaguePlayerRoleAsync(long leagueId, string playerName, LeagueRole role, string? byUserId, string? notes, CancellationToken cancellationToken);
+
+        Task<List<SeasonUserRole>> GetSeasonUserRolesAsync(long seasonId, CancellationToken cancellationToken);
+        Task InsertSeasonUserRoleAsync(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken);
+        Task DeleteSeasonUserRoleAsync(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken);
 
         #endregion
     }

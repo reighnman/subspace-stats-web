@@ -4,6 +4,7 @@ using SubspaceStats.Areas.League.Authorization;
 using SubspaceStats.Areas.League.Models;
 using SubspaceStats.Areas.League.Models.Franchise;
 using SubspaceStats.Areas.League.Models.League;
+using SubspaceStats.Areas.League.Models.League.PlayerRoles;
 using SubspaceStats.Areas.League.Models.League.Roles;
 using SubspaceStats.Areas.League.Models.Season;
 using SubspaceStats.Areas.League.Models.Season.Game;
@@ -2066,11 +2067,16 @@ namespace SubspaceStats.Services
                 NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
                 await using (connection.ConfigureAwait(false))
                 {
-                    NpgsqlCommand command = new("select league.is_league_manager($1,$2)", connection);
+                    NpgsqlCommand command = new("select league.is_league_manager($1,$2)", connection)
+                    {
+                        Parameters = {
+                            new() { Value = userId },
+                            new NpgsqlParameter<long> { TypedValue = leagueId }
+                        }
+                    };
+
                     await using (command.ConfigureAwait(false))
                     {
-                        command.Parameters.AddWithValue(userId);
-                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = leagueId });
                         await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
                         object? resultObj = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -2087,7 +2093,41 @@ namespace SubspaceStats.Services
                 throw;
             }
         }
-        
+
+        public async Task<bool> IsUserLeaguePermitManager(string userId, long leagueId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.is_user_league_permit_manager($1,$2)", connection)
+                    {
+                        Parameters = {
+                            new() { Value = userId },
+                            new NpgsqlParameter<long> { TypedValue = leagueId }
+                        }
+                    };
+
+                    await using (command.ConfigureAwait(false))
+                    {
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        object? resultObj = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                        if (resultObj is null || resultObj == DBNull.Value)
+                            throw new Exception("Expected an value.");
+
+                        return (bool)resultObj;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting whether a user is a manager of a league. (user_id:{user_id}, league_id:{league_id})", userId, leagueId);
+                throw;
+            }
+        }
+
         public async Task<bool> IsLeagueOrSeasonManager(string userId, long seasonId, CancellationToken cancellationToken)
         {
             try
@@ -2095,11 +2135,16 @@ namespace SubspaceStats.Services
                 NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
                 await using (connection.ConfigureAwait(false))
                 {
-                    NpgsqlCommand command = new("select league.is_league_or_season_manager($1,$2)", connection);
+                    NpgsqlCommand command = new("select league.is_league_or_season_manager($1,$2)", connection)
+                    {
+                        Parameters = {
+                            new() { Value = userId },
+                            new NpgsqlParameter<long> { TypedValue = seasonId }
+                        }
+                    };
+
                     await using (command.ConfigureAwait(false))
                     {
-                        command.Parameters.AddWithValue(userId);
-                        command.Parameters.Add(new NpgsqlParameter<long> { TypedValue = seasonId });
                         await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
 
                         object? resultObj = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -2117,7 +2162,7 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task<List<LeagueUserRole>> GetLeagueUserRoles(long leagueId, CancellationToken cancellationToken)
+        public async Task<List<LeagueUserRole>> GetLeagueUserRolesAsync(long leagueId, CancellationToken cancellationToken)
         {
             try
             {
@@ -2156,7 +2201,7 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task InsertLeagueUserRole(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken)
+        public async Task InsertLeagueUserRoleAsync(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken)
         {
             try
             {
@@ -2182,7 +2227,7 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task DeleteLeagueUserRole(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken)
+        public async Task DeleteLeagueUserRoleAsync(long leagueId, string userId, LeagueRole role, CancellationToken cancellationToken)
         {
             try
             {
@@ -2208,7 +2253,187 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task<List<SeasonUserRole>> GetSeasonUserRoles(long seasonId, CancellationToken cancellationToken)
+        public async Task<List<LeaguePlayerRoleRequest>> GetLeaguePlayerRoleRequestsAsync(long leagueId, IEnumerable<LeagueRole>? filterRoles, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    long[]? filterRoleIds = filterRoles is null
+                        ? null
+                        : [.. (from role in filterRoles select (long)role)];
+
+                    NpgsqlCommand command = new("select * from league.get_league_player_role_requests($1,$2)", connection)
+                    {
+                        Parameters =
+                        {
+                            new NpgsqlParameter<long> { TypedValue = leagueId },
+                            new NpgsqlParameter() { NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Bigint, Value = (object?)filterRoleIds ?? DBNull.Value },
+                        }
+                    };
+
+                    await using (command.ConfigureAwait(false))
+                    {
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_playerName = reader.GetOrdinal("player_name");
+                            int column_leagueRoleId = reader.GetOrdinal("league_role_id");
+                            int column_requestTimestamp = reader.GetOrdinal("request_timestamp");
+
+                            List<LeaguePlayerRoleRequest> list = [];
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                list.Add(
+                                    new LeaguePlayerRoleRequest(
+                                        reader.GetString(column_playerName),
+                                        (LeagueRole)reader.GetInt64(column_leagueRoleId),
+                                        reader.GetDateTime(column_requestTimestamp)));
+                            }
+                            return list;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting league player role requests. (league_id: {league_id})", leagueId);
+                throw;
+            }
+        }
+
+        public async Task<List<LeaguePlayerRole>> GetLeaguePlayerRolesAsync(long leagueId, IEnumerable<LeagueRole>? filterRoles, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    long[]? filterRoleIds = filterRoles is null 
+                        ? null 
+                        : [.. (from role in filterRoles select (long)role)];
+
+                    NpgsqlCommand command = new("select * from league.get_league_player_roles($1,$2)", connection)
+                    {
+                        Parameters =
+                        {
+                            new NpgsqlParameter<long> { TypedValue = leagueId },
+                            new NpgsqlParameter() { NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Bigint, Value = (object?)filterRoleIds ?? DBNull.Value },
+                        }
+                    };
+
+                    await using (command.ConfigureAwait(false))
+                    {
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                        await using (reader.ConfigureAwait(false))
+                        {
+                            int column_playerName = reader.GetOrdinal("player_name");
+                            int column_leagueRoleId = reader.GetOrdinal("league_role_id");
+
+                            List<LeaguePlayerRole> list = [];
+                            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                            {
+                                list.Add(
+                                    new LeaguePlayerRole(
+                                        reader.GetString(column_playerName),
+                                        (LeagueRole)reader.GetInt64(column_leagueRoleId)));
+                            }
+                            return list;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting league player roles. (league_id: {league_id})", leagueId);
+                throw;
+            }
+        }
+
+        public async Task<bool> InsertLeaguePlayerRoleAsync(long leagueId, string playerName, LeagueRole role, string? byUserId, string? notes, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.insert_league_player_role($1,$2,$3,$4,$5,$6)", connection)
+                    {
+                        Parameters =
+                        {
+                            new() { Value = playerName },
+                            new NpgsqlParameter<long> { TypedValue = leagueId },
+                            new NpgsqlParameter<long> { TypedValue = (long)role },
+                            new() { NpgsqlDbType = NpgsqlDbType.Text, Value = DBNull.Value },
+                            new() { NpgsqlDbType = NpgsqlDbType.Text, Value = (object?)byUserId ?? DBNull.Value },
+                            new() { NpgsqlDbType = NpgsqlDbType.Text, Value = (object?)notes ?? DBNull.Value },
+                        }
+                    };
+
+                    await using (command.ConfigureAwait(false))
+                    {
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        object? retObj = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                        if (retObj is not bool ret)
+                            throw new Exception("Expected a bool return value.");
+
+                        return ret;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inserting league player role. (league_id: {league_id}, player_name:{player_name}, player_role_id:{player_role_id})", leagueId, playerName, (long)role);
+                throw;
+            }
+        }
+
+        public async Task<bool> DeleteLeaguePlayerRoleAsync(long leagueId, string playerName, LeagueRole role, string? byUserId, string? notes, CancellationToken cancellationToken)
+        {
+            try
+            {
+                NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                await using (connection.ConfigureAwait(false))
+                {
+                    NpgsqlCommand command = new("select league.delete_league_player_role($1,$2,$3,$4,$5,$6)", connection)
+                    {
+                        Parameters =
+                        {
+                            new() { Value = playerName },
+                            new NpgsqlParameter<long> { TypedValue = leagueId },
+                            new NpgsqlParameter<long> { TypedValue = (long)role },
+                            new() { NpgsqlDbType = NpgsqlDbType.Text, Value = DBNull.Value },
+                            new() { NpgsqlDbType = NpgsqlDbType.Text, Value = (object?)byUserId ?? DBNull.Value },
+                            new() { NpgsqlDbType = NpgsqlDbType.Text, Value = (object?)notes ?? DBNull.Value },
+                        }
+                    };
+
+                    await using (command.ConfigureAwait(false))
+                    {
+                        await command.PrepareAsync(cancellationToken).ConfigureAwait(false);
+
+                        object? retObj = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                        if (retObj is not bool ret)
+                            throw new Exception("Expected a bool return value.");
+
+                        return ret;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting league player role. (league_id: {league_id}, player_name:{player_name}, league_role_id:{league_role_id})", leagueId, playerName, (long)role);
+                throw;
+            }
+        }
+
+        public async Task<List<SeasonUserRole>> GetSeasonUserRolesAsync(long seasonId, CancellationToken cancellationToken)
         {
             try
             {
@@ -2247,7 +2472,7 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task InsertSeasonUserRole(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken)
+        public async Task InsertSeasonUserRoleAsync(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken)
         {
             try
             {
@@ -2273,7 +2498,7 @@ namespace SubspaceStats.Services
             }
         }
 
-        public async Task DeleteSeasonUserRole(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken)
+        public async Task DeleteSeasonUserRoleAsync(long seasonId, string userId, SeasonRole role, CancellationToken cancellationToken)
         {
             try
             {

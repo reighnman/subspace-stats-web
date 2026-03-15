@@ -1,0 +1,138 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using SubspaceStats.Areas.Identity.Data
+@using SubspaceStats.Areas.League.Authorization
+@using SubspaceStats.Areas.League.Models.League
+@using SubspaceStats.Areas.League.Models.League.PlayerRoles
+@model LeaguePlayerRolesViewModel
+@inject UserManager<SubspaceStatsUser> UserManager
+
+@{
+	ViewData["Title"] = "League Player Roles";
+	IEnumerable<SelectListItem> roleItems =
+		from item in Html.GetEnumSelectList<LeagueRole>()
+		where Model.AddPlayerRole.AvailableRoles is not null 
+			&& Model.AddPlayerRole.AvailableRoles.Contains((LeagueRole)int.Parse(item.Value))
+		select item;
+}
+
+<partial name="_LeagueNav" />
+<h2>@Model.League.Name</h2>
+<partial name="_LeagueSectionNav" />
+
+<div class="row">
+	<div class="col-12 col-md-4 order-md-2">
+		<div class="card mb-3">
+			<form asp-action="Add">
+				<h5 class="card-header">Assign role</h5>
+				<div class="card-body">
+					<div class="mb-3">
+						<label asp-for="AddPlayerRole.PlayerName" class="form-label"></label>
+						<input asp-for="AddPlayerRole.PlayerName" class="form-control" />
+						<span asp-validation-for="AddPlayerRole.PlayerName" class="text-danger"></span>
+					</div>
+					<div class="mb-3">
+						<label asp-for="AddPlayerRole.Role" class="form-label"></label>
+						<select asp-for="AddPlayerRole.Role" asp-items="@roleItems" class="form-select"></select>
+						<span asp-validation-for="AddPlayerRole.Role" class="text-danger"></span>
+					</div>
+					<div class="d-flex mb-3">
+						<button type="submit" class="btn btn-primary m-2">Add</button>
+					</div>
+					@if (!string.IsNullOrWhiteSpace(Model.AddPlayerRole.Message))
+					{
+						<div class="alert alert-info">@Model.AddPlayerRole.Message</div>
+					}
+					@if (!string.IsNullOrWhiteSpace(Model.AddPlayerRole.ErrorMessage))
+					{
+						<div class="alert alert-danger">@Model.AddPlayerRole.ErrorMessage</div>
+					}
+				</div>
+			</form>
+		</div>
+	</div>
+	<div class="col-12 col-md-8 order-md-1">
+		<h3>Requests</h3>
+		@if(Model.Requests.Count > 0)
+		{
+			<div class="table-responsive">
+				<table class="table table-bordered table-striped">
+					<thead>
+						<tr>
+							<th>Player Name</th>
+							<th>Role</th>
+							<th>Request Timestamp</th>
+							<th>Action</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var record in Model.Requests)
+						{
+							<tr>
+								<td>
+									@record.PlayerName
+								</td>
+								<td>
+									@Html.DisplayFor(modelItem => record.Role)
+								</td>
+								<td>
+									@record.RequestTimestamp.ToString("u")
+								</td>
+								<td>
+									<div class="d-flex">
+										<form asp-action="Add">
+											<input type="hidden" name="AddPlayerRole.PlayerName" value="@record.PlayerName" />
+											<input type="hidden" name="AddPlayerRole.Role" value="@record.Role" />
+											<input type="submit" value="Grant" class="btn btn-primary m-1" />
+										</form>
+										<a asp-action="Delete" asp-route-playerName="@record.PlayerName" asp-route-role="@record.Role" class="btn btn-secondary m-1">Decline</a>
+									</div>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+		else
+		{
+			<div>No pending requests.</div>
+		}
+
+		<h3>Roles</h3>
+		<div class="table-responsive">
+			<table class="table table-bordered table-striped">
+				<thead>
+					<tr>
+						<th>Player Name</th>
+						<th>Role</th>
+						<th>Action</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var record in Model.Roles)
+					{
+						<tr>
+							<td>
+								@record.PlayerName
+							</td>
+							<td>
+								@Html.DisplayFor(modelItem => record.Role)
+							</td>
+							<td>
+								<div class="d-flex">
+									<a asp-action="Delete" asp-route-playerName="@record.PlayerName" asp-route-role="@record.Role">Delete</a>
+								</div>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	@{
+		await Html.RenderPartialAsync("_ValidationScriptsPartial");
+	}
+}
