@@ -3,21 +3,21 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using SubspaceStats.Areas.League.Authorization;
 using System.ComponentModel.DataAnnotations;
 
-namespace SubspaceStats.Areas.League.Models.Season.Roles
+namespace SubspaceStats.Areas.League.Models.League.PlayerRoles
 {
-    public class AddUserRoleViewModel
+    public class AddPlayerRoleViewModel
     {
-        [Display(Name = "User Name")]
+        [Display(Name = "Player Name")]
         [Required]
-        public string? UserName { get; set; }
+        public string? PlayerName { get; set; }
 
         [Required]
-        [AllowedValues(SeasonRole.Manager)]
-        public SeasonRole? Role { get; set; }
+        [AllowedValues(LeagueRole.PracticePermit, LeagueRole.PermitManager)]
+        public LeagueRole? Role { get; set; }
 
         [BindNever]
         [ValidateNever]
-        public IEnumerable<SeasonRole>? AvailableRoles { get; set; }
+        public IEnumerable<LeagueRole>? AvailableRoles { get; set; }
 
         [BindNever]
         public string? Message { get; set; }

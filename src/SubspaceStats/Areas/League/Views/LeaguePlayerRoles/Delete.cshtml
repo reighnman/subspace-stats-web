@@ -1,0 +1,34 @@
+﻿@using SubspaceStats.Areas.League.Models.League.PlayerRoles
+@model DeletePlayerRoleViewModel
+
+@{
+	ViewData["Title"] = "Delete League Player Role";
+}
+
+<partial name="_LeagueNav" />
+
+<h3>Delete League Player Role</h3>
+
+<div class="container">
+	<form asp-action="Delete">
+		<h5>Are you sure you want to delete the following player role?</h5>
+		<div class="mb-3">
+			<label asp-for="PlayerName" class="form-label"></label>
+			<input asp-for="PlayerName" class="form-control" disabled />
+			<input type="hidden" name="PlayerName" value="@Model.PlayerName" />
+		</div>
+		<div class="mb-3">
+			<label for="RoleDisplay" class="form-label">@Html.DisplayNameFor(m => m.Role)</label>
+			<input id="RoleDisplay" type="text" value="@Model.Role.ToDisplayString()" class="form-control" disabled />
+			<input type="hidden" asp-for="Role" />
+		</div>
+		<div class="mb-3">
+			<label asp-for="Notes" class="form-label"></label>
+			<textarea asp-for="Notes" class="form-control"></textarea>
+		</div>
+		<div class="d-flex">
+			<button type="submit" class="btn btn-primary m-2">Delete</button>
+			<a asp-action="Index" class="btn btn-secondary m-2">Cancel</a>
+		</div>
+	</form>
+</div>

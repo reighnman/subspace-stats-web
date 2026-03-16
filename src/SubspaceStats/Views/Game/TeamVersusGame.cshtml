@@ -312,7 +312,7 @@
 						<th scope="col">
 							<div class="d-flex">
 								<div class="flex-grow-1">
-									Assist(s)
+									Additional
 								</div>
 								<div>
 									<span class="badge bg-secondary">Damage</span>
@@ -331,7 +331,7 @@
 						{
 							TimeSpan gameTime = killEvent.Timestamp - Model.Game.StartTime;
 							int? killerDamage = null;
-							List<(string PlayerName, int Damage)> assistList = new();
+							List<(string PlayerName, int Damage)> addList = new();
 							if (killEvent.DamageStats is not null)
 							{
 								foreach ((string playerName, int damage) in killEvent.DamageStats)
@@ -342,11 +342,11 @@
 									}
 									else
 									{
-										assistList.Add((playerName, damage));
+										addList.Add((playerName, damage));
 									}
 								}
 
-								assistList.Sort((x, y) => -x.Damage.CompareTo(y.Damage));
+								addList.Sort((x, y) => -x.Damage.CompareTo(y.Damage));
 							}
 
 							<tr>
@@ -379,14 +379,14 @@
 									</div>
 								</td>
 								<td>
-									@foreach (var assist in assistList)
+									@foreach (var add in addList)
 									{
 										<div class="d-flex">
 											<div class="flex-grow-1">
-												@Html.ActionLink(assist.PlayerName, "Index", "Player", new { playerName = assist.PlayerName, gameType = Model.Game.GameTypeId })
+												@Html.ActionLink(add.PlayerName, "Index", "Player", new { playerName = add.PlayerName, gameType = Model.Game.GameTypeId })
 											</div>
 											<div>
-												<span class="badge bg-secondary" title="Damage">@assist.Damage</span>
+												<span class="badge bg-secondary" title="Damage">@add.Damage</span>
 											</div>
 										</div>
 									}

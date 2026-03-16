@@ -43,6 +43,7 @@ namespace SubspaceStats
             builder.Services.AddScoped<IAuthorizationHandler, ManageLeagueAuthorizationHandler>();
             builder.Services.AddScoped<IAuthorizationHandler, ManageSeasonAuthorizationHandler>();
             builder.Services.AddScoped<IAuthorizationHandler, ManageSeasonDetailsAuthorizationHandler>();
+            builder.Services.AddScoped<IAuthorizationHandler, LeaguePermitManagerAuthorizationHandler>();
 
             if (!builder.Environment.IsDevelopment())
             {
@@ -54,7 +55,8 @@ namespace SubspaceStats
             }
 
             builder.Services.AddAuthorizationBuilder()
-                .AddPolicy(PolicyNames.Manager, policy => policy.AddRequirements(new ManagerRequirement()));
+                .AddPolicy(PolicyNames.Manager, policy => policy.AddRequirements(new ManagerRequirement()))
+                .AddPolicy(PolicyNames.PermitManager, policy => policy.AddRequirements(new PermitManagerRequirement()));
 
             builder.Services.AddControllersWithViews(options =>
             {
@@ -187,6 +189,12 @@ namespace SubspaceStats
                 areaName: "League",
                 pattern: "League/{leagueId:long}/Roles/{action=Index}",
                 defaults: new { controller = "LeagueRoles" });
+
+            app.MapAreaControllerRoute(
+                name: "LeagueLeaguePlayerRoles",
+                areaName: "League",
+                pattern: "League/{leagueId:long}/PlayerRoles/{action=Index}",
+                defaults: new { controller = "LeaguePlayerRoles" });
 
             app.MapAreaControllerRoute(
                 name: "LeagueLeague",

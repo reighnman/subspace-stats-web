@@ -3,10 +3,20 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using SubspaceStats.Areas.League.Authorization;
 using System.ComponentModel.DataAnnotations;
 
-namespace SubspaceStats.Areas.League.Models.League.Roles
+namespace SubspaceStats.Areas.League.Models.League.PlayerRoles
 {
-    public class DeleteUserRoleViewModel : ILeagueViewModel
+    public class DeletePlayerRoleViewModel : ILeagueViewModel
     {
+        [Display(Name = "Player Name")]
+        [Required]
+        public required string PlayerName { get; set; }
+
+        [Required]
+        [AllowedValues(LeagueRole.PracticePermit, LeagueRole.PermitManager)]
+        public required LeagueRole Role { get; set; }
+
+        public string? Notes { get; set; }
+
         [BindNever]
         [ValidateNever]
         public required LeagueModel League { get; set; }
@@ -16,18 +26,5 @@ namespace SubspaceStats.Areas.League.Models.League.Roles
         [BindNever]
         [ValidateNever]
         public required LeagueSeasonChooserViewModel LeagueSeasonChooser { get; init; }
-
-        [Display(Name = "User ID")]
-        [Required]
-        public string? UserId { get; set; }
-
-        [Display(Name = "User Name")]
-        [BindNever]
-        [ValidateNever]
-        public string? UserName { get; set; }
-
-        [Required]
-        [AllowedValues(LeagueRole.Manager, LeagueRole.PermitManager)]
-        public LeagueRole? Role { get; set; }
     }
 }

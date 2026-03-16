@@ -9,7 +9,6 @@ namespace SubspaceStats.Areas.League.Models.Season.Roles
         public SeasonPage Page => SeasonPage.Roles;
         public required LeagueSeasonChooserViewModel LeagueSeasonChooser { get; init; }
         public required List<SeasonUserRole> Roles { get; init; }
-        public AddUserRoleViewModel? AddUserRole { get; init; }
-        public string? AddUserRoleMessage { get; init; }
+        public required AddUserRoleViewModel AddUserRole { get; init; }
     }
 }
